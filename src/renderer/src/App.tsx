@@ -1,8 +1,8 @@
 // src/renderer/src/App.tsx
 import React, { useState, useEffect } from "react";
 import MenuStrip from "./components/MenuStrip";
-import UsersSection from "./components/UsersSection";
-import PackagesSection from "./components/PackagesSection";
+import UsersSection from "./components/UsersSection/UsersSection";
+import PackagesSection from "./components/PackagesSection/PackagesSection";
 import AboutModal from "./components/AboutModal";
 import { User, Package } from "./types";
 import { usersService, packagesService } from "./DataServices";

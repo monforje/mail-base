@@ -1,6 +1,6 @@
 import React from "react";
-import { UsersTableProps } from "../types";
-import "../assets/UsersTable.css";
+import { UsersTableProps } from "../../types";
+import "../../assets/UsersSectionStyles/UsersTable.css";
 
 const UsersTable: React.FC<UsersTableProps> = ({ users }) => {
   return (

@@ -1,7 +1,7 @@
 import React from "react";
 import UsersTable from "./UsersTable";
-import { User } from "../types";
-import "../assets/UsersSection.css";
+import { User } from "../../types";
+import "../../assets/UsersSectionStyles/UsersSection.css";
 
 interface UsersSectionProps {
   users: User[];

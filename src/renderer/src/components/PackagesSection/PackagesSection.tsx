@@ -1,7 +1,7 @@
 import React from "react";
 import PackagesTable from "./PackagesTable";
-import { Package } from "../types";
-import "../assets/PackagesSection.css";
+import { Package } from "../../types";
+import "../../assets/PackagesSectionStyles/PackagesSection.css";
 
 interface PackagesSectionProps {
   packages: Package[];
