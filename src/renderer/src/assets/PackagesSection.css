@@ -1,0 +1,18 @@
+.table-section {
+  flex: 1;
+  border: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-header {
+  background-color: #f0f0f0;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ccc;
+  font-weight: bold;
+}
+
+.table-container {
+  flex: 1;
+  overflow: auto;
+}

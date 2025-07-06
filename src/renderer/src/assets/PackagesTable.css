@@ -1,0 +1,28 @@
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  background-color: #e0e0e0;
+  padding: 8px;
+  text-align: left;
+  border: 1px solid #ccc;
+  font-weight: bold;
+}
+
+.data-table td {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+}
+
+.data-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.empty-message {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
