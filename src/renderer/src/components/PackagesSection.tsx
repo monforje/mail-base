@@ -1,10 +1,10 @@
-import React from 'react'
-import PackagesTable from './PackagesTable'
-import { Package } from '../types'
-import '../assets/PackagesSection.css'
+import React from "react";
+import PackagesTable from "./PackagesTable";
+import { Package } from "../types";
+import "../assets/PackagesSection.css";
 
 interface PackagesSectionProps {
-  packages: Package[]
+  packages: Package[];
 }
 
 const PackagesSection: React.FC<PackagesSectionProps> = ({ packages }) => {
@@ -15,7 +15,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({ packages }) => {
         <PackagesTable packages={packages} />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default PackagesSection
+export default PackagesSection;

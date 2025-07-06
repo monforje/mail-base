@@ -1,30 +1,34 @@
+// src/renderer/src/types.ts
 export interface User {
-  phone: string
-  fullName: string
-  address: string
+  phone: string;
+  fullName: string;
+  address: string;
 }
 
 export interface Package {
-  senderPhone: string
-  receiverPhone: string
-  weight: number
-  date: string
+  senderPhone: string;
+  receiverPhone: string;
+  weight: number;
+  date: string;
 }
 
 export interface MenuStripProps {
-  onUsersLoad: (users: User[]) => void
-  onPackagesLoad: (packages: Package[]) => void
-  onUsersClear: () => void
-  onPackagesClear: () => void
-  onUsersSave: () => void
-  onPackagesSave: () => void
-  onAbout: () => void
+  onUsersClear: () => void;
+  onPackagesClear: () => void;
+  onUsersSave: () => void;
+  onPackagesSave: () => void;
+  onFileLoad: (
+    event: React.ChangeEvent<HTMLInputElement>,
+    expectedType: "users" | "packages"
+  ) => void;
+  onAbout: () => void;
+  onRefreshData: () => void;
 }
 
 export interface UsersTableProps {
-  users: User[]
+  users: User[];
 }
 
 export interface PackagesTableProps {
-  packages: Package[]
+  packages: Package[];
 }

@@ -1,6 +1,6 @@
-import React from 'react'
-import { UsersTableProps } from '../types'
-import '../assets/UsersTable.css'
+import React from "react";
+import { UsersTableProps } from "../types";
+import "../assets/UsersTable.css";
 
 const UsersTable: React.FC<UsersTableProps> = ({ users }) => {
   return (
@@ -30,7 +30,7 @@ const UsersTable: React.FC<UsersTableProps> = ({ users }) => {
         )}
       </tbody>
     </table>
-  )
-}
+  );
+};
 
-export default UsersTable
+export default UsersTable;

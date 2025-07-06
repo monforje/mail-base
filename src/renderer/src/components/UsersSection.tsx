@@ -1,10 +1,10 @@
-import React from 'react'
-import UsersTable from './UsersTable'
-import { User } from '../types'
-import '../assets/UsersSection.css'
+import React from "react";
+import UsersTable from "./UsersTable";
+import { User } from "../types";
+import "../assets/UsersSection.css";
 
 interface UsersSectionProps {
-  users: User[]
+  users: User[];
 }
 
 const UsersSection: React.FC<UsersSectionProps> = ({ users }) => {
@@ -15,7 +15,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({ users }) => {
         <UsersTable users={users} />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default UsersSection
+export default UsersSection;

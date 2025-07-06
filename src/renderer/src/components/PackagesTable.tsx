@@ -1,6 +1,6 @@
-import React from 'react'
-import { PackagesTableProps } from '../types'
-import '../assets/PackagesTable.css'
+import React from "react";
+import { PackagesTableProps } from "../types";
+import "../assets/PackagesTable.css";
 
 const PackagesTable: React.FC<PackagesTableProps> = ({ packages }) => {
   return (
@@ -32,7 +32,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({ packages }) => {
         )}
       </tbody>
     </table>
-  )
-}
+  );
+};
 
-export default PackagesTable
+export default PackagesTable;
