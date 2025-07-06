@@ -1,0 +1,162 @@
+/* src/renderer/src/assets/LoggerConsole.css */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: rgba(0, 0, 0, 0.95);
+    color: #00ff00;
+    font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
+    overflow: hidden;
+}
+
+.console-container {
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.95);
+    color: #00ff00;
+    font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.2;
+    padding: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.console-content {
+    min-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+}
+
+.console-header {
+    color: #00ff00;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+    padding-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.console-title {
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.console-clear-btn {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(0, 255, 0, 0.6);
+    color: #00ff00;
+    padding: 4px 12px;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 2px;
+}
+
+.console-clear-btn:hover {
+    background-color: rgba(0, 255, 0, 0.2);
+    border-color: #00ff00;
+}
+
+.console-clear-btn:active {
+    background-color: rgba(0, 255, 0, 0.3);
+}
+
+.console-logs {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.console-log-entry {
+    margin-bottom: 1px;
+    color: #00ff00;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.console-log-entry.info {
+    color: #00ff00;
+}
+
+.console-log-entry.warning {
+    color: #ffff00;
+}
+
+.console-log-entry.error {
+    color: #ff0000;
+}
+
+.console-log-entry.debug {
+    color: #00ffff;
+}
+
+.console-empty-message {
+    color: #006600;
+    text-align: center;
+    margin-top: 20vh;
+    font-style: italic;
+}
+
+.console-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background-color: #00ff00;
+    animation: blink 1s infinite;
+    margin-left: 2px;
+}
+
+@keyframes blink {
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Скроллбар в стиле терминала */
+.console-container::-webkit-scrollbar {
+    width: 12px;
+}
+
+.console-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(0, 255, 0, 0.2);
+}
+
+.console-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 255, 0, 0.6);
+    border-radius: 0;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.console-container::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 255, 0, 0.8);
+}
+
+/* Выделение текста */
+.console-container ::selection {
+    background-color: rgba(0, 255, 0, 0.3);
+    color: #00ff00;
+}
+
+.console-container ::-moz-selection {
+    background-color: rgba(0, 255, 0, 0.3);
+    color: #00ff00;
+}

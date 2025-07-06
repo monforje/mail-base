@@ -22,6 +22,16 @@ const MenuStrip: React.FC<MenuStripProps> = ({
     onFileLoad(event, "packages");
   };
 
+  const handleOpenLogger = () => {
+    // Отправляем сообщение в главный процесс для открытия логгера
+    const electron = (window as any).electron;
+    if (electron?.ipcRenderer) {
+      electron.ipcRenderer.send("open-logger");
+    } else {
+      console.log("IPC not available");
+    }
+  };
+
   return (
     <div className="menu-strip">
       <div className="menu-bar">
@@ -65,6 +75,14 @@ const MenuStrip: React.FC<MenuStripProps> = ({
           <div className="dropdown-menu">
             <button className="menu-button" onClick={onRefreshData}>
               Обновить отображение
+            </button>
+          </div>
+        </div>
+        <div className="menu-item">
+          <button className="menu-title">Инструменты</button>
+          <div className="dropdown-menu">
+            <button className="menu-button" onClick={handleOpenLogger}>
+              Открыть логгер
             </button>
           </div>
         </div>
