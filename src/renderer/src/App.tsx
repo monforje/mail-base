@@ -3,6 +3,7 @@ import MenuStrip from './components/MenuStrip'
 import UsersSection from './components/UsersSection'
 import PackagesSection from './components/PackagesSection'
 import { User, Package } from './types'
+import { usersService, packagesService } from './DataServices'
 import './assets/App.css'
 
 const App: React.FC = () => {
@@ -10,40 +11,45 @@ const App: React.FC = () => {
   const [packages, setPackages] = useState<Package[]>([])
 
   const handleUsersLoad = (loadedUsers: User[]) => {
-    setUsers(loadedUsers)
+    usersService.loadUsers(loadedUsers)
+    setUsers(usersService.getAllUsers())
   }
 
   const handlePackagesLoad = (loadedPackages: Package[]) => {
-    setPackages(loadedPackages)
+    packagesService.loadPackages(loadedPackages)
+    setPackages(packagesService.getAllPackages())
   }
 
   const handleUsersClear = () => {
-    if (users.length === 0) {
+    if (usersService.getCount() === 0) {
       alert('Список пользователей уже пуст')
       return
     }
     if (window.confirm('Вы уверены, что хотите удалить всех пользователей?')) {
+      usersService.clear()
       setUsers([])
     }
   }
 
   const handlePackagesClear = () => {
-    if (packages.length === 0) {
+    if (packagesService.getCount() === 0) {
       alert('Список посылок уже пуст')
       return
     }
     if (window.confirm('Вы уверены, что хотите удалить все посылки?')) {
+      packagesService.clear()
       setPackages([])
     }
   }
 
   const handleUsersSave = () => {
-    if (users.length === 0) {
+    const currentUsers = usersService.getAllUsers()
+    if (currentUsers.length === 0) {
       alert('Нет данных для сохранения')
       return
     }
     
-    const data = users.map(user => `${user.phone}\t${user.fullName}\t${user.address}`).join('\n')
+    const data = currentUsers.map(user => `${user.phone}\t${user.fullName}\t${user.address}`).join('\n')
     const blob = new Blob([data], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -54,12 +60,13 @@ const App: React.FC = () => {
   }
 
   const handlePackagesSave = () => {
-    if (packages.length === 0) {
+    const currentPackages = packagesService.getAllPackages()
+    if (currentPackages.length === 0) {
       alert('Нет данных для сохранения')
       return
     }
     
-    const data = packages.map(pkg => `${pkg.senderPhone}\t${pkg.receiverPhone}\t${pkg.weight}\t${pkg.date}`).join('\n')
+    const data = currentPackages.map(pkg => `${pkg.senderPhone}\t${pkg.receiverPhone}\t${pkg.weight}\t${pkg.date}`).join('\n')
     const blob = new Blob([data], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -77,9 +84,13 @@ const App: React.FC = () => {
 - Телефон: 8XXXXXXXXXX (например: 89001234567)
 - Дата: dd mmm yyyy (например: 15 jan 2025)
 
+Структуры данных:
+- Пользователи: Хеш-таблица
+- Посылки: Красно-черное дерево
+
 Загруженные данные:
-- Пользователей: ${users.length}
-- Посылок: ${packages.length}`)
+- Пользователей: ${usersService.getCount()}
+- Посылок: ${packagesService.getCount()}`)
   }
 
   return (
