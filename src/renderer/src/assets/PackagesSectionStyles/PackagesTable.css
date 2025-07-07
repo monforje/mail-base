@@ -1,8 +1,8 @@
+/* Обновление для UsersTable.css - замените содержимое файла на: */
 .data-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  /* Фиксируем ширину колонок */
 }
 
 .data-table th {
@@ -12,14 +12,11 @@
   border: 1px solid #ccc;
   font-weight: bold;
   position: sticky;
-  /* Закрепляем заголовки при скролле */
   top: 0;
   z-index: 10;
 }
 
-/* Фиксированные ширины колонок для посылок */
 .data-table th:nth-child(1),
-/* Телефон отправителя */
 .data-table td:nth-child(1) {
   width: 140px;
   min-width: 140px;
@@ -27,28 +24,16 @@
 }
 
 .data-table th:nth-child(2),
-/* Телефон получателя */
 .data-table td:nth-child(2) {
-  width: 140px;
-  min-width: 140px;
-  max-width: 140px;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
 }
 
 .data-table th:nth-child(3),
-/* Вес */
 .data-table td:nth-child(3) {
-  width: 100px;
-  min-width: 100px;
-  max-width: 100px;
-  text-align: right;
-}
-
-.data-table th:nth-child(4),
-/* Дата */
-.data-table td:nth-child(4) {
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
+  width: auto;
+  min-width: 150px;
 }
 
 .data-table td {
@@ -57,6 +42,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
 }
 
 .data-table tr:nth-child(even) {
@@ -69,5 +55,75 @@
   font-style: italic;
   padding: 20px;
   white-space: normal;
-  /* Разрешаем перенос текста для сообщения */
+}
+
+
+/* ================================================== */
+/* Обновление для PackagesTable.css - замените содержимое файла на: */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.data-table th {
+  background-color: #e0e0e0;
+  padding: 8px;
+  text-align: left;
+  border: 1px solid #ccc;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  text-align: left; /* Теперь вес тоже по левому краю */
+}
+
+.data-table th:nth-child(4),
+.data-table td:nth-child(4) {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.data-table td {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.data-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.empty-message {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+  white-space: normal;
 }
