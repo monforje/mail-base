@@ -2,10 +2,17 @@
   background-color: #f0f0f0;
   border-bottom: 1px solid #ccc;
   padding: 0;
+  height: 40px;
+  /* Фиксированная высота меню */
+  flex-shrink: 0;
+  /* Меню не сжимается */
+  overflow: visible;
+  /* Разрешаем показ выпадающих меню */
 }
 
 .menu-bar {
   display: flex;
+  height: 100%;
 }
 
 .menu-item {
@@ -19,6 +26,10 @@
   background-color: transparent;
   border: none;
   font-size: 14px;
+  height: 40px;
+  /* Фиксированная высота кнопки */
+  display: flex;
+  align-items: center;
 }
 
 .menu-title:hover {
@@ -35,6 +46,10 @@
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   min-width: 200px;
+  max-height: 400px;
+  /* Ограничиваем высоту выпадающего меню */
+  overflow-y: auto;
+  /* Добавляем скролл если нужно */
 }
 
 .menu-item:hover .dropdown-menu {
@@ -50,6 +65,8 @@
   text-align: left;
   cursor: pointer;
   font-size: 14px;
+  white-space: nowrap;
+  /* Предотвращаем перенос текста */
 }
 
 .menu-button:hover {

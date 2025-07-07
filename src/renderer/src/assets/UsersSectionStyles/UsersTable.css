@@ -1,6 +1,8 @@
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
+  /* Фиксируем ширину колонок */
 }
 
 .data-table th {
@@ -9,11 +11,42 @@
   text-align: left;
   border: 1px solid #ccc;
   font-weight: bold;
+  position: sticky;
+  /* Закрепляем заголовки при скролле */
+  top: 0;
+  z-index: 10;
+}
+
+/* Фиксированные ширины колонок для пользователей */
+.data-table th:nth-child(1),
+/* Телефон */
+.data-table td:nth-child(1) {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.data-table th:nth-child(2),
+/* ФИО */
+.data-table td:nth-child(2) {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+}
+
+.data-table th:nth-child(3),
+/* Адрес */
+.data-table td:nth-child(3) {
+  width: auto;
+  min-width: 150px;
 }
 
 .data-table td {
   padding: 6px 8px;
   border: 1px solid #ccc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .data-table tr:nth-child(even) {
@@ -25,4 +58,6 @@
   color: #666;
   font-style: italic;
   padding: 20px;
+  white-space: normal;
+  /* Разрешаем перенос текста для сообщения */
 }

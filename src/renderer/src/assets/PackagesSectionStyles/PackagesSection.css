@@ -3,6 +3,14 @@
   border: 1px solid #ccc;
   display: flex;
   flex-direction: column;
+  height: 50%;
+  /* Фиксированная высота - половина доступного пространства */
+  min-height: 200px;
+  /* Минимальная высота для удобства */
+  max-height: 50vh;
+  /* Максимальная высота относительно viewport */
+  overflow: hidden;
+  /* Предотвращаем расширение секции */
 }
 
 .section-header {
@@ -10,9 +18,18 @@
   padding: 8px 12px;
   border-bottom: 1px solid #ccc;
   font-weight: bold;
+  flex-shrink: 0;
+  /* Заголовок не сжимается */
+  height: 36px;
+  /* Фиксированная высота заголовка */
 }
 
 .table-container {
   flex: 1;
   overflow: auto;
+  /* Включаем скролл внутри контейнера */
+  min-height: 0;
+  /* Важно для работы overflow в flex */
+  height: calc(100% - 36px);
+  /* Высота минус заголовок */
 }
