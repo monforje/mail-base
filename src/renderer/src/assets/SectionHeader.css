@@ -1,0 +1,63 @@
+/* src/renderer/src/assets/SectionHeader.css */
+/* Обновляем существующие стили section-header в UsersSection.css и PackagesSection.css */
+.table-section .section-header {
+    background-color: #f0f0f0;
+    padding: 8px 12px;
+    border-bottom: 1px solid #ccc;
+    font-weight: bold;
+    flex-shrink: 0;
+    height: 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-title {
+    font-size: 14px;
+    color: #333;
+}
+
+.section-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-icon {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+}
+
+.action-icon:hover {
+    background-color: #e0e0e0;
+    transform: scale(1.1);
+}
+
+.action-icon:active {
+    transform: scale(0.95);
+    background-color: #d0d0d0;
+}
+
+.action-icon[title="Найти пользователя"]:hover,
+.action-icon[title="Найти посылки"]:hover {
+    background-color: #e3f2fd;
+}
+
+.action-icon[title="Добавить пользователя"]:hover,
+.action-icon[title="Добавить посылку"]:hover {
+    background-color: #e8f5e8;
+}
+
+.action-icon[title="Удалить пользователя"]:hover,
+.action-icon[title="Удалить посылку"]:hover {
+    background-color: #ffebee;
+}

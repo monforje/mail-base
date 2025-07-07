@@ -8,15 +8,21 @@ import { User, Package, ViewMode } from "./types";
 import { usersService, packagesService } from "./DataServices";
 import { AppHandlers } from "./handlers/AppHandlers";
 import "./assets/App.css";
+import "./assets/SectionHeader.css";
 
 const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   // Создаем экземпляр обработчиков
-  const handlers = new AppHandlers(setUsers, setPackages, setIsAboutModalOpen, setViewMode);
+  const handlers = new AppHandlers(
+    setUsers,
+    setPackages,
+    setIsAboutModalOpen,
+    setViewMode
+  );
 
   // Проверяем состояние данных при монтировании и изменениях
   useEffect(() => {
@@ -38,6 +44,11 @@ const App: React.FC = () => {
   const refreshData = () => {
     setUsers(usersService.getAllUsers());
     setPackages(packagesService.getAllPackages());
+  };
+
+  // Обработчик изменения данных для секций
+  const handleDataChange = () => {
+    refreshData();
   };
 
   // Закрытие модального окна по Escape
@@ -68,8 +79,16 @@ const App: React.FC = () => {
         currentViewMode={viewMode}
       />
       <div className="content-area">
-        <UsersSection users={users} viewMode={viewMode} />
-        <PackagesSection packages={packages} viewMode={viewMode} />
+        <UsersSection
+          users={users}
+          viewMode={viewMode}
+          onDataChange={handleDataChange}
+        />
+        <PackagesSection
+          packages={packages}
+          viewMode={viewMode}
+          onDataChange={handleDataChange}
+        />
       </div>
 
       <AboutModal

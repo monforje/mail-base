@@ -1,3 +1,4 @@
+/* src/renderer/src/assets/PackagesSectionStyles/PackagesSection.css */
 .table-section {
   flex: 1;
   border: 1px solid #ccc;
@@ -22,6 +23,56 @@
   /* Заголовок не сжимается */
   height: 36px;
   /* Фиксированная высота заголовка */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-title {
+  font-size: 14px;
+  color: #333;
+}
+
+.section-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-icon {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+}
+
+.action-icon:hover {
+  background-color: #e0e0e0;
+  transform: scale(1.1);
+}
+
+.action-icon:active {
+  transform: scale(0.95);
+  background-color: #d0d0d0;
+}
+
+.action-icon[title="Найти посылки"]:hover {
+  background-color: #e3f2fd;
+}
+
+.action-icon[title="Добавить посылку"]:hover {
+  background-color: #e8f5e8;
+}
+
+.action-icon[title="Удалить посылку"]:hover {
+  background-color: #ffebee;
 }
 
 .table-container {
