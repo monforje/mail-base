@@ -1,4 +1,4 @@
-/* src/renderer/src/assets/HashTableView.css */
+/* src/renderer/src/assets/UsersSectionStyles/HashTableView.css */
 
 .hashtable-structure {
     width: 100%;
@@ -6,13 +6,13 @@
     overflow: auto;
 }
 
-.data-table {
+.hashtable-structure .data-table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
 }
 
-.data-table th {
+.hashtable-structure .data-table th {
     background-color: #e0e0e0;
     padding: 8px;
     text-align: left;
@@ -23,41 +23,43 @@
     z-index: 10;
 }
 
-.data-table th:nth-child(1),
-.data-table td:nth-child(1) {
-    width: 80px;
-    min-width: 80px;
-    max-width: 80px;
+/* Принудительное переопределение ширин колонок для хеш-таблицы */
+.hashtable-structure .data-table th:nth-child(1),
+.hashtable-structure .data-table td:nth-child(1) {
+    width: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
 }
 
-.data-table th:nth-child(2),
-.data-table td:nth-child(2) {
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
+.hashtable-structure .data-table th:nth-child(2),
+.hashtable-structure .data-table td:nth-child(2) {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
 }
 
-.data-table th:nth-child(3),
-.data-table td:nth-child(3) {
-    width: auto;
-    min-width: 150px;
+.hashtable-structure .data-table th:nth-child(3),
+.hashtable-structure .data-table td:nth-child(3) {
+    width: auto !important;
+    min-width: 250px !important;
+    max-width: none !important;
 }
 
-.data-table th:nth-child(4),
-.data-table td:nth-child(4) {
-    width: 100px;
-    min-width: 100px;
-    max-width: 100px;
+.hashtable-structure .data-table th:nth-child(4),
+.hashtable-structure .data-table td:nth-child(4) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
 }
 
-.data-table th:nth-child(5),
-.data-table td:nth-child(5) {
-    width: 80px;
-    min-width: 80px;
-    max-width: 80px;
+.hashtable-structure .data-table th:nth-child(5),
+.hashtable-structure .data-table td:nth-child(5) {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
 }
 
-.data-table td {
+.hashtable-structure .data-table td {
     padding: 6px 8px;
     border: 1px solid #ccc;
     overflow: hidden;
@@ -66,11 +68,11 @@
     text-align: left;
 }
 
-.data-table tr:nth-child(even) {
+.hashtable-structure .data-table tr:nth-child(even) {
     background-color: #f9f9f9;
 }
 
-.empty-message {
+.hashtable-structure .empty-message {
     text-align: center;
     color: #666;
     font-style: italic;
