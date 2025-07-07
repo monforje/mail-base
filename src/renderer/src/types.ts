@@ -12,6 +12,8 @@ export interface Package {
   date: string;
 }
 
+export type ViewMode = 'table' | 'structure';
+
 export interface MenuStripProps {
   onUsersClear: () => void;
   onPackagesClear: () => void;
@@ -23,6 +25,8 @@ export interface MenuStripProps {
   ) => void;
   onAbout: () => void;
   onRefreshData: () => void;
+  onViewModeChange: (mode: ViewMode) => void;
+  currentViewMode: ViewMode;
 }
 
 export interface UsersTableProps {

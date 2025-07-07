@@ -4,7 +4,7 @@ import MenuStrip from "./components/MenuStrip";
 import UsersSection from "./components/UsersSection/UsersSection";
 import PackagesSection from "./components/PackagesSection/PackagesSection";
 import AboutModal from "./components/AboutModal";
-import { User, Package } from "./types";
+import { User, Package, ViewMode } from "./types";
 import { usersService, packagesService } from "./DataServices";
 import { AppHandlers } from "./handlers/AppHandlers";
 import "./assets/App.css";
@@ -13,9 +13,10 @@ const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   // Создаем экземпляр обработчиков
-  const handlers = new AppHandlers(setUsers, setPackages, setIsAboutModalOpen);
+  const handlers = new AppHandlers(setUsers, setPackages, setIsAboutModalOpen, setViewMode);
 
   // Проверяем состояние данных при монтировании и изменениях
   useEffect(() => {
@@ -63,10 +64,12 @@ const App: React.FC = () => {
         onFileLoad={handlers.handleFileLoad}
         onAbout={handlers.handleAbout}
         onRefreshData={refreshData}
+        onViewModeChange={handlers.handleViewModeChange}
+        currentViewMode={viewMode}
       />
       <div className="content-area">
-        <UsersSection users={users} />
-        <PackagesSection packages={packages} />
+        <UsersSection users={users} viewMode={viewMode} />
+        <PackagesSection packages={packages} viewMode={viewMode} />
       </div>
 
       <AboutModal

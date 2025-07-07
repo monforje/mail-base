@@ -55,3 +55,8 @@
 .menu-button:hover {
   background-color: #f0f0f0;
 }
+
+.menu-button.active {
+  background-color: #d0d0d0;
+  font-weight: bold;
+}

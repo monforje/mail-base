@@ -1,5 +1,5 @@
 // src/renderer/src/handlers/AppHandlers.ts
-import { User, Package } from "../types";
+import { User, Package, ViewMode } from "../types";
 import { usersService, packagesService } from "../DataServices";
 import { detectFileType, validateFileContent } from "../utils";
 
@@ -7,15 +7,18 @@ export class AppHandlers {
   private setUsers: (users: User[]) => void;
   private setPackages: (packages: Package[]) => void;
   private setIsAboutModalOpen: (isOpen: boolean) => void;
+  private setViewMode: (mode: ViewMode) => void;
 
   constructor(
     setUsers: (users: User[]) => void,
     setPackages: (packages: Package[]) => void,
-    setIsAboutModalOpen: (isOpen: boolean) => void
+    setIsAboutModalOpen: (isOpen: boolean) => void,
+    setViewMode: (mode: ViewMode) => void
   ) {
     this.setUsers = setUsers;
     this.setPackages = setPackages;
     this.setIsAboutModalOpen = setIsAboutModalOpen;
+    this.setViewMode = setViewMode;
   }
 
   handleUsersLoad = (loadedUsers: User[]) => {
@@ -172,5 +175,10 @@ export class AppHandlers {
 
   handleCloseAbout = () => {
     this.setIsAboutModalOpen(false);
+  };
+
+  handleViewModeChange = (mode: ViewMode) => {
+    this.setViewMode(mode);
+    console.log("View mode changed to:", mode);
   };
 }

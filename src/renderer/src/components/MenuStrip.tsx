@@ -11,6 +11,8 @@ const MenuStrip: React.FC<MenuStripProps> = ({
   onFileLoad,
   onAbout,
   onRefreshData,
+  onViewModeChange,
+  currentViewMode,
 }) => {
   const handleUsersFileLoad = (event: React.ChangeEvent<HTMLInputElement>) => {
     onFileLoad(event, "users");
@@ -30,6 +32,10 @@ const MenuStrip: React.FC<MenuStripProps> = ({
     } else {
       console.log("IPC not available");
     }
+  };
+
+  const handleViewModeChange = (mode: "table" | "structure") => {
+    onViewModeChange(mode);
   };
 
   return (
@@ -75,6 +81,27 @@ const MenuStrip: React.FC<MenuStripProps> = ({
           <div className="dropdown-menu">
             <button className="menu-button" onClick={onRefreshData}>
               Обновить отображение
+            </button>
+          </div>
+        </div>
+        <div className="menu-item">
+          <button className="menu-title">Вид</button>
+          <div className="dropdown-menu">
+            <button
+              className={`menu-button ${
+                currentViewMode === "table" ? "active" : ""
+              }`}
+              onClick={() => handleViewModeChange("table")}
+            >
+              Таблица
+            </button>
+            <button
+              className={`menu-button ${
+                currentViewMode === "structure" ? "active" : ""
+              }`}
+              onClick={() => handleViewModeChange("structure")}
+            >
+              Структура данных
             </button>
           </div>
         </div>
