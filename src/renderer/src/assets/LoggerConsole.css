@@ -1,4 +1,5 @@
 /* src/renderer/src/assets/LoggerConsole.css */
+/* Простой терминальный стиль без излишеств */
 
 * {
     margin: 0;
@@ -7,114 +8,116 @@
 }
 
 body {
-    background-color: rgba(0, 0, 0, 0.95);
-    color: #00ff00;
-    font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #ffffff;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.4;
     overflow: hidden;
 }
 
 .console-container {
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.95);
-    color: #00ff00;
-    font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
-    font-size: 13px;
-    line-height: 1.2;
-    padding: 10px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-
-.console-content {
-    min-height: calc(100vh - 40px);
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: inherit;
     display: flex;
     flex-direction: column;
 }
 
+/* Простой заголовок */
 .console-header {
-    color: #00ff00;
-    margin-bottom: 10px;
-    border-bottom: 1px solid rgba(0, 255, 0, 0.3);
-    padding-bottom: 8px;
+    background: rgba(40, 40, 40, 0.8);
+    border-bottom: 1px solid #555;
+    padding: 10px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .console-title {
-    font-size: 16px;
-    font-weight: bold;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    color: #ffffff;
+    font-size: 14px;
 }
 
 .console-clear-btn {
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid rgba(0, 255, 0, 0.6);
-    color: #00ff00;
-    padding: 4px 12px;
+    background: #333;
+    border: 1px solid #555;
+    color: #fff;
+    padding: 6px 12px;
     font-family: inherit;
-    font-size: 11px;
+    font-size: 12px;
     cursor: pointer;
-    transition: all 0.2s;
-    border-radius: 2px;
+    border-radius: 3px;
 }
 
 .console-clear-btn:hover {
-    background-color: rgba(0, 255, 0, 0.2);
-    border-color: #00ff00;
+    background: #444;
 }
 
-.console-clear-btn:active {
-    background-color: rgba(0, 255, 0, 0.3);
+/* Основная область */
+.console-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .console-logs {
     flex: 1;
+    padding: 16px;
     overflow-y: auto;
+    overflow-x: hidden;
+    background-color: rgba(0, 0, 0, 0.9);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: calc(100vh - 60px);
+    scroll-behavior: smooth;
 }
 
+/* Стили сообщений */
 .console-log-entry {
-    margin-bottom: 1px;
-    color: #00ff00;
+    margin-bottom: 2px;
     font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
 }
 
 .console-log-entry.info {
-    color: #00ff00;
+    color: #ffffff;
 }
 
 .console-log-entry.warning {
-    color: #ffff00;
+    color: #ffaa00;
 }
 
 .console-log-entry.error {
-    color: #ff0000;
+    color: #ff4444;
 }
 
 .console-log-entry.debug {
-    color: #00ffff;
+    color: #66aaff;
 }
 
+.console-log-entry.success {
+    color: #44ff44;
+}
+
+/* Пустое состояние */
 .console-empty-message {
-    color: #006600;
+    color: #888;
     text-align: center;
-    margin-top: 20vh;
+    margin-top: 30vh;
     font-style: italic;
 }
 
+/* Простой курсор */
 .console-cursor {
     display: inline-block;
     width: 8px;
-    height: 15px;
-    background-color: #00ff00;
+    height: 14px;
+    background-color: #ffffff;
     animation: blink 1s infinite;
-    margin-left: 2px;
+    margin-left: 4px;
 }
 
 @keyframes blink {
@@ -130,33 +133,42 @@ body {
     }
 }
 
-/* Скроллбар в стиле терминала */
-.console-container::-webkit-scrollbar {
+/* Простой скроллбар */
+.console-logs::-webkit-scrollbar {
     width: 12px;
+    background: transparent;
 }
 
-.console-container::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(0, 255, 0, 0.2);
+.console-logs::-webkit-scrollbar-track {
+    background: #222;
+    border-radius: 6px;
 }
 
-.console-container::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 255, 0, 0.6);
-    border-radius: 0;
-    border: 1px solid rgba(0, 0, 0, 0.5);
+.console-logs::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 6px;
+    border: 2px solid #222;
 }
 
-.console-container::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 255, 0, 0.8);
+.console-logs::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+.console-logs::-webkit-scrollbar-thumb:active {
+    background: #777;
+}
+
+/* Для Firefox */
+.console-logs {
+    scrollbar-width: thin;
+    scrollbar-color: #555 #222;
 }
 
 /* Выделение текста */
-.console-container ::selection {
-    background-color: rgba(0, 255, 0, 0.3);
-    color: #00ff00;
+::selection {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
-.console-container ::-moz-selection {
-    background-color: rgba(0, 255, 0, 0.3);
-    color: #00ff00;
+::-moz-selection {
+    background-color: rgba(255, 255, 255, 0.2);
 }

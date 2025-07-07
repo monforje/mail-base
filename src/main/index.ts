@@ -51,18 +51,31 @@ function createLoggerWindow(): void {
   loggerWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    minWidth: 400,
+    minHeight: 300,
     show: false,
     autoHideMenuBar: true,
     title: "Logger Console",
+    transparent: true,
+    resizable: true,
+    maximizable: true,
+    minimizable: true,
+    backgroundMaterial: "acrylic",
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
+      contextIsolation: true,
+      nodeIntegration: false,
     },
   });
 
   loggerWindow.on("ready-to-show", () => {
     loggerWindow?.show();
+
+    // Простая прозрачность
+    loggerWindow?.setOpacity(0.9);
+
     // Отправляем существующие логи в окно логгера
     if (logs.length > 0) {
       loggerWindow?.webContents.send("logger-update", logs);
@@ -116,8 +129,8 @@ app.whenReady().then(() => {
       loggerWindow.webContents.send("logger-update", logs);
     }
 
-    // Также выводим в консоль главного процесса
-    console.log(message);
+    // Убираем console.log для очистки терминала разработки
+    // console.log(message);
   });
 
   // Обработчик очистки логов
