@@ -1,89 +1,139 @@
 // src/renderer/src/services/PackagesService.ts
 import { RedBlackTree } from "../data-structures/RedBlackTree";
+import { PackagesArray, PackageData } from "../data-structures/PackagesArray";
 import { Package } from "../types";
 import { logger } from "./Logger";
 
 export class PackagesService {
-  private redBlackTree: RedBlackTree<Package>;
-  private idCounter: number;
+  private redBlackTree: RedBlackTree<number>; // Ключ: составной ключ, Значение: индекс массива
+  private packagesArray: PackagesArray; // Массив с данными (без senderPhone)
 
   constructor() {
-    this.redBlackTree = new RedBlackTree<Package>();
-    this.idCounter = 0;
-    logger.info("PackagesService: Initialized red-black tree");
+    this.redBlackTree = new RedBlackTree<number>();
+    this.packagesArray = new PackagesArray();
+    logger.info("PackagesService: Initialized red-black tree (composite key -> index) and packages array (data without senderPhone)");
   }
 
-  // Генерация ключей
+  // Генерация составного ключа
   private generateKey(pkg: Package): string {
-    const timestamp = Date.now();
-    return `${pkg.senderPhone}_${pkg.receiverPhone}_${
-      pkg.date
-    }_${timestamp}_${this.idCounter++}`;
+    return `${pkg.senderPhone}_${pkg.receiverPhone}_${pkg.date}`;
   }
 
   // Основные операции CRUD
   public addPackage(pkg: Package): void {
+    // Извлекаем данные без senderPhone
+    const packageData: PackageData = {
+      receiverPhone: pkg.receiverPhone,
+      weight: pkg.weight,
+      date: pkg.date
+    };
+    
+    // Добавляем данные в массив
+    const index = this.packagesArray.add(packageData);
+    // Генерируем ключ и сохраняем индекс в дереве
     const key = this.generateKey(pkg);
-    this.redBlackTree.insert(key, pkg);
-    logger.info(
-      `PackagesService: Added package ${pkg.senderPhone} -> ${pkg.receiverPhone} (${pkg.weight}kg, ${pkg.date})`
-    );
+    this.redBlackTree.insert(key, index);
+    logger.info(`PackagesService: Added package ${pkg.senderPhone} -> ${pkg.receiverPhone} (${pkg.weight}kg, ${pkg.date}) at index ${index}`);
   }
 
   public getAllPackages(): Package[] {
-    const packages = this.redBlackTree.values();
-    logger.debug(
-      `PackagesService: Retrieved all packages (${packages.length} total)`
-    );
+    const packages: Package[] = [];
+    const allKeys = this.redBlackTree.keys();
+    
+    for (const key of allKeys) {
+      const index = this.redBlackTree.search(key);
+      if (index !== null) {
+        const packageData = this.packagesArray.get(index);
+        if (packageData) {
+          // Восстанавливаем senderPhone из ключа
+          const senderPhone = key.split('_')[0];
+          const pkg: Package = {
+            senderPhone: senderPhone,
+            receiverPhone: packageData.receiverPhone,
+            weight: packageData.weight,
+            date: packageData.date
+          };
+          packages.push(pkg);
+        }
+      }
+    }
+    
+    logger.debug(`PackagesService: Retrieved all packages (${packages.length} total)`);
     return packages;
   }
 
   public getPackage(key: string): Package | null {
-    const pkg = this.redBlackTree.search(key);
-    logger.debug(
-      `PackagesService: Get package by key ${key} - ${
-        pkg ? "found" : "not found"
-      }`
-    );
+    // Получаем индекс из дерева
+    const index = this.redBlackTree.search(key);
+    if (index === null) {
+      logger.debug(`PackagesService: Get package by key ${key} - not found in tree`);
+      return null;
+    }
+    
+    // Получаем данные из массива по индексу
+    const packageData = this.packagesArray.get(index);
+    if (packageData === null) {
+      logger.error(`PackagesService: Get package by key ${key} - invalid index ${index} in array`);
+      return null;
+    }
+
+    // Восстанавливаем senderPhone из ключа
+    const senderPhone = key.split('_')[0];
+    const pkg: Package = {
+      senderPhone: senderPhone,
+      receiverPhone: packageData.receiverPhone,
+      weight: packageData.weight,
+      date: packageData.date
+    };
+    
+    logger.debug(`PackagesService: Get package by key ${key} - found at index ${index}`);
     return pkg;
   }
 
-  public removePackage(
-    senderPhone: string,
-    receiverPhone: string,
-    date: string
-  ): boolean {
-    const allKeys = this.redBlackTree.keys();
-    for (const key of allKeys) {
-      const pkg = this.redBlackTree.search(key);
-      if (
-        pkg &&
-        pkg.senderPhone === senderPhone &&
-        pkg.receiverPhone === receiverPhone &&
-        pkg.date === date
-      ) {
-        const result = this.redBlackTree.delete(key);
-        logger.info(
-          `PackagesService: Remove package ${senderPhone} -> ${receiverPhone} (${date}) - ${
-            result ? "success" : "failed"
-          }`
-        );
-        return result;
+  public removePackage(senderPhone: string, receiverPhone: string, date: string): boolean {
+    // Генерируем ключ для поиска
+    const key = `${senderPhone}_${receiverPhone}_${date}`;
+    const index = this.redBlackTree.search(key);
+
+    if (index === null) {
+      logger.warning(`PackagesService: Remove package ${senderPhone} -> ${receiverPhone} (${date}) - not found`);
+      return false;
+    }
+
+    // Удаляем из дерева
+    const treeRemoved = this.redBlackTree.delete(key);
+    if (!treeRemoved) {
+      logger.error(`PackagesService: Failed to remove package from tree`);
+      return false;
+    }
+
+    // Удаляем из массива и получаем информацию о перемещении
+    const moveInfo = this.packagesArray.remove(index);
+    
+    if (moveInfo) {
+      // Если элемент был перемещен, нужно найти ключ, который указывал на старый индекс
+      // и обновить его на новый индекс
+      const allKeys = this.redBlackTree.keys();
+      for (const searchKey of allKeys) {
+        const currentIndex = this.redBlackTree.search(searchKey);
+        if (currentIndex === moveInfo.movedFromIndex) {
+          this.redBlackTree.delete(searchKey);
+          this.redBlackTree.insert(searchKey, moveInfo.newIndex);
+          logger.debug(`PackagesService: Updated index for key ${searchKey} from ${moveInfo.movedFromIndex} to ${moveInfo.newIndex}`);
+          break;
+        }
       }
     }
-    logger.warning(
-      `PackagesService: Remove package ${senderPhone} -> ${receiverPhone} (${date}) - not found`
-    );
-    return false;
+
+    logger.info(`PackagesService: Remove package ${senderPhone} -> ${receiverPhone} (${date}) - success (was at index ${index})`);
+    return true;
   }
 
   public clear(): void {
-    const countBefore = this.redBlackTree.getSize();
+    const countBefore = this.packagesArray.size();
     this.redBlackTree.clear();
-    this.idCounter = 0;
-    logger.warning(
-      `PackagesService: Cleared all packages (${countBefore} removed)`
-    );
+    this.packagesArray.clear();
+    logger.warning(`PackagesService: Cleared all packages (${countBefore} removed)`);
   }
 
   // Операции поиска
@@ -91,9 +141,7 @@ export class PackagesService {
     const results = this.getAllPackages().filter(
       (pkg) => pkg.senderPhone === senderPhone
     );
-    logger.info(
-      `PackagesService: Search by sender ${senderPhone} - ${results.length} results`
-    );
+    logger.info(`PackagesService: Search by sender ${senderPhone} - ${results.length} results`);
     return results;
   }
 
@@ -101,65 +149,45 @@ export class PackagesService {
     const results = this.getAllPackages().filter(
       (pkg) => pkg.receiverPhone === receiverPhone
     );
-    logger.info(
-      `PackagesService: Search by receiver ${receiverPhone} - ${results.length} results`
-    );
+    logger.info(`PackagesService: Search by receiver ${receiverPhone} - ${results.length} results`);
     return results;
   }
 
   public findPackagesByDate(date: string): Package[] {
     const results = this.getAllPackages().filter((pkg) => pkg.date === date);
-    logger.info(
-      `PackagesService: Search by date ${date} - ${results.length} results`
-    );
+    logger.info(`PackagesService: Search by date ${date} - ${results.length} results`);
     return results;
   }
 
-  public findPackagesByWeightRange(
-    minWeight: number,
-    maxWeight: number
-  ): Package[] {
+  public findPackagesByWeightRange(minWeight: number, maxWeight: number): Package[] {
     const results = this.getAllPackages().filter(
       (pkg) => pkg.weight >= minWeight && pkg.weight <= maxWeight
     );
-    logger.info(
-      `PackagesService: Search by weight range ${minWeight}-${maxWeight}kg - ${results.length} results`
-    );
+    logger.info(`PackagesService: Search by weight range ${minWeight}-${maxWeight}kg - ${results.length} results`);
     return results;
   }
 
-  public findPackagesByDateRange(
-    startDate: string,
-    endDate: string
-  ): Package[] {
+  public findPackagesByDateRange(startDate: string, endDate: string): Package[] {
     const results = this.getAllPackages().filter((pkg) => {
       return pkg.date >= startDate && pkg.date <= endDate;
     });
-    logger.info(
-      `PackagesService: Search by date range ${startDate} to ${endDate} - ${results.length} results`
-    );
+    logger.info(`PackagesService: Search by date range ${startDate} to ${endDate} - ${results.length} results`);
     return results;
   }
 
   // Массовые операции
   public loadPackages(packages: Package[]): void {
-    logger.info(
-      `PackagesService: Starting load of ${packages.length} packages`
-    );
+    logger.info(`PackagesService: Starting load of ${packages.length} packages`);
     this.clear();
 
     packages.forEach((pkg, index) => {
       this.addPackage(pkg);
       if ((index + 1) % 10 === 0 || index === packages.length - 1) {
-        logger.debug(
-          `PackagesService: Loaded ${index + 1}/${packages.length} packages`
-        );
+        logger.debug(`PackagesService: Loaded ${index + 1}/${packages.length} packages`);
       }
     });
 
-    logger.info(
-      `PackagesService: Load complete - ${this.getCount()} packages in red-black tree`
-    );
+    logger.info(`PackagesService: Load complete - ${this.getCount()} packages in system`);
     this.logTreeStatistics();
   }
 
@@ -187,13 +215,7 @@ export class PackagesService {
       sum,
     };
 
-    logger.debug(
-      `PackagesService: Weight statistics - Total: ${
-        stats.total
-      }, Avg: ${stats.average.toFixed(2)}kg, Min: ${stats.min}kg, Max: ${
-        stats.max
-      }kg`
-    );
+    logger.debug(`PackagesService: Weight statistics - Total: ${stats.total}, Avg: ${stats.average.toFixed(2)}kg, Min: ${stats.min}kg, Max: ${stats.max}kg`);
     return stats;
   }
 
@@ -208,25 +230,15 @@ export class PackagesService {
       dateMap.get(pkg.date)!.push(pkg);
     });
 
-    logger.debug(
-      `PackagesService: Grouped by date - ${dateMap.size} unique dates`
-    );
+    logger.debug(`PackagesService: Grouped by date - ${dateMap.size} unique dates`);
     return dateMap;
   }
 
-  public getTopSenders(
-    limit: number = 10
-  ): Array<{ phone: string; count: number; totalWeight: number }> {
-    const senderStats = new Map<
-      string,
-      { count: number; totalWeight: number }
-    >();
+  public getTopSenders(limit: number = 10): Array<{ phone: string; count: number; totalWeight: number }> {
+    const senderStats = new Map<string, { count: number; totalWeight: number }>();
 
     this.getAllPackages().forEach((pkg) => {
-      const current = senderStats.get(pkg.senderPhone) || {
-        count: 0,
-        totalWeight: 0,
-      };
+      const current = senderStats.get(pkg.senderPhone) || { count: 0, totalWeight: 0 };
       current.count++;
       current.totalWeight += pkg.weight;
       senderStats.set(pkg.senderPhone, current);
@@ -237,15 +249,13 @@ export class PackagesService {
       .sort((a, b) => b.count - a.count)
       .slice(0, limit);
 
-    logger.info(
-      `PackagesService: Top ${limit} senders calculated - ${results.length} results`
-    );
+    logger.info(`PackagesService: Top ${limit} senders calculated - ${results.length} results`);
     return results;
   }
 
   // Метрики дерева
   public getCount(): number {
-    return this.redBlackTree.getSize();
+    return this.packagesArray.size();
   }
 
   public getHeight(): number {
@@ -258,9 +268,7 @@ export class PackagesService {
 
   public isTreeValid(): boolean {
     const isValid = this.redBlackTree.isValid();
-    logger.debug(
-      `PackagesService: Tree validation - ${isValid ? "valid" : "invalid"}`
-    );
+    logger.debug(`PackagesService: Tree validation - ${isValid ? "valid" : "invalid"}`);
     return isValid;
   }
 
@@ -283,22 +291,12 @@ export class PackagesService {
       efficiency: theoreticalHeight > 0 ? theoreticalHeight / height : 1,
     };
 
-    logger.debug(
-      `PackagesService: Tree statistics - Size: ${stats.size}, Height: ${
-        stats.height
-      }, Black Height: ${
-        stats.blackHeight
-      }, Efficiency: ${stats.efficiency.toFixed(3)}`
-    );
+    logger.debug(`PackagesService: Tree statistics - Size: ${stats.size}, Height: ${stats.height}, Black Height: ${stats.blackHeight}, Efficiency: ${stats.efficiency.toFixed(3)}`);
     return stats;
   }
 
   private logTreeStatistics(): void {
     const stats = this.getTreeStatistics();
-    logger.debug(
-      `RedBlackTree Performance: Height: ${stats.height}, Black Height: ${
-        stats.blackHeight
-      }, Efficiency: ${stats.efficiency.toFixed(3)}, Valid: ${stats.isValid}`
-    );
+    logger.debug(`RedBlackTree Performance: Height: ${stats.height}, Black Height: ${stats.blackHeight}, Efficiency: ${stats.efficiency.toFixed(3)}, Valid: ${stats.isValid}`);
   }
 }

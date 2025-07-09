@@ -1,42 +1,109 @@
 // src/renderer/src/services/UsersService.ts
 import { HashTable } from "../data-structures/HashTable";
+import { UsersArray, UserData } from "../data-structures/UsersArray";
 import { User } from "../types";
 import { logger } from "./Logger";
 
 export class UsersService {
-  private hashTable: HashTable<User>;
+  private hashTable: HashTable<number>; // Ключ: телефон, Значение: индекс массива
+  private usersArray: UsersArray; // Массив с данными (без телефона)
 
   constructor() {
-    this.hashTable = new HashTable<User>(11); // Начинаем с простого числа
-    logger.info("UsersService: Initialized simple hash table with mid-square method");
+    this.hashTable = new HashTable<number>(11); // Начинаем с простого числа
+    this.usersArray = new UsersArray();
+    logger.info("UsersService: Initialized hash table (phone -> index) and users array (data without phone)");
   }
 
   // Основные операции CRUD
   public addUser(user: User): void {
-    this.hashTable.put(user.phone, user);
-    logger.info(`UsersService: Added user ${user.phone} (${user.fullName})`);
+    // Извлекаем данные без телефона
+    const userData: UserData = {
+      fullName: user.fullName,
+      address: user.address
+    };
+    
+    // Добавляем данные в массив
+    const index = this.usersArray.add(userData);
+    // Сохраняем индекс в хеш-таблице с телефоном как ключом
+    this.hashTable.put(user.phone, index);
+    logger.info(`UsersService: Added user ${user.phone} (${user.fullName}) at index ${index}`);
   }
 
   public getUser(phone: string): User | null {
-    const user = this.hashTable.get(phone);
-    logger.debug(
-      `UsersService: Get user ${phone} - ${user ? "found" : "not found"}`
-    );
+    // Получаем индекс из хеш-таблицы по телефону
+    const index = this.hashTable.get(phone);
+    if (index === null) {
+      logger.debug(`UsersService: Get user ${phone} - not found in hash table`);
+      return null;
+    }
+    
+    // Получаем данные из массива по индексу
+    const userData = this.usersArray.get(index);
+    if (userData === null) {
+      logger.error(`UsersService: Get user ${phone} - invalid index ${index} in array`);
+      return null;
+    }
+
+    // Собираем полного пользователя с телефоном
+    const user: User = {
+      phone: phone,
+      fullName: userData.fullName,
+      address: userData.address
+    };
+    
+    logger.debug(`UsersService: Get user ${phone} - found at index ${index}`);
     return user;
   }
 
   public getAllUsers(): User[] {
-    const users = this.hashTable.values();
+    const users: User[] = [];
+    const allPhones = this.hashTable.keys();
+    
+    for (const phone of allPhones) {
+      const user = this.getUser(phone);
+      if (user) {
+        users.push(user);
+      }
+    }
+    
     logger.debug(`UsersService: Retrieved all users (${users.length} total)`);
     return users;
   }
 
   public removeUser(phone: string): boolean {
-    const result = this.hashTable.delete(phone);
-    logger.info(
-      `UsersService: Remove user ${phone} - ${result ? "success" : "failed"}`
-    );
-    return result;
+    // Получаем индекс удаляемого пользователя
+    const index = this.hashTable.get(phone);
+    if (index === null) {
+      logger.warning(`UsersService: Remove user ${phone} - not found`);
+      return false;
+    }
+
+    // Удаляем из хеш-таблицы
+    const hashRemoved = this.hashTable.delete(phone);
+    if (!hashRemoved) {
+      logger.error(`UsersService: Failed to remove ${phone} from hash table`);
+      return false;
+    }
+
+    // Удаляем из массива и получаем информацию о перемещении
+    const moveInfo = this.usersArray.remove(index);
+    
+    if (moveInfo) {
+      // Если элемент был перемещен, нужно найти телефон, который указывал на старый индекс
+      // и обновить его на новый индекс
+      const allPhones = this.hashTable.keys();
+      for (const phone of allPhones) {
+        const currentIndex = this.hashTable.get(phone);
+        if (currentIndex === moveInfo.movedFromIndex) {
+          this.hashTable.put(phone, moveInfo.newIndex);
+          logger.debug(`UsersService: Updated index for phone ${phone} from ${moveInfo.movedFromIndex} to ${moveInfo.newIndex}`);
+          break;
+        }
+      }
+    }
+
+    logger.info(`UsersService: Remove user ${phone} - success (was at index ${index})`);
+    return true;
   }
 
   public hasUser(phone: string): boolean {
@@ -46,8 +113,9 @@ export class UsersService {
   }
 
   public clear(): void {
-    const countBefore = this.hashTable.getSize();
+    const countBefore = this.usersArray.size();
     this.hashTable.clear();
+    this.usersArray.clear();
     logger.warning(`UsersService: Cleared all users (${countBefore} removed)`);
   }
 
@@ -56,9 +124,7 @@ export class UsersService {
     const results = this.getAllUsers().filter((user) =>
       user.fullName.toLowerCase().includes(namePart.toLowerCase())
     );
-    logger.info(
-      `UsersService: Search by name "${namePart}" - ${results.length} results`
-    );
+    logger.info(`UsersService: Search by name "${namePart}" - ${results.length} results`);
     return results;
   }
 
@@ -66,9 +132,7 @@ export class UsersService {
     const results = this.getAllUsers().filter((user) =>
       user.address.toLowerCase().includes(addressPart.toLowerCase())
     );
-    logger.info(
-      `UsersService: Search by address "${addressPart}" - ${results.length} results`
-    );
+    logger.info(`UsersService: Search by address "${addressPart}" - ${results.length} results`);
     return results;
   }
 
@@ -84,15 +148,13 @@ export class UsersService {
       }
     });
 
-    logger.info(
-      `UsersService: Load complete - ${this.getCount()} users in hash table`
-    );
+    logger.info(`UsersService: Load complete - ${this.getCount()} users in system`);
     this.logStatistics();
   }
 
   // Статистика и метрики
   public getCount(): number {
-    return this.hashTable.getSize();
+    return this.usersArray.size();
   }
 
   public getCapacity(): number {
@@ -107,7 +169,7 @@ export class UsersService {
     size: number;
     capacity: number;
     loadFactor: number;
-    distribution: ReturnType<HashTable<User>["getPerformanceStats"]>;
+    distribution: ReturnType<HashTable<number>["getPerformanceStats"]>;
   } {
     const stats = {
       size: this.getCount(),
@@ -116,20 +178,14 @@ export class UsersService {
       distribution: this.hashTable.getPerformanceStats(),
     };
 
-    logger.debug(
-      `UsersService: Statistics - Size: ${stats.size}, Capacity: ${
-        stats.capacity
-      }, Load Factor: ${stats.loadFactor.toFixed(3)}`
-    );
+    logger.debug(`UsersService: Statistics - Size: ${stats.size}, Capacity: ${stats.capacity}, Load Factor: ${stats.loadFactor.toFixed(3)}`);
     return stats;
   }
 
   private logStatistics(): void {
     const stats = this.hashTable.getPerformanceStats();
-    logger.debug(
-      `HashTable Performance: Load Factor: ${stats.loadFactor.toFixed(3)}, ` +
-      `Empty: ${stats.emptySlots}, Occupied: ${stats.occupiedSlots}, Deleted: ${stats.deletedSlots}`
-    );
+    logger.debug(`HashTable Performance: Load Factor: ${stats.loadFactor.toFixed(3)}, ` +
+      `Empty: ${stats.emptySlots}, Occupied: ${stats.occupiedSlots}, Deleted: ${stats.deletedSlots}`);
   }
 
   // Метод для демонстрации работы хеш-функции
@@ -173,5 +229,72 @@ export class UsersService {
       finalHash: hashValue,
       tableIndex,
     };
+  }
+
+  // Метод для доступа к внутренней структуре (для отображения)
+  public getHashTableEntries(): Array<{
+    index: number;
+    key: string;
+    value: User | null;
+    status: "empty" | "occupied" | "deleted";
+    hashValue?: number;
+  }> {
+    const capacity = this.hashTable.getCapacity();
+    const table = (this.hashTable as any).table;
+    const entries: Array<{
+      index: number;
+      key: string;
+      value: User | null;
+      status: "empty" | "occupied" | "deleted";
+      hashValue?: number;
+    }> = [];
+
+    for (let i = 0; i < capacity; i++) {
+      const entry = table[i];
+      
+      if (entry === null) {
+        // Пустая ячейка
+        entries.push({
+          index: i,
+          key: "",
+          value: null,
+          status: "empty",
+        });
+      } else if (entry.isDeleted) {
+        // Удаленная запись - восстанавливаем пользователя для отображения
+        const userData = this.usersArray.get(entry.value);
+        const user: User | null = userData ? {
+          phone: entry.key,
+          fullName: userData.fullName,
+          address: userData.address
+        } : null;
+        
+        entries.push({
+          index: i,
+          key: entry.key,
+          value: user,
+          status: "deleted",
+          hashValue: (this.hashTable as any).hash ? (this.hashTable as any).hash(entry.key) : 0,
+        });
+      } else {
+        // Занятая ячейка - восстанавливаем пользователя
+        const userData = this.usersArray.get(entry.value);
+        const user: User | null = userData ? {
+          phone: entry.key,
+          fullName: userData.fullName,
+          address: userData.address
+        } : null;
+        
+        entries.push({
+          index: i,
+          key: entry.key,
+          value: user,
+          status: "occupied",
+          hashValue: (this.hashTable as any).hash ? (this.hashTable as any).hash(entry.key) : 0,
+        });
+      }
+    }
+
+    return entries;
   }
 }

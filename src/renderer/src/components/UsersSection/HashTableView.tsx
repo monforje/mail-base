@@ -17,46 +17,9 @@ interface HashTableEntry {
 }
 
 const HashTableView: React.FC<HashTableViewProps> = ({}) => {
-  // Получаем доступ к внутренней структуре хеш-таблицы
+  // Получаем доступ к внутренней структуре хеш-таблицы через новый метод
   const getHashTableStructure = (): HashTableEntry[] => {
-    const hashTable = (usersService as any).hashTable;
-    const capacity = hashTable.getCapacity();
-    const table = (hashTable as any).table;
-    const entries: HashTableEntry[] = [];
-
-    for (let i = 0; i < capacity; i++) {
-      const entry = table[i];
-      
-      if (entry === null) {
-        // Пустая ячейка
-        entries.push({
-          index: i,
-          key: "",
-          value: null,
-          status: "empty",
-        });
-      } else if (entry.isDeleted) {
-        // Удаленная запись
-        entries.push({
-          index: i,
-          key: entry.key,
-          value: entry.value,
-          status: "deleted",
-          hashValue: hashTable.hash ? hashTable.hash(entry.key) : 0,
-        });
-      } else {
-        // Занятая ячейка
-        entries.push({
-          index: i,
-          key: entry.key,
-          value: entry.value,
-          status: "occupied",
-          hashValue: hashTable.hash ? hashTable.hash(entry.key) : 0,
-        });
-      }
-    }
-
-    return entries;
+    return usersService.getHashTableEntries();
   };
 
   const hashTableEntries = getHashTableStructure();

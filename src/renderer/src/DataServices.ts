@@ -3,6 +3,10 @@
  * Legacy DataServices module
  * Теперь служит только для экспорта сервисов из нового архитектурного слоя
  * Все логика перенесена в отдельные сервисы в папку services/
+ * 
+ * Обновлено для работы с новой архитектурой:
+ * - Данные хранятся в массивах (UsersArray, PackagesArray)
+ * - Структуры данных хранят только индексы
  */
 
 // Импортируем новые сервисы
@@ -15,3 +19,9 @@ export { usersService, packagesService } from "./services/ServiceRegistry";
 
 // Экспортируем логгер для использования в других частях приложения
 export { logger } from "./services/Logger";
+
+// Экспортируем новые классы массивов и интерфейсы данных
+export { UsersArray } from "./data-structures/UsersArray";
+export type { UserData } from "./data-structures/UsersArray";
+export { PackagesArray } from "./data-structures/PackagesArray";
+export type { PackageData } from "./data-structures/PackagesArray";
