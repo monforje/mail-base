@@ -7,8 +7,8 @@ export class UsersService {
   private hashTable: HashTable<User>;
 
   constructor() {
-    this.hashTable = new HashTable<User>();
-    logger.info("UsersService: Initialized hash table");
+    this.hashTable = new HashTable<User>(11); // Начинаем с простого числа
+    logger.info("UsersService: Initialized simple hash table with mid-square method");
   }
 
   // Основные операции CRUD
@@ -107,13 +107,13 @@ export class UsersService {
     size: number;
     capacity: number;
     loadFactor: number;
-    distribution: ReturnType<HashTable<User>["getDistributionStats"]>;
+    distribution: ReturnType<HashTable<User>["getPerformanceStats"]>;
   } {
     const stats = {
       size: this.getCount(),
       capacity: this.getCapacity(),
       loadFactor: this.getLoadFactor(),
-      distribution: this.hashTable.getDistributionStats(),
+      distribution: this.hashTable.getPerformanceStats(),
     };
 
     logger.debug(
@@ -127,11 +127,51 @@ export class UsersService {
   private logStatistics(): void {
     const stats = this.hashTable.getPerformanceStats();
     logger.debug(
-      `HashTable Performance: Load Factor: ${stats.loadFactor.toFixed(
-        3
-      )}, Collisions: ${
-        stats.collisionCount
-      }, Avg Chain: ${stats.avgChainLength.toFixed(2)}`
+      `HashTable Performance: Load Factor: ${stats.loadFactor.toFixed(3)}, ` +
+      `Empty: ${stats.emptySlots}, Occupied: ${stats.occupiedSlots}, Deleted: ${stats.deletedSlots}`
     );
+  }
+
+  // Метод для демонстрации работы хеш-функции
+  public demonstrateHashing(key: string): {
+    originalKey: string;
+    numericRepresentation: number;
+    squared: number;
+    middleDigits: string;
+    finalHash: number;
+    tableIndex: number;
+  } {
+    // Дублируем логику хеш-функции для демонстрации
+    let numericKey = 0;
+    for (let i = 0; i < key.length; i++) {
+      numericKey += key.charCodeAt(i) * (i + 1);
+    }
+
+    const squared = numericKey * numericKey;
+    const squaredStr = squared.toString();
+    const len = squaredStr.length;
+    
+    let middleDigits: string;
+    if (len >= 6) {
+      const start = Math.floor((len - 4) / 2);
+      middleDigits = squaredStr.substring(start, start + 4);
+    } else if (len >= 4) {
+      const start = Math.floor((len - 2) / 2);
+      middleDigits = squaredStr.substring(start, start + 2);
+    } else {
+      middleDigits = squaredStr;
+    }
+
+    const hashValue = parseInt(middleDigits, 10);
+    const tableIndex = hashValue % this.getCapacity();
+
+    return {
+      originalKey: key,
+      numericRepresentation: numericKey,
+      squared,
+      middleDigits,
+      finalHash: hashValue,
+      tableIndex,
+    };
   }
 }
