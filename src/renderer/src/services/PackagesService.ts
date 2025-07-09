@@ -294,13 +294,11 @@ export class PackagesService {
   }
 
   private logTreeStatistics(): void {
-    const stats = this.redBlackTree.getPerformanceStats();
+    const stats = this.getTreeStatistics();
     logger.debug(
       `RedBlackTree Performance: Height: ${stats.height}, Black Height: ${
         stats.blackHeight
-      }, Balance Factor: ${stats.balanceFactor.toFixed(3)}, Valid: ${
-        stats.isValid
-      }`
+      }, Efficiency: ${stats.efficiency.toFixed(3)}, Valid: ${stats.isValid}`
     );
   }
 }

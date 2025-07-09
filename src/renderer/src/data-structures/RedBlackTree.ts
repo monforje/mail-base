@@ -1,109 +1,37 @@
 // src/renderer/src/data-structures/RedBlackTree.ts
 /**
- * Высокооптимизированное красно-черное дерево с управлением памятью
- * Включает pool объектов, оптимизации поиска, и элементы уровня C++
+ * Красно-черное дерево - стандартная реализация для курсовой работы
+ * Основано на классическом алгоритме из учебников по структурам данных
  */
 
 export enum Color {
-  RED = 0, // Используем числа вместо строк для скорости
+  RED = 0,
   BLACK = 1,
 }
 
 export interface RBNode<T> {
   key: string;
-  keyHash: number; // Кэшированный хеш для быстрого сравнения
   value: T;
   color: Color;
   left: RBNode<T>;
   right: RBNode<T>;
   parent: RBNode<T>;
-  // Дополнительные поля для оптимизации
-  height?: number; // Кэшированная высота поддерева
-}
-
-// Пул объектов для узлов дерева (управление памятью как в C++)
-class RBNodePool<T> {
-  private pool: RBNode<T>[] = [];
-  private maxPoolSize: number = 2000;
-  private readonly NIL: RBNode<T>;
-
-  constructor(nil: RBNode<T>) {
-    this.NIL = nil;
-  }
-
-  acquire(key: string, keyHash: number, value: T): RBNode<T> {
-    const node = this.pool.pop();
-    if (node) {
-      // Переиспользуем существующий узел
-      node.key = key;
-      node.keyHash = keyHash;
-      node.value = value;
-      node.color = Color.RED;
-      node.left = this.NIL;
-      node.right = this.NIL;
-      node.parent = this.NIL;
-      node.height = 1;
-      return node;
-    }
-
-    // Создаем новый узел только если пул пуст
-    return {
-      key,
-      keyHash,
-      value,
-      color: Color.RED,
-      left: this.NIL,
-      right: this.NIL,
-      parent: this.NIL,
-      height: 1,
-    };
-  }
-
-  release(node: RBNode<T>): void {
-    if (this.pool.length < this.maxPoolSize && node !== this.NIL) {
-      // Очищаем ссылки для GC
-      node.key = "";
-      node.keyHash = 0;
-      node.value = null as any;
-      node.left = this.NIL;
-      node.right = this.NIL;
-      node.parent = this.NIL;
-      this.pool.push(node);
-    }
-  }
-
-  clear(): void {
-    this.pool.length = 0;
-  }
-
-  getPoolSize(): number {
-    return this.pool.length;
-  }
 }
 
 export class RedBlackTree<T> {
   private root: RBNode<T>;
   private readonly NIL: RBNode<T>;
   private size: number;
-  private readonly nodePool: RBNodePool<T>;
-
-  // Оптимизации производительности
-  private readonly hashSeed: number;
-  private rotationCount: number = 0;
-  private searchCount: number = 0;
-  private maxDepthReached: number = 0;
 
   constructor() {
-    // Создаем optimized sentinel узел
+    // Создаем NIL узел (sentinel)
     this.NIL = {
       key: "",
-      keyHash: 0,
       value: null as any,
       color: Color.BLACK,
       left: null as any,
       right: null as any,
       parent: null as any,
-      height: 0,
     };
 
     // Инициализируем циклические ссылки для NIL
@@ -113,59 +41,12 @@ export class RedBlackTree<T> {
 
     this.root = this.NIL;
     this.size = 0;
-    this.nodePool = new RBNodePool<T>(this.NIL);
-    this.hashSeed = Math.floor(Math.random() * 0x7fffffff);
   }
 
   /**
-   * Быстрая хеш-функция для строковых ключей
-   */
-  private fastHash(key: string): number {
-    let hash = 0x811c9dc5 ^ this.hashSeed;
-
-    for (let i = 0; i < key.length; i++) {
-      hash ^= key.charCodeAt(i);
-      hash = (hash * 0x01000193) >>> 0;
-    }
-
-    return hash;
-  }
-
-  /**
-   * Оптимизированное сравнение ключей
-   */
-  private compareKeys(
-    key1: string,
-    hash1: number,
-    key2: string,
-    hash2: number
-  ): number {
-    // Сначала сравниваем хеши (быстрее)
-    if (hash1 !== hash2) {
-      return hash1 < hash2 ? -1 : 1;
-    }
-
-    // Если хеши равны, сравниваем строки
-    return key1 < key2 ? -1 : key1 > key2 ? 1 : 0;
-  }
-
-  /**
-   * Обновление кэшированной высоты узла
-   */
-  private updateHeight(node: RBNode<T>): void {
-    if (node !== this.NIL) {
-      const leftHeight = node.left.height || 0;
-      const rightHeight = node.right.height || 0;
-      node.height = 1 + Math.max(leftHeight, rightHeight);
-    }
-  }
-
-  /**
-   * Оптимизированный левый поворот
+   * Левый поворот
    */
   private leftRotate(x: RBNode<T>): void {
-    this.rotationCount++;
-
     const y = x.right;
     x.right = y.left;
 
@@ -185,18 +66,12 @@ export class RedBlackTree<T> {
 
     y.left = x;
     x.parent = y;
-
-    // Обновляем высоты
-    this.updateHeight(x);
-    this.updateHeight(y);
   }
 
   /**
-   * Оптимизированный правый поворот
+   * Правый поворот
    */
   private rightRotate(y: RBNode<T>): void {
-    this.rotationCount++;
-
     const x = y.left;
     y.left = x.right;
 
@@ -216,35 +91,25 @@ export class RedBlackTree<T> {
 
     x.right = y;
     y.parent = x;
-
-    // Обновляем высоты
-    this.updateHeight(y);
-    this.updateHeight(x);
   }
 
   /**
-   * Высокопроизводительная вставка
+   * Вставка элемента
    */
   public insert(key: string, value: T): void {
     if (key === null || key === undefined) {
       throw new Error("Key cannot be null or undefined");
     }
 
-    const keyHash = this.fastHash(key);
     let parent = this.NIL;
     let current = this.root;
-    let depth = 0;
 
-    // Итеративный поиск позиции для вставки
+    // Обычная вставка как в BST
     while (current !== this.NIL) {
       parent = current;
-      depth++;
-
-      const cmp = this.compareKeys(key, keyHash, current.key, current.keyHash);
-
-      if (cmp < 0) {
+      if (key < current.key) {
         current = current.left;
-      } else if (cmp > 0) {
+      } else if (key > current.key) {
         current = current.right;
       } else {
         // Ключ уже существует, обновляем значение
@@ -253,44 +118,32 @@ export class RedBlackTree<T> {
       }
     }
 
-    // Создаем новый узел из пула
-    const newNode = this.nodePool.acquire(key, keyHash, value);
-    newNode.parent = parent;
+    // Создаем новый узел
+    const newNode: RBNode<T> = {
+      key,
+      value,
+      color: Color.RED, // Новый узел всегда красный
+      left: this.NIL,
+      right: this.NIL,
+      parent,
+    };
 
     if (parent === this.NIL) {
       this.root = newNode;
+    } else if (key < parent.key) {
+      parent.left = newNode;
     } else {
-      const cmp = this.compareKeys(key, keyHash, parent.key, parent.keyHash);
-      if (cmp < 0) {
-        parent.left = newNode;
-      } else {
-        parent.right = newNode;
-      }
+      parent.right = newNode;
     }
 
     this.size++;
-    this.maxDepthReached = Math.max(this.maxDepthReached, depth);
 
     // Восстанавливаем свойства красно-черного дерева
     this.insertFixup(newNode);
-
-    // Обновляем высоты до корня
-    this.updateHeightsToRoot(newNode);
   }
 
   /**
-   * Обновление высот до корня
-   */
-  private updateHeightsToRoot(node: RBNode<T>): void {
-    let current = node;
-    while (current !== this.NIL) {
-      this.updateHeight(current);
-      current = current.parent;
-    }
-  }
-
-  /**
-   * Оптимизированный insertFixup
+   * Восстановление свойств после вставки
    */
   private insertFixup(node: RBNode<T>): void {
     while (node.parent.color === Color.RED) {
@@ -315,7 +168,7 @@ export class RedBlackTree<T> {
           this.rightRotate(node.parent.parent);
         }
       } else {
-        // Симметричные случаи
+        // Симметричные случаи (родитель справа)
         const uncle = node.parent.parent.left;
 
         if (uncle.color === Color.RED) {
@@ -339,45 +192,37 @@ export class RedBlackTree<T> {
   }
 
   /**
-   * Высокопроизводительный поиск с ранним выходом
+   * Поиск элемента
    */
   public search(key: string): T | null {
     if (key === null || key === undefined) {
       return null;
     }
 
-    this.searchCount++;
-    const keyHash = this.fastHash(key);
     let current = this.root;
-    let depth = 0;
 
     while (current !== this.NIL) {
-      depth++;
-      const cmp = this.compareKeys(key, keyHash, current.key, current.keyHash);
-
-      if (cmp === 0) {
-        this.maxDepthReached = Math.max(this.maxDepthReached, depth);
+      if (key === current.key) {
         return current.value;
-      } else if (cmp < 0) {
+      } else if (key < current.key) {
         current = current.left;
       } else {
         current = current.right;
       }
     }
 
-    this.maxDepthReached = Math.max(this.maxDepthReached, depth);
     return null;
   }
 
   /**
-   * Быстрая проверка существования ключа
+   * Проверка существования ключа
    */
   public contains(key: string): boolean {
     return this.search(key) !== null;
   }
 
   /**
-   * Оптимизированное удаление с возвратом узлов в пул
+   * Удаление элемента
    */
   public delete(key: string): boolean {
     const nodeToDelete = this.findNode(key);
@@ -391,18 +236,15 @@ export class RedBlackTree<T> {
   }
 
   /**
-   * Внутренний поиск узла
+   * Поиск узла
    */
   private findNode(key: string): RBNode<T> {
-    const keyHash = this.fastHash(key);
     let current = this.root;
 
     while (current !== this.NIL) {
-      const cmp = this.compareKeys(key, keyHash, current.key, current.keyHash);
-
-      if (cmp === 0) {
+      if (key === current.key) {
         return current;
-      } else if (cmp < 0) {
+      } else if (key < current.key) {
         current = current.left;
       } else {
         current = current.right;
@@ -413,7 +255,7 @@ export class RedBlackTree<T> {
   }
 
   /**
-   * Оптимизированное удаление узла
+   * Удаление узла
    */
   private deleteNode(z: RBNode<T>): void {
     let y = z;
@@ -443,32 +285,16 @@ export class RedBlackTree<T> {
       y.left = z.left;
       y.left.parent = y;
       y.color = z.color;
-      this.updateHeight(y);
     }
-
-    // Возвращаем удаленный узел в пул
-    this.nodePool.release(z);
 
     if (yOriginalColor === Color.BLACK) {
       this.deleteFixup(x);
     }
-
-    // Обновляем высоты
-    if (x !== this.NIL) {
-      this.updateHeightsToRoot(x);
-    }
   }
 
   /**
-   * Операции для совместимости и дополнительной функциональности
+   * Пересадка поддерева
    */
-  private minimum(node: RBNode<T>): RBNode<T> {
-    while (node.left !== this.NIL) {
-      node = node.left;
-    }
-    return node;
-  }
-
   private transplant(u: RBNode<T>, v: RBNode<T>): void {
     if (u.parent === this.NIL) {
       this.root = v;
@@ -480,6 +306,19 @@ export class RedBlackTree<T> {
     v.parent = u.parent;
   }
 
+  /**
+   * Поиск минимального элемента
+   */
+  private minimum(node: RBNode<T>): RBNode<T> {
+    while (node.left !== this.NIL) {
+      node = node.left;
+    }
+    return node;
+  }
+
+  /**
+   * Восстановление свойств после удаления
+   */
   private deleteFixup(x: RBNode<T>): void {
     while (x !== this.root && x.color === Color.BLACK) {
       if (x === x.parent.left) {
@@ -543,45 +382,84 @@ export class RedBlackTree<T> {
   }
 
   /**
-   * Быстрая очистка с возвратом всех узлов в пул
+   * Симметричный обход (In-Order)
    */
-  public clear(): void {
-    this.clearSubtree(this.root);
-    this.root = this.NIL;
-    this.size = 0;
-    this.rotationCount = 0;
-    this.searchCount = 0;
-    this.maxDepthReached = 0;
+  public inOrder(): T[] {
+    const result: T[] = [];
+    this.inOrderHelper(this.root, result);
+    return result;
   }
 
-  /**
-   * Рекурсивная очистка поддерева
-   */
-  private clearSubtree(node: RBNode<T>): void {
+  private inOrderHelper(node: RBNode<T>, result: T[]): void {
     if (node !== this.NIL) {
-      this.clearSubtree(node.left);
-      this.clearSubtree(node.right);
-      this.nodePool.release(node);
+      this.inOrderHelper(node.left, result);
+      result.push(node.value);
+      this.inOrderHelper(node.right, result);
     }
   }
 
   /**
-   * Принудительная очистка памяти (аналог explicit deallocation в C++)
+   * Получение всех значений (используем симметричный обход)
    */
-  public deallocate(): void {
-    this.clear();
-    this.nodePool.clear();
+  public values(): T[] {
+    return this.inOrder();
   }
 
   /**
-   * Получение высоты дерева (оптимизированная версия)
+   * Получение всех ключей
+   */
+  public keys(): string[] {
+    const result: string[] = [];
+    this.keysHelper(this.root, result);
+    return result;
+  }
+
+  private keysHelper(node: RBNode<T>, result: string[]): void {
+    if (node !== this.NIL) {
+      this.keysHelper(node.left, result);
+      result.push(node.key);
+      this.keysHelper(node.right, result);
+    }
+  }
+
+  /**
+   * Очистка дерева
+   */
+  public clear(): void {
+    this.root = this.NIL;
+    this.size = 0;
+  }
+
+  /**
+   * Получение размера дерева
+   */
+  public getSize(): number {
+    return this.size;
+  }
+
+  /**
+   * Проверка на пустоту
+   */
+  public isEmpty(): boolean {
+    return this.size === 0;
+  }
+
+  /**
+   * Получение высоты дерева
    */
   public getHeight(): number {
-    return this.root.height || 0;
+    return this.calculateHeight(this.root);
+  }
+
+  private calculateHeight(node: RBNode<T>): number {
+    if (node === this.NIL) {
+      return 0;
+    }
+    return 1 + Math.max(this.calculateHeight(node.left), this.calculateHeight(node.right));
   }
 
   /**
-   * Быстрое вычисление черной высоты
+   * Вычисление черной высоты
    */
   public getBlackHeight(): number {
     if (this.root === this.NIL) return 0;
@@ -601,63 +479,16 @@ export class RedBlackTree<T> {
   }
 
   /**
-   * Оптимизированное получение всех значений
-   */
-  public values(): T[] {
-    const result: T[] = new Array(this.size);
-    let index = 0;
-
-    this.inOrderTraversal(this.root, (value) => {
-      result[index++] = value;
-    });
-
-    return result;
-  }
-
-  /**
-   * Оптимизированное получение всех ключей
-   */
-  public keys(): string[] {
-    const result: string[] = new Array(this.size);
-    let index = 0;
-
-    this.inOrderKeys(this.root, (key) => {
-      result[index++] = key;
-    });
-
-    return result;
-  }
-
-  /**
-   * Быстрый симметричный обход
-   */
-  private inOrderTraversal(node: RBNode<T>, visit: (value: T) => void): void {
-    if (node !== this.NIL) {
-      this.inOrderTraversal(node.left, visit);
-      visit(node.value);
-      this.inOrderTraversal(node.right, visit);
-    }
-  }
-
-  /**
-   * Быстрый обход ключей
-   */
-  private inOrderKeys(node: RBNode<T>, visit: (key: string) => void): void {
-    if (node !== this.NIL) {
-      this.inOrderKeys(node.left, visit);
-      visit(node.key);
-      this.inOrderKeys(node.right, visit);
-    }
-  }
-
-  /**
-   * Получение минимального и максимального значений
+   * Получение минимального значения
    */
   public getMin(): T | null {
     if (this.root === this.NIL) return null;
     return this.minimum(this.root).value;
   }
 
+  /**
+   * Получение максимального значения
+   */
   public getMax(): T | null {
     if (this.root === this.NIL) return null;
 
@@ -669,7 +500,7 @@ export class RedBlackTree<T> {
   }
 
   /**
-   * Быстрая валидация дерева (оптимизированная)
+   * Проверка корректности дерева
    */
   public isValid(): boolean {
     if (this.root === this.NIL) return true;
@@ -692,7 +523,7 @@ export class RedBlackTree<T> {
     const rightResult = this.validateSubtree(node.right);
     if (!rightResult.isValid) return { isValid: false, blackHeight: 0 };
 
-    // Проверка черной высоты
+    // Проверка одинаковой черной высоты
     if (leftResult.blackHeight !== rightResult.blackHeight) {
       return { isValid: false, blackHeight: 0 };
     }
@@ -712,59 +543,7 @@ export class RedBlackTree<T> {
   }
 
   /**
-   * Расширенная статистика производительности
-   */
-  public getPerformanceStats(): {
-    size: number;
-    height: number;
-    blackHeight: number;
-    isValid: boolean;
-    rotationCount: number;
-    searchCount: number;
-    maxDepthReached: number;
-    avgSearchDepth: number;
-    memoryEfficiency: number;
-    poolSize: number;
-    balanceFactor: number;
-  } {
-    const theoreticalOptimalHeight =
-      this.size > 0 ? Math.ceil(Math.log2(this.size + 1)) : 0;
-    const actualHeight = this.getHeight();
-
-    return {
-      size: this.size,
-      height: actualHeight,
-      blackHeight: this.getBlackHeight(),
-      isValid: this.isValid(),
-      rotationCount: this.rotationCount,
-      searchCount: this.searchCount,
-      maxDepthReached: this.maxDepthReached,
-      avgSearchDepth:
-        this.searchCount > 0 ? this.maxDepthReached / this.searchCount : 0,
-      memoryEfficiency:
-        this.nodePool.getPoolSize() / (this.size + this.nodePool.getPoolSize()),
-      poolSize: this.nodePool.getPoolSize(),
-      balanceFactor:
-        theoreticalOptimalHeight > 0
-          ? theoreticalOptimalHeight / actualHeight
-          : 1,
-    };
-  }
-
-  /**
-   * Предварительное выделение памяти в пуле
-   */
-  public reserve(expectedSize: number): void {
-    // Предварительно создаем узлы в пуле для быстрых вставок
-    const nodesToPreallocate = Math.min(expectedSize, 1000);
-    for (let i = 0; i < nodesToPreallocate; i++) {
-      const tempNode = this.nodePool.acquire("", 0, null as any);
-      this.nodePool.release(tempNode);
-    }
-  }
-
-  /**
-   * Высокопроизводительный итератор
+   * Итератор для обхода элементов
    */
   public *entries(): IterableIterator<[string, T]> {
     yield* this.inOrderEntries(this.root);
@@ -778,41 +557,16 @@ export class RedBlackTree<T> {
     }
   }
 
-  /**
-   * Массовая вставка с оптимизацией
-   */
-  public bulkInsert(entries: Array<[string, T]>): void {
-    // Предварительно выделяем память
-    this.reserve(entries.length);
-
-    // Сортируем записи для оптимального построения дерева
-    entries.sort((a, b) => a[0].localeCompare(b[0]));
-
-    // Вставляем отсортированные данные
-    for (const [key, value] of entries) {
-      this.insert(key, value);
-    }
-  }
-
-  // Геттеры для совместимости
-  public getSize(): number {
-    return this.size;
-  }
-  public isEmpty(): boolean {
-    return this.size === 0;
-  }
-
-  // Синонимы для совместимости
+  // Синонимы для совместимости с интерфейсом
   public has(key: string): boolean {
     return this.contains(key);
   }
+
   public getAllKeys(): string[] {
     return this.keys();
   }
+
   public getAllValues(): T[] {
     return this.values();
-  }
-  public getTreeStatistics() {
-    return this.getPerformanceStats();
   }
 }
