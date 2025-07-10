@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import PackagesTable from "./PackagesTable";
 import RBTreeView from "./RBTreeView";
+import RBTreeStructureView from "./RBTreeStructureView";
 import PackageModal from "./PackageModal";
 import { Package, ViewMode } from "../../types";
 import { packagesService } from "../../DataServices";
@@ -27,7 +28,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     undefined
   );
 
-  // ИСПРАВЛЕНО: Обработчик поиска с числовым телефоном
+  // Обработчик поиска с числовым телефоном
   const handleSearch = (senderPhone: number) => {
     const results = packagesService.findPackagesBySender(senderPhone);
     setSearchResults(results);
@@ -39,12 +40,11 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
       onDataChange();
       alert("Посылка успешно добавлена");
     } catch (error) {
-      // ИСПРАВЛЕНО: Обработка ошибки дубликата
       alert(`Ошибка добавления посылки: ${error}`);
     }
   };
 
-  // ИСПРАВЛЕНО: Обработчик удаления с числовыми телефонами
+  // Обработчик удаления с числовыми телефонами
   const handleDelete = (
     senderPhone: number,
     receiverPhone: number,
@@ -74,13 +74,43 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     setSearchResults(undefined);
   };
 
+  // Получение статистики дерева
+  const getTreeStats = () => {
+    return packagesService.getTreeStatistics();
+  };
+
+  // Форматированный заголовок с информацией о дереве
+  const getSectionTitle = () => {
+    const stats = getTreeStats();
+
+    if (viewMode === "structure") {
+      return `Посылки (Красно-черное дерево: ${stats.uniqueSenders} отправителей)`;
+    } else if (viewMode === "datastructure") {
+      return `Посылки (Детальная структура красно-черного дерева)`;
+    } else {
+      return `Посылки`;
+    }
+  };
+
+  // Выбор компонента для отображения
+  const renderContent = () => {
+    switch (viewMode) {
+      case "table":
+        return <PackagesTable packages={packages} />;
+      case "structure":
+        return <RBTreeView packages={packages} />;
+      case "datastructure":
+        return <RBTreeStructureView packages={packages} />;
+      default:
+        return <PackagesTable packages={packages} />;
+    }
+  };
+
   return (
     <>
       <div className="table-section">
         <div className="section-header">
-          <div className="section-title">
-            Посылки {viewMode === "structure" && "(Красно-черное дерево)"}
-          </div>
+          <div className="section-title">{getSectionTitle()}</div>
           <div className="section-actions">
             <button
               className="action-icon"
@@ -106,11 +136,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
           </div>
         </div>
         <div className="table-container">
-          {viewMode === "table" ? (
-            <PackagesTable packages={packages} />
-          ) : (
-            <RBTreeView packages={packages} />
-          )}
+          {renderContent()}
         </div>
       </div>
 

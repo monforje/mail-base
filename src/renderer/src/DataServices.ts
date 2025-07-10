@@ -7,6 +7,7 @@
  * Обновлено для работы с новой архитектурой:
  * - Данные хранятся в массивах (UsersArray, PackagesArray)
  * - Структуры данных хранят только индексы
+ * - Добавлен двойной двусвязный список для обработки коллизий
  */
 
 // Импортируем новые сервисы
@@ -25,3 +26,10 @@ export { UsersArray } from "./data-structures/UsersArray";
 export type { UserData } from "./data-structures/UsersArray";
 export { PackagesArray } from "./data-structures/PackagesArray";
 export type { PackageData } from "./data-structures/PackagesArray";
+
+// Экспортируем двойной двусвязный список
+export { DoublyLinkedList, ListNode } from "./data-structures/DoublyLinkedList";
+
+// Экспортируем структуры данных
+export { HashTable } from "./data-structures/HashTable";
+export { RedBlackTree } from "./data-structures/RedBlackTree";

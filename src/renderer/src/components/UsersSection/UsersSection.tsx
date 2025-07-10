@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import UsersTable from "./UsersTable";
 import HashTableView from "./HashTableView";
+import HashTableStructureView from "./HashTableStructureView";
 import UserModal from "./UserModal";
 import { User, ViewMode } from "../../types";
 import { usersService } from "../../DataServices";
@@ -27,7 +28,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     undefined
   );
 
-  // ДОБАВЛЕНО: Получение статистики хеш-таблицы
+  // Получение статистики хеш-таблицы
   const getHashTableInfo = () => {
     const stats = usersService.getStatistics();
     const isInitialized = usersService.isInitialized();
@@ -67,7 +68,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
   const openModal = (mode: "search" | "add" | "delete") => {
     const info = getHashTableInfo();
 
-    // ДОБАВЛЕНО: Проверка инициализации для операций добавления/удаления/поиска
+    // Проверка инициализации для операций добавления/удаления/поиска
     if (
       !info.isInitialized &&
       (mode === "add" || mode === "delete" || mode === "search")
@@ -88,12 +89,12 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     setSearchResult(undefined);
   };
 
-  // ИЗМЕНЕНО: Форматированный заголовок с информацией о хеш-таблице
+  // Форматированный заголовок с информацией о хеш-таблице
   const getSectionTitle = () => {
     const info = getHashTableInfo();
 
     if (!info.isInitialized) {
-      if (viewMode === "structure") {
+      if (viewMode === "structure" || viewMode === "datastructure") {
         return "Пользователи (Хеш-таблица: не инициализирована)";
       } else {
         return `Пользователи`;
@@ -104,8 +105,24 @@ const UsersSection: React.FC<UsersSectionProps> = ({
       return `Пользователи (Хеш-таблица: размер ${info.capacity}, загрузка ${(
         info.loadFactor * 100
       ).toFixed(1)}%)`;
+    } else if (viewMode === "datastructure") {
+      return `Пользователи (Детальная структура хеш-таблицы)`;
     } else {
       return `Пользователи`;
+    }
+  };
+
+  // Выбор компонента для отображения
+  const renderContent = () => {
+    switch (viewMode) {
+      case "table":
+        return <UsersTable users={users} />;
+      case "structure":
+        return <HashTableView users={users} />;
+      case "datastructure":
+        return <HashTableStructureView users={users} />;
+      default:
+        return <UsersTable users={users} />;
     }
   };
 
@@ -139,11 +156,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
           </div>
         </div>
         <div className="table-container">
-          {viewMode === "table" ? (
-            <UsersTable users={users} />
-          ) : (
-            <HashTableView users={users} />
-          )}
+          {renderContent()}
         </div>
       </div>
 

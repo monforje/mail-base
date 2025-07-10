@@ -17,7 +17,7 @@ const App: React.FC = () => {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
 
-  // ДОБАВЛЕНО: Состояние для модального окна выбора размера хеш-таблицы
+  // Состояние для модального окна выбора размера хеш-таблицы
   const [isHashTableSizeModalOpen, setIsHashTableSizeModalOpen] =
     useState(false);
   const [hashTableUserCount, setHashTableUserCount] = useState(0);
@@ -34,7 +34,7 @@ const App: React.FC = () => {
     setViewMode
   );
 
-  // ДОБАВЛЕНО: Устанавливаем callback для выбора размера хеш-таблицы
+  // Устанавливаем callback для выбора размера хеш-таблицы
   useEffect(() => {
     handlers.setHashTableSizeCallback((userCount, onConfirm, onCancel) => {
       setHashTableUserCount(userCount);
@@ -46,7 +46,7 @@ const App: React.FC = () => {
     });
   }, [handlers]);
 
-  // ДОБАВЛЕНО: Обработчики для модального окна размера хеш-таблицы
+  // Обработчики для модального окна размера хеш-таблицы
   const handleHashTableSizeConfirm = (size: number) => {
     if (hashTableSizeResolver) {
       hashTableSizeResolver.resolve(size);

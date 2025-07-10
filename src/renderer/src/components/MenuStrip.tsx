@@ -34,7 +34,7 @@ const MenuStrip: React.FC<MenuStripProps> = ({
     }
   };
 
-  const handleViewModeChange = (mode: "table" | "structure") => {
+  const handleViewModeChange = (mode: "table" | "structure" | "datastructure") => {
     onViewModeChange(mode);
   };
 
@@ -93,7 +93,7 @@ const MenuStrip: React.FC<MenuStripProps> = ({
               }`}
               onClick={() => handleViewModeChange("table")}
             >
-              Таблица
+              📋 Таблица данных
             </button>
             <button
               className={`menu-button ${
@@ -101,7 +101,15 @@ const MenuStrip: React.FC<MenuStripProps> = ({
               }`}
               onClick={() => handleViewModeChange("structure")}
             >
-              Структура данных
+              🏗️ Структура данных (простая)
+            </button>
+            <button
+              className={`menu-button ${
+                currentViewMode === "datastructure" ? "active" : ""
+              }`}
+              onClick={() => handleViewModeChange("datastructure")}
+            >
+              🔧 Структура данных (детальная)
             </button>
           </div>
         </div>

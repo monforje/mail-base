@@ -1,41 +1,31 @@
 // src/renderer/src/services/PackagesService.ts
 import { RedBlackTree } from "../data-structures/RedBlackTree";
+import { DoublyLinkedList } from "../data-structures/DoublyLinkedList";
 import { PackagesArray, PackageData } from "../data-structures/PackagesArray";
 import { Package } from "../types";
 import { logger } from "./Logger";
 
 export class PackagesService {
-  private redBlackTree: RedBlackTree<number>; // Ключ: составной ключ, Значение: индекс массива
+  private redBlackTree: RedBlackTree<DoublyLinkedList<number>>; // Ключ: номер телефона отправителя, Значение: список индексов
   private packagesArray: PackagesArray; // Массив с данными (без senderPhone)
 
   constructor() {
-    this.redBlackTree = new RedBlackTree<number>();
+    this.redBlackTree = new RedBlackTree<DoublyLinkedList<number>>();
     this.packagesArray = new PackagesArray();
     logger.info(
-      "PackagesService: Initialized red-black tree (composite key -> index) and packages array (data without senderPhone)"
+      "PackagesService: Initialized red-black tree (sender phone -> list of indices) and packages array (data without senderPhone)"
     );
   }
 
-  // Генерация составного ключа с числовыми телефонами
-  private generateKey(pkg: Package): string {
-    return `${pkg.senderPhone.toString()}_${pkg.receiverPhone.toString()}_${
-      pkg.date
-    }`;
+  // Генерация ключа - номер телефона отправителя
+  private generateKey(senderPhone: number): string {
+    return senderPhone.toString();
   }
 
   // Основные операции CRUD
   public addPackage(pkg: Package): void {
-    // ИСПРАВЛЕНО: Проверка на дубликат перед добавлением
-    const key = this.generateKey(pkg);
-    if (this.redBlackTree.contains(key)) {
-      logger.warning(
-        `PackagesService: Package with key ${key} already exists, skipping add`
-      );
-      throw new Error(
-        `Package with sender ${pkg.senderPhone}, receiver ${pkg.receiverPhone}, date ${pkg.date} already exists`
-      );
-    }
-
+    const key = this.generateKey(pkg.senderPhone);
+    
     // Извлекаем данные без senderPhone
     const packageData: PackageData = {
       receiverPhone: pkg.receiverPhone.toString(),
@@ -45,8 +35,19 @@ export class PackagesService {
 
     // Добавляем данные в массив
     const index = this.packagesArray.add(packageData);
-    // Сохраняем индекс в дереве
-    this.redBlackTree.insert(key, index);
+
+    // Ищем список для данного отправителя
+    let indexList = this.redBlackTree.search(key);
+    
+    if (indexList === null) {
+      // Создаем новый список для нового отправителя
+      indexList = new DoublyLinkedList<number>();
+      this.redBlackTree.insert(key, indexList);
+    }
+
+    // Добавляем индекс в список
+    indexList.append(index);
+
     logger.info(
       `PackagesService: Added package ${pkg.senderPhone} -> ${pkg.receiverPhone} (${pkg.weight}kg, ${pkg.date}) at index ${index}`
     );
@@ -57,22 +58,22 @@ export class PackagesService {
     const allKeys = this.redBlackTree.keys();
 
     for (const key of allKeys) {
-      const index = this.redBlackTree.search(key);
-      if (index !== null) {
-        const packageData = this.packagesArray.get(index);
-        if (packageData) {
-          // Восстанавливаем senderPhone из ключа
-          const keyParts = key.split("_");
-          const senderPhone = parseInt(keyParts[0], 10);
-          const receiverPhone = parseInt(packageData.receiverPhone, 10);
-
-          const pkg: Package = {
-            senderPhone: senderPhone,
-            receiverPhone: receiverPhone,
-            weight: packageData.weight,
-            date: packageData.date,
-          };
-          packages.push(pkg);
+      const senderPhone = parseInt(key, 10);
+      const indexList = this.redBlackTree.search(key);
+      
+      if (indexList !== null) {
+        for (const index of indexList) {
+          const packageData = this.packagesArray.get(index);
+          if (packageData) {
+            const receiverPhone = parseInt(packageData.receiverPhone, 10);
+            const pkg: Package = {
+              senderPhone: senderPhone,
+              receiverPhone: receiverPhone,
+              weight: packageData.weight,
+              date: packageData.date,
+            };
+            packages.push(pkg);
+          }
         }
       }
     }
@@ -83,41 +84,36 @@ export class PackagesService {
     return packages;
   }
 
-  public getPackage(key: string): Package | null {
-    // Получаем индекс из дерева
-    const index = this.redBlackTree.search(key);
-    if (index === null) {
+  public getPackagesBySender(senderPhone: number): Package[] {
+    const key = this.generateKey(senderPhone);
+    const indexList = this.redBlackTree.search(key);
+    const packages: Package[] = [];
+
+    if (indexList === null) {
       logger.debug(
-        `PackagesService: Get package by key ${key} - not found in tree`
+        `PackagesService: Get packages by sender ${senderPhone} - not found in tree`
       );
-      return null;
+      return packages;
     }
 
-    // Получаем данные из массива по индексу
-    const packageData = this.packagesArray.get(index);
-    if (packageData === null) {
-      logger.error(
-        `PackagesService: Get package by key ${key} - invalid index ${index} in array`
-      );
-      return null;
+    for (const index of indexList) {
+      const packageData = this.packagesArray.get(index);
+      if (packageData) {
+        const receiverPhone = parseInt(packageData.receiverPhone, 10);
+        const pkg: Package = {
+          senderPhone: senderPhone,
+          receiverPhone: receiverPhone,
+          weight: packageData.weight,
+          date: packageData.date,
+        };
+        packages.push(pkg);
+      }
     }
-
-    // Восстанавливаем senderPhone из ключа
-    const keyParts = key.split("_");
-    const senderPhone = parseInt(keyParts[0], 10);
-    const receiverPhone = parseInt(packageData.receiverPhone, 10);
-
-    const pkg: Package = {
-      senderPhone: senderPhone,
-      receiverPhone: receiverPhone,
-      weight: packageData.weight,
-      date: packageData.date,
-    };
 
     logger.debug(
-      `PackagesService: Get package by key ${key} - found at index ${index}`
+      `PackagesService: Get packages by sender ${senderPhone} - found ${packages.length} packages`
     );
-    return pkg;
+    return packages;
   }
 
   public removePackage(
@@ -125,46 +121,65 @@ export class PackagesService {
     receiverPhone: number,
     date: string
   ): boolean {
-    // Генерируем ключ для поиска
-    const key = `${senderPhone.toString()}_${receiverPhone.toString()}_${date}`;
-    const index = this.redBlackTree.search(key);
+    const key = this.generateKey(senderPhone);
+    const indexList = this.redBlackTree.search(key);
 
-    if (index === null) {
+    if (indexList === null) {
       logger.warning(
-        `PackagesService: Remove package ${senderPhone} -> ${receiverPhone} (${date}) - not found`
+        `PackagesService: Remove package ${senderPhone} -> ${receiverPhone} (${date}) - sender not found`
       );
       return false;
     }
 
-    // Удаляем из дерева
-    const treeRemoved = this.redBlackTree.delete(key);
-    if (!treeRemoved) {
-      logger.error(`PackagesService: Failed to remove package from tree`);
+    // Ищем нужную посылку в списке индексов
+    let targetIndex = -1;
+    for (const index of indexList) {
+      const packageData = this.packagesArray.get(index);
+      if (packageData && 
+          parseInt(packageData.receiverPhone, 10) === receiverPhone && 
+          packageData.date === date) {
+        targetIndex = index;
+        break;
+      }
+    }
+
+    if (targetIndex === -1) {
+      logger.warning(
+        `PackagesService: Remove package ${senderPhone} -> ${receiverPhone} (${date}) - package not found`
+      );
       return false;
     }
 
+    // Удаляем индекс из списка
+    indexList.remove(targetIndex);
+
+    // Если список стал пустым, удаляем ключ из дерева
+    if (indexList.isEmpty()) {
+      this.redBlackTree.delete(key);
+    }
+
     // Удаляем из массива и получаем информацию о перемещении
-    const moveInfo = this.packagesArray.remove(index);
+    const moveInfo = this.packagesArray.remove(targetIndex);
 
     if (moveInfo) {
-      // Если элемент был перемещен, нужно найти ключ, который указывал на старый индекс
-      // и обновить его на новый индекс
+      // Обновляем все списки, которые содержат перемещенный индекс
       const allKeys = this.redBlackTree.keys();
       for (const searchKey of allKeys) {
-        const currentIndex = this.redBlackTree.search(searchKey);
-        if (currentIndex === moveInfo.movedFromIndex) {
-          this.redBlackTree.delete(searchKey);
-          this.redBlackTree.insert(searchKey, moveInfo.newIndex);
-          logger.debug(
-            `PackagesService: Updated index for key ${searchKey} from ${moveInfo.movedFromIndex} to ${moveInfo.newIndex}`
-          );
-          break;
+        const list = this.redBlackTree.search(searchKey);
+        if (list !== null) {
+          // Заменяем старый индекс на новый во всех списках
+          if (list.remove(moveInfo.movedFromIndex)) {
+            list.append(moveInfo.newIndex);
+            logger.debug(
+              `PackagesService: Updated index in list for key ${searchKey} from ${moveInfo.movedFromIndex} to ${moveInfo.newIndex}`
+            );
+          }
         }
       }
     }
 
     logger.info(
-      `PackagesService: Remove package ${senderPhone} -> ${receiverPhone} (${date}) - success (was at index ${index})`
+      `PackagesService: Remove package ${senderPhone} -> ${receiverPhone} (${date}) - success (was at index ${targetIndex})`
     );
     return true;
   }
@@ -180,9 +195,7 @@ export class PackagesService {
 
   // Операции поиска
   public findPackagesBySender(senderPhone: number): Package[] {
-    const results = this.getAllPackages().filter(
-      (pkg) => pkg.senderPhone === senderPhone
-    );
+    const results = this.getPackagesBySender(senderPhone);
     logger.info(
       `PackagesService: Search by sender ${senderPhone} - ${results.length} results`
     );
@@ -233,64 +246,39 @@ export class PackagesService {
     return results;
   }
 
-  // ИСПРАВЛЕНО: Массовые операции с проверкой дубликатов
+  // Массовые операции
   public loadPackages(packages: Package[]): void {
     logger.info(
       `PackagesService: Starting load of ${packages.length} packages`
     );
     this.clear();
 
-    const duplicates: string[] = [];
     const loaded: string[] = [];
 
     packages.forEach((pkg, index) => {
-      const key = this.generateKey(pkg);
-
-      // ИСПРАВЛЕНО: Проверка на дубликаты в загружаемых данных
-      if (this.redBlackTree.contains(key)) {
-        duplicates.push(
-          `${pkg.senderPhone}->${pkg.receiverPhone}(${pkg.date})`
-        );
-        logger.warning(
-          `PackagesService: Duplicate package ${key} skipped (line ${
-            index + 1
-          })`
-        );
-      } else {
-        try {
-          this.addPackageInternal(pkg); // Используем внутренний метод без дополнительной проверки
-          loaded.push(key);
-          if (loaded.length % 10 === 0 || index === packages.length - 1) {
-            logger.debug(
-              `PackagesService: Loaded ${loaded.length}/${packages.length} packages`
-            );
-          }
-        } catch (error) {
-          logger.error(
-            `PackagesService: Failed to load package ${key}: ${error}`
+      try {
+        this.addPackageInternal(pkg);
+        loaded.push(`${pkg.senderPhone}->${pkg.receiverPhone}(${pkg.date})`);
+        if (loaded.length % 10 === 0 || index === packages.length - 1) {
+          logger.debug(
+            `PackagesService: Loaded ${loaded.length}/${packages.length} packages`
           );
         }
+      } catch (error) {
+        logger.error(
+          `PackagesService: Failed to load package: ${error}`
+        );
       }
     });
 
-    // ИСПРАВЛЕНО: Отчет о дубликатах как требуется по ТЗ
-    if (duplicates.length > 0) {
-      logger.warning(
-        `PackagesService: Found ${
-          duplicates.length
-        } duplicate packages: ${duplicates.join(", ")}`
-      );
-    }
-
     logger.info(
-      `PackagesService: Load complete - ${loaded.length} packages loaded, ${duplicates.length} duplicates skipped`
+      `PackagesService: Load complete - ${loaded.length} packages loaded`
     );
     this.logTreeStatistics();
   }
 
   /**
-   * Внутренний метод добавления без проверки дубликатов
-   * Используется при массовой загрузке после проверки
+   * Внутренний метод добавления
    */
   private addPackageInternal(pkg: Package): void {
     const packageData: PackageData = {
@@ -300,8 +288,15 @@ export class PackagesService {
     };
 
     const index = this.packagesArray.add(packageData);
-    const key = this.generateKey(pkg);
-    this.redBlackTree.insert(key, index);
+    const key = this.generateKey(pkg.senderPhone);
+    
+    let indexList = this.redBlackTree.search(key);
+    if (indexList === null) {
+      indexList = new DoublyLinkedList<number>();
+      this.redBlackTree.insert(key, indexList);
+    }
+    
+    indexList.append(index);
     logger.debug(
       `PackagesService: Internal add package ${key} at index ${index}`
     );
@@ -366,15 +361,27 @@ export class PackagesService {
       { count: number; totalWeight: number }
     >();
 
-    this.getAllPackages().forEach((pkg) => {
-      const current = senderStats.get(pkg.senderPhone) || {
-        count: 0,
-        totalWeight: 0,
-      };
-      current.count++;
-      current.totalWeight += pkg.weight;
-      senderStats.set(pkg.senderPhone, current);
-    });
+    // Проходим по всем ключам в дереве
+    const allKeys = this.redBlackTree.keys();
+    for (const key of allKeys) {
+      const senderPhone = parseInt(key, 10);
+      const indexList = this.redBlackTree.search(key);
+      
+      if (indexList !== null) {
+        let count = 0;
+        let totalWeight = 0;
+        
+        for (const index of indexList) {
+          const packageData = this.packagesArray.get(index);
+          if (packageData) {
+            count++;
+            totalWeight += packageData.weight;
+          }
+        }
+        
+        senderStats.set(senderPhone, { count, totalWeight });
+      }
+    }
 
     const results = Array.from(senderStats.entries())
       .map(([phone, stats]) => ({ phone, ...stats }))
@@ -414,24 +421,27 @@ export class PackagesService {
     blackHeight: number;
     isValid: boolean;
     efficiency: number;
+    uniqueSenders: number;
+    averagePackagesPerSender: number;
   } {
-    const size = this.getCount();
+    const totalPackages = this.getCount();
+    const uniqueSenders = this.redBlackTree.getSize();
     const height = this.getHeight();
-    const theoreticalHeight = size > 0 ? Math.ceil(Math.log2(size + 1)) : 0;
+    const theoreticalHeight = uniqueSenders > 0 ? Math.ceil(Math.log2(uniqueSenders + 1)) : 0;
 
     const stats = {
-      size,
+      size: totalPackages,
       height,
       blackHeight: this.getBlackHeight(),
       isValid: this.isTreeValid(),
       efficiency: theoreticalHeight > 0 ? theoreticalHeight / height : 1,
+      uniqueSenders,
+      averagePackagesPerSender: uniqueSenders > 0 ? totalPackages / uniqueSenders : 0,
     };
 
     logger.debug(
-      `PackagesService: Tree statistics - Size: ${stats.size}, Height: ${
+      `PackagesService: Tree statistics - Total packages: ${stats.size}, Unique senders: ${stats.uniqueSenders}, Height: ${
         stats.height
-      }, Black Height: ${
-        stats.blackHeight
       }, Efficiency: ${stats.efficiency.toFixed(3)}`
     );
     return stats;
@@ -442,7 +452,37 @@ export class PackagesService {
     logger.debug(
       `RedBlackTree Performance: Height: ${stats.height}, Black Height: ${
         stats.blackHeight
-      }, Efficiency: ${stats.efficiency.toFixed(3)}, Valid: ${stats.isValid}`
+      }, Efficiency: ${stats.efficiency.toFixed(3)}, Valid: ${stats.isValid}, Unique Senders: ${stats.uniqueSenders}`
     );
+  }
+
+  // Метод для получения структуры дерева (для отладки)
+  public getTreeStructure(): Array<{
+    senderPhone: number;
+    packageCount: number;
+    indices: number[];
+  }> {
+    const structure: Array<{
+      senderPhone: number;
+      packageCount: number;
+      indices: number[];
+    }> = [];
+
+    const allKeys = this.redBlackTree.keys();
+    for (const key of allKeys) {
+      const senderPhone = parseInt(key, 10);
+      const indexList = this.redBlackTree.search(key);
+      
+      if (indexList !== null) {
+        const indices = indexList.toArray();
+        structure.push({
+          senderPhone,
+          packageCount: indices.length,
+          indices,
+        });
+      }
+    }
+
+    return structure;
   }
 }

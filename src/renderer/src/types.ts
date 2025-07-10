@@ -13,7 +13,8 @@ export interface Package {
   date: string;
 }
 
-export type ViewMode = "table" | "structure";
+// ДОБАВЛЕНО: Новый режим просмотра "datastructure"
+export type ViewMode = "table" | "structure" | "datastructure";
 
 export interface MenuStripProps {
   onUsersClear: () => void;
