@@ -17,8 +17,14 @@ interface HashTableEntry {
 }
 
 const HashTableView: React.FC<HashTableViewProps> = ({}) => {
+  // ДОБАВЛЕНО: Проверка инициализации хеш-таблицы
+  const isInitialized = usersService.isInitialized();
+
   // ИСПРАВЛЕНО: Получаем доступ к внутренней структуре хеш-таблицы через публичный метод
   const getHashTableStructure = (): HashTableEntry[] => {
+    if (!isInitialized) {
+      return [];
+    }
     return usersService.getHashTableEntries();
   };
 
@@ -50,6 +56,22 @@ const HashTableView: React.FC<HashTableViewProps> = ({}) => {
     }
   };
 
+  // ДОБАВЛЕНО: Отображение неинициализированного состояния
+  if (!isInitialized) {
+    return (
+      <div className="hashtable-structure">
+        <div
+          className="empty-message"
+          style={{ padding: "40px 20px", textAlign: "center" }}
+        >
+          Хеш-таблица не инициализирована.
+          <br />
+          Загрузите пользователей из файла.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="hashtable-structure">
       <div
@@ -57,8 +79,17 @@ const HashTableView: React.FC<HashTableViewProps> = ({}) => {
           borderBottom: "1px solid #ccc",
           backgroundColor: "#f9f9f9",
           fontSize: "12px",
+          padding: "8px 12px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
-      ></div>
+      >
+        <span>Структура хеш-таблицы ({hashTableEntries.length} ячеек)</span>
+        <span style={{ color: "#666" }}>
+          Метод серединного квадрата + линейный пробинг
+        </span>
+      </div>
 
       <table className="data-table">
         <thead>

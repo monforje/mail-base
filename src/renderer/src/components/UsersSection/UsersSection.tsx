@@ -27,7 +27,18 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     undefined
   );
 
-  // ИСПРАВЛЕНО: Обработчик поиска с числовым телефоном
+  // ДОБАВЛЕНО: Получение статистики хеш-таблицы
+  const getHashTableInfo = () => {
+    const stats = usersService.getStatistics();
+    const isInitialized = usersService.isInitialized();
+    return {
+      size: stats.size,
+      capacity: stats.capacity,
+      loadFactor: stats.loadFactor,
+      isInitialized,
+    };
+  };
+
   const handleSearch = (phone: number) => {
     const user = usersService.getUser(phone);
     setSearchResult(user);
@@ -39,12 +50,10 @@ const UsersSection: React.FC<UsersSectionProps> = ({
       onDataChange();
       alert("Пользователь успешно добавлен");
     } catch (error) {
-      // ИСПРАВЛЕНО: Обработка ошибки дубликата
       alert(`Ошибка добавления пользователя: ${error}`);
     }
   };
 
-  // ИСПРАВЛЕНО: Обработчик удаления с числовым телефоном
   const handleDelete = (phone: number) => {
     const success = usersService.removeUser(phone);
     if (success) {
@@ -56,6 +65,19 @@ const UsersSection: React.FC<UsersSectionProps> = ({
   };
 
   const openModal = (mode: "search" | "add" | "delete") => {
+    const info = getHashTableInfo();
+
+    // ДОБАВЛЕНО: Проверка инициализации для операций добавления/удаления/поиска
+    if (
+      !info.isInitialized &&
+      (mode === "add" || mode === "delete" || mode === "search")
+    ) {
+      alert(
+        "Хеш-таблица не инициализирована. Сначала загрузите пользователей из файла."
+      );
+      return;
+    }
+
     setModalMode(mode);
     setSearchResult(undefined);
     setIsModalOpen(true);
@@ -66,13 +88,32 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     setSearchResult(undefined);
   };
 
+  // ИЗМЕНЕНО: Форматированный заголовок с информацией о хеш-таблице
+  const getSectionTitle = () => {
+    const info = getHashTableInfo();
+
+    if (!info.isInitialized) {
+      if (viewMode === "structure") {
+        return "Пользователи (Хеш-таблица: не инициализирована)";
+      } else {
+        return `Пользователи`;
+      }
+    }
+
+    if (viewMode === "structure") {
+      return `Пользователи (Хеш-таблица: размер ${info.capacity}, загрузка ${(
+        info.loadFactor * 100
+      ).toFixed(1)}%)`;
+    } else {
+      return `Пользователи`;
+    }
+  };
+
   return (
     <>
       <div className="table-section">
         <div className="section-header">
-          <div className="section-title">
-            Пользователи {viewMode === "structure" && "(Хеш-таблица)"}
-          </div>
+          <div className="section-title">{getSectionTitle()}</div>
           <div className="section-actions">
             <button
               className="action-icon"

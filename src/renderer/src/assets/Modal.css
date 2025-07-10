@@ -19,6 +19,8 @@
     width: 90%;
     max-height: 70vh;
     overflow-y: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .modal-header {
@@ -28,6 +30,7 @@
     padding: 12px 16px;
     border-bottom: 1px solid #ccc;
     background-color: #f0f0f0;
+    border-radius: 4px 4px 0 0;
 }
 
 .modal-header h3 {
@@ -44,6 +47,8 @@
     cursor: pointer;
     color: #666;
     padding: 2px 6px;
+    border-radius: 2px;
+    transition: background-color 0.2s ease;
 }
 
 .modal-close:hover {
@@ -71,11 +76,14 @@
     border: 1px solid #ccc;
     font-size: 14px;
     box-sizing: border-box;
+    border-radius: 3px;
+    transition: border-color 0.2s ease;
 }
 
 .form-group input:focus {
     outline: none;
     border-color: #666;
+    box-shadow: 0 0 0 2px rgba(102, 102, 102, 0.1);
 }
 
 .error-list {
@@ -89,6 +97,7 @@
     font-size: 12px;
     margin-bottom: 4px;
     border: 1px solid #ffcccc;
+    border-radius: 3px;
 }
 
 .search-result {
@@ -96,6 +105,7 @@
     padding: 12px;
     background-color: #f8f8f8;
     border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
 .result-found h4 {
@@ -118,6 +128,7 @@
 
 .search-results-table {
     margin-top: 8px;
+    overflow-x: auto;
 }
 
 .search-results-table table {
@@ -143,6 +154,7 @@
     font-size: 12px;
     color: #666;
     text-align: center;
+    font-style: italic;
 }
 
 .modal-actions {
@@ -161,6 +173,8 @@
     color: #333;
     cursor: pointer;
     font-size: 14px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
 }
 
 .btn-cancel:hover {
@@ -174,8 +188,123 @@
     color: white;
     cursor: pointer;
     font-size: 14px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
 }
 
 .btn-primary:hover {
     background: #555;
+}
+
+.btn-primary:disabled {
+    background: #ccc;
+    border-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Дополнительные стили для модального окна выбора размера хеш-таблицы */
+.hash-table-size-modal .modal-content {
+    max-width: 500px;
+}
+
+.size-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.size-option:hover {
+    border-color: #999;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.size-option.selected {
+    background-color: #e3f2fd;
+    border-color: #1976d2;
+}
+
+.size-option input[type="radio"] {
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.size-option-content {
+    flex: 1;
+}
+
+.size-option-title {
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.size-option-title.recommended {
+    color: #1976d2;
+}
+
+.size-option-description {
+    font-size: 12px;
+    color: #666;
+}
+
+.recommended-badge {
+    color: #4caf50;
+    margin-left: 8px;
+    font-weight: normal;
+}
+
+.custom-size-input {
+    margin-top: 8px;
+    margin-left: 24px;
+}
+
+.custom-size-input input {
+    width: 200px;
+    margin-bottom: 4px;
+}
+
+.custom-size-info {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.info-box {
+    padding: 12px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.info-box p {
+    margin: 0;
+}
+
+.info-box p:first-child {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.warning-box {
+    padding: 12px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    margin-top: 16px;
+}
+
+.warning-box p {
+    margin: 0;
+    font-size: 12px;
+    color: #856404;
+}
+
+.warning-box strong {
+    font-weight: bold;
 }

@@ -9,15 +9,49 @@ export class UsersService {
   private usersArray: UsersArray; // Массив с данными (без телефона)
 
   constructor() {
-    this.hashTable = new HashTable<number>(11); // Начинаем с простого числа
+    // ИЗМЕНЕНО: Создаем неинициализированную хеш-таблицу (размер 0)
+    this.hashTable = new HashTable<number>(0);
     this.usersArray = new UsersArray();
     logger.info(
-      "UsersService: Initialized hash table (phone -> index) and users array (data without phone)"
+      "UsersService: Initialized with empty hash table (size 0) and users array"
     );
+  }
+
+  // ДОБАВЛЕНО: Метод для пересоздания хеш-таблицы с новым размером
+  public reinitializeHashTable(newSize: number): void {
+    // Сохраняем текущие данные
+    const currentUsers = this.getAllUsers();
+
+    // Создаем новую хеш-таблицу с указанным размером
+    this.hashTable = new HashTable<number>(newSize);
+    this.usersArray = new UsersArray();
+
+    logger.info(`UsersService: Reinitialized hash table with size ${newSize}`);
+
+    // Восстанавливаем данные
+    if (currentUsers.length > 0) {
+      currentUsers.forEach((user) => {
+        this.addUserInternal(user);
+      });
+      logger.info(
+        `UsersService: Restored ${currentUsers.length} users to new hash table`
+      );
+    }
+  }
+
+  // ДОБАВЛЕНО: Проверка инициализации хеш-таблицы
+  private ensureHashTableInitialized(): void {
+    if (!this.hashTable.getIsInitialized()) {
+      throw new Error(
+        "Hash table is not initialized. Load users first to set the table size."
+      );
+    }
   }
 
   // Основные операции CRUD
   public addUser(user: User): void {
+    this.ensureHashTableInitialized();
+
     // ИСПРАВЛЕНО: Проверка на дубликат перед добавлением
     const phoneKey = user.phone.toString();
     if (this.hashTable.containsKey(phoneKey)) {
@@ -43,6 +77,13 @@ export class UsersService {
   }
 
   public getUser(phone: number): User | null {
+    if (!this.hashTable.getIsInitialized()) {
+      logger.debug(
+        `UsersService: Get user ${phone} - hash table not initialized`
+      );
+      return null;
+    }
+
     // Получаем индекс из хеш-таблицы по телефону
     const phoneKey = phone.toString();
     const index = this.hashTable.get(phoneKey);
@@ -72,6 +113,11 @@ export class UsersService {
   }
 
   public getAllUsers(): User[] {
+    if (!this.hashTable.getIsInitialized()) {
+      logger.debug(`UsersService: Get all users - hash table not initialized`);
+      return [];
+    }
+
     const users: User[] = [];
     const allPhoneKeys = this.hashTable.keys();
 
@@ -88,6 +134,13 @@ export class UsersService {
   }
 
   public removeUser(phone: number): boolean {
+    if (!this.hashTable.getIsInitialized()) {
+      logger.warning(
+        `UsersService: Remove user ${phone} - hash table not initialized`
+      );
+      return false;
+    }
+
     // Получаем индекс удаляемого пользователя
     const phoneKey = phone.toString();
     const index = this.hashTable.get(phoneKey);
@@ -129,6 +182,10 @@ export class UsersService {
   }
 
   public hasUser(phone: number): boolean {
+    if (!this.hashTable.getIsInitialized()) {
+      return false;
+    }
+
     const phoneKey = phone.toString();
     const exists = this.hashTable.containsKey(phoneKey);
     logger.debug(`UsersService: Check user ${phone} exists - ${exists}`);
@@ -137,9 +194,14 @@ export class UsersService {
 
   public clear(): void {
     const countBefore = this.usersArray.size();
-    this.hashTable.clear();
+
+    // ИЗМЕНЕНО: Сбрасываем хеш-таблицу к размеру 0
+    this.hashTable.clear(); // Теперь вернет к неинициализированному состоянию
     this.usersArray.clear();
-    logger.warning(`UsersService: Cleared all users (${countBefore} removed)`);
+
+    logger.warning(
+      `UsersService: Cleared all users (${countBefore} removed) - hash table reset to size 0`
+    );
   }
 
   // Операции поиска
@@ -163,10 +225,26 @@ export class UsersService {
     return results;
   }
 
-  // ИСПРАВЛЕНО: Массовые операции с проверкой дубликатов
-  public loadUsers(users: User[]): void {
+  // ИЗМЕНЕНО: Массовые операции с поддержкой пользовательского размера хеш-таблицы
+  public loadUsers(users: User[], customHashTableSize?: number): void {
     logger.info(`UsersService: Starting load of ${users.length} users`);
-    this.clear();
+
+    // ИЗМЕНЕНО: Всегда создаем новую хеш-таблицу с указанным размером
+    if (customHashTableSize && customHashTableSize > 0) {
+      logger.info(
+        `UsersService: Creating hash table with custom size: ${customHashTableSize}`
+      );
+      this.hashTable = new HashTable<number>(customHashTableSize);
+    } else {
+      // Если размер не указан, используем оптимальный размер на основе количества пользователей
+      const optimalSize = Math.max(11, Math.ceil(users.length / 0.75));
+      logger.info(
+        `UsersService: Creating hash table with optimal size: ${optimalSize}`
+      );
+      this.hashTable = new HashTable<number>(optimalSize);
+    }
+
+    this.usersArray = new UsersArray();
 
     const duplicates: number[] = [];
     const loaded: number[] = [];
@@ -208,9 +286,17 @@ export class UsersService {
       );
     }
 
+    // ДОБАВЛЕНО: Логирование финального размера хеш-таблицы
+    const finalStats = this.getStatistics();
     logger.info(
       `UsersService: Load complete - ${loaded.length} users loaded, ${duplicates.length} duplicates skipped`
     );
+    logger.info(
+      `UsersService: Final hash table - Size: ${
+        finalStats.capacity
+      }, Load Factor: ${finalStats.loadFactor.toFixed(3)}`
+    );
+
     this.logStatistics();
   }
 
@@ -243,6 +329,11 @@ export class UsersService {
 
   public getLoadFactor(): number {
     return this.hashTable.getLoadFactor();
+  }
+
+  // ДОБАВЛЕНО: Проверка инициализации для внешнего использования
+  public isInitialized(): boolean {
+    return this.hashTable.getIsInitialized();
   }
 
   public getStatistics(): {
@@ -283,6 +374,17 @@ export class UsersService {
     finalHash: number;
     tableIndex: number;
   } {
+    if (!this.hashTable.getIsInitialized()) {
+      return {
+        originalKey: key,
+        numericRepresentation: 0,
+        squared: 0,
+        middleDigits: "N/A",
+        finalHash: 0,
+        tableIndex: 0,
+      };
+    }
+
     // Дублируем логику хеш-функции для демонстрации
     let numericKey = 0;
     for (let i = 0; i < key.length; i++) {
@@ -325,6 +427,10 @@ export class UsersService {
     status: "empty" | "occupied" | "deleted";
     hashValue?: number;
   }> {
+    if (!this.hashTable.getIsInitialized()) {
+      return [];
+    }
+
     // ИСПРАВЛЕНО: Используем публичный метод вместо прямого доступа к приватному полю
     const tableStructure = this.hashTable.getTableStructure();
     const entries: Array<{

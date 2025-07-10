@@ -25,10 +25,54 @@ export class AppHandlers {
     this.setViewMode = setViewMode;
   }
 
-  handleUsersLoad = (loadedUsers: User[]) => {
+  // ДОБАВЛЕНО: Метод для установки callback'а для выбора размера хеш-таблицы
+  private hashTableSizeCallback:
+    | ((
+        userCount: number,
+        onConfirm: (size: number) => void,
+        onCancel: () => void
+      ) => void)
+    | null = null;
+
+  public setHashTableSizeCallback(
+    callback: (
+      userCount: number,
+      onConfirm: (size: number) => void,
+      onCancel: () => void
+    ) => void
+  ) {
+    this.hashTableSizeCallback = callback;
+  }
+
+  // ДОБАВЛЕНО: Асинхронный выбор размера хеш-таблицы через UI
+  private askForHashTableSize(userCount: number): Promise<number | null> {
+    return new Promise((resolve) => {
+      if (this.hashTableSizeCallback) {
+        this.hashTableSizeCallback(
+          userCount,
+          (size: number) => resolve(size),
+          () => resolve(null)
+        );
+      } else {
+        // Fallback к простому prompt если callback не установлен
+        const choice = prompt(
+          `Введите размер хеш-таблицы для ${userCount} пользователей:`
+        );
+        if (choice === null) {
+          resolve(null);
+        } else {
+          const parsedSize = parseInt(choice, 10);
+          resolve(isNaN(parsedSize) ? null : Math.max(11, parsedSize));
+        }
+      }
+    });
+  }
+
+  handleUsersLoad = (loadedUsers: User[], customHashTableSize?: number) => {
     console.log("Loading users:", loadedUsers);
     try {
-      usersService.loadUsers(loadedUsers);
+      // ИЗМЕНЕНО: Передаем размер хеш-таблицы в сервис
+      usersService.loadUsers(loadedUsers, customHashTableSize);
       const allUsers = usersService.getAllUsers();
       console.log("Users in service after load:", allUsers);
       this.setUsers(allUsers);
@@ -82,7 +126,6 @@ export class AppHandlers {
       return;
     }
 
-    // ИСПРАВЛЕНО: Форматирование числовых телефонов для сохранения
     const data = currentUsers
       .map(
         (user) => `${user.phone.toString()}\t${user.fullName}\t${user.address}`
@@ -105,7 +148,6 @@ export class AppHandlers {
       return;
     }
 
-    // ИСПРАВЛЕНО: Форматирование числовых телефонов для сохранения
     const data = currentPackages
       .map(
         (pkg) =>
@@ -167,7 +209,7 @@ export class AppHandlers {
       const lines = content.split("\n").filter((line) => line.trim() !== "");
 
       if (expectedType === "users") {
-        // ИСПРАВЛЕНО: Парсинг строковых телефонов в числа
+        // ИЗМЕНЕНО: Сначала парсим пользователей, затем спрашиваем размер хеш-таблицы
         const users: User[] = [];
         const parseErrors: string[] = [];
 
@@ -189,9 +231,28 @@ export class AppHandlers {
           return;
         }
 
-        this.handleUsersLoad(users);
+        // ИЗМЕНЕНО: Используем асинхронный выбор размера хеш-таблицы
+        this.askForHashTableSize(users.length)
+          .then((hashTableSize) => {
+            if (hashTableSize === null) {
+              console.log("User cancelled hash table size selection");
+              return;
+            }
+
+            console.log(
+              `Selected hash table size: ${hashTableSize} for ${users.length} users`
+            );
+            this.handleUsersLoad(users, hashTableSize);
+          })
+          .catch((error) => {
+            console.error("Error in hash table size selection:", error);
+            alert(
+              "Ошибка при выборе размера хеш-таблицы. Используется размер по умолчанию."
+            );
+            this.handleUsersLoad(users);
+          });
       } else {
-        // ИСПРАВЛЕНО: Парсинг строковых телефонов в числа для посылок
+        // Обработка посылок без изменений
         const packages: Package[] = [];
         const parseErrors: string[] = [];
 
