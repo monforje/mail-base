@@ -1,7 +1,23 @@
+// ИСПРАВЛЕНО: Валидация для числовых телефонов вместо строковых
+
 export const validatePhoneNumber = (phone: string): boolean => {
   // Проверяем, что номер состоит только из цифр и имеет длину 11 символов
   const phoneRegex = /^8\d{10}$/;
   return phoneRegex.test(phone.trim());
+};
+
+export const parsePhoneNumber = (phoneStr: string): number | null => {
+  // ДОБАВЛЕНО: Парсинг строки в число с валидацией
+  if (!validatePhoneNumber(phoneStr)) {
+    return null;
+  }
+  const phoneNum = parseInt(phoneStr.trim(), 10);
+  return isNaN(phoneNum) ? null : phoneNum;
+};
+
+export const formatPhoneNumber = (phone: number): string => {
+  // ДОБАВЛЕНО: Форматирование числа обратно в строку для отображения
+  return phone.toString();
 };
 
 export const validateWeight = (weight: string): boolean => {

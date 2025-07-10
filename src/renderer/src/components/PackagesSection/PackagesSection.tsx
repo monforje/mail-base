@@ -27,20 +27,27 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     undefined
   );
 
-  const handleSearch = (senderPhone: string) => {
+  // ИСПРАВЛЕНО: Обработчик поиска с числовым телефоном
+  const handleSearch = (senderPhone: number) => {
     const results = packagesService.findPackagesBySender(senderPhone);
     setSearchResults(results);
   };
 
   const handleAdd = (pkg: Package) => {
-    packagesService.addPackage(pkg);
-    onDataChange();
-    alert("Посылка успешно добавлена");
+    try {
+      packagesService.addPackage(pkg);
+      onDataChange();
+      alert("Посылка успешно добавлена");
+    } catch (error) {
+      // ИСПРАВЛЕНО: Обработка ошибки дубликата
+      alert(`Ошибка добавления посылки: ${error}`);
+    }
   };
 
+  // ИСПРАВЛЕНО: Обработчик удаления с числовыми телефонами
   const handleDelete = (
-    senderPhone: string,
-    receiverPhone: string,
+    senderPhone: number,
+    receiverPhone: number,
     date: string
   ) => {
     const success = packagesService.removePackage(

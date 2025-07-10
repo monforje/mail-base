@@ -1,3 +1,4 @@
+// src/renderer/src/components/UsersSection/UsersTable.tsx
 import React from "react";
 import { UsersTableProps } from "../../types";
 import "../../assets/UsersSectionStyles/UsersTable.css";
@@ -22,7 +23,7 @@ const UsersTable: React.FC<UsersTableProps> = ({ users }) => {
         ) : (
           users.map((user, index) => (
             <tr key={index}>
-              <td>{user.phone}</td>
+              <td>{user.phone.toString()}</td>
               <td>{user.fullName}</td>
               <td>{user.address}</td>
             </tr>

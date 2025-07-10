@@ -1,15 +1,15 @@
 // src/renderer/src/components/UsersSection/UserModal.tsx
 import React, { useState, useEffect } from "react";
 import { User } from "../../types";
-import { validatePhoneNumber } from "../../utils";
+import { validatePhoneNumber, parsePhoneNumber } from "../../utils";
 
 interface UserModalProps {
   isOpen: boolean;
   mode: "search" | "add" | "delete";
   onClose: () => void;
-  onSearch: (phone: string) => void;
+  onSearch: (phone: number) => void; // ИСПРАВЛЕНО: числовой телефон
   onAdd: (user: User) => void;
-  onDelete: (phone: string) => void;
+  onDelete: (phone: number) => void; // ИСПРАВЛЕНО: числовой телефон
   searchResult?: User | null;
 }
 
@@ -22,7 +22,7 @@ const UserModal: React.FC<UserModalProps> = ({
   onDelete,
   searchResult,
 }) => {
-  const [phone, setPhone] = useState("");
+  const [phoneStr, setPhoneStr] = useState(""); // Строка для ввода
   const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
@@ -30,7 +30,7 @@ const UserModal: React.FC<UserModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       // Сброс формы при открытии
-      setPhone("");
+      setPhoneStr("");
       setFullName("");
       setAddress("");
       setErrors([]);
@@ -53,9 +53,9 @@ const UserModal: React.FC<UserModalProps> = ({
   const validateForm = (): boolean => {
     const newErrors: string[] = [];
 
-    if (!phone.trim()) {
+    if (!phoneStr.trim()) {
       newErrors.push("Телефон обязателен для заполнения");
-    } else if (!validatePhoneNumber(phone)) {
+    } else if (!validatePhoneNumber(phoneStr)) {
       newErrors.push("Неверный формат телефона (ожидается 8XXXXXXXXXX)");
     }
 
@@ -76,6 +76,13 @@ const UserModal: React.FC<UserModalProps> = ({
     e.preventDefault();
 
     if (!validateForm()) return;
+
+    // ИСПРАВЛЕНО: Парсим телефон в число
+    const phone = parsePhoneNumber(phoneStr);
+    if (phone === null) {
+      setErrors(["Ошибка парсинга номера телефона"]);
+      return;
+    }
 
     switch (mode) {
       case "search":
@@ -126,8 +133,8 @@ const UserModal: React.FC<UserModalProps> = ({
             <input
               id="phone"
               type="text"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              value={phoneStr}
+              onChange={(e) => setPhoneStr(e.target.value)}
               placeholder="8XXXXXXXXXX"
               autoFocus
             />
@@ -175,7 +182,7 @@ const UserModal: React.FC<UserModalProps> = ({
                 <div className="result-found">
                   <h4>Пользователь найден:</h4>
                   <p>
-                    <strong>Телефон:</strong> {searchResult.phone}
+                    <strong>Телефон:</strong> {searchResult.phone.toString()}
                   </p>
                   <p>
                     <strong>ФИО:</strong> {searchResult.fullName}
@@ -186,7 +193,7 @@ const UserModal: React.FC<UserModalProps> = ({
                 </div>
               ) : (
                 <div className="result-not-found">
-                  <p>Пользователь с телефоном {phone} не найден</p>
+                  <p>Пользователь с телефоном {phoneStr} не найден</p>
                 </div>
               )}
             </div>

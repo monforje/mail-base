@@ -17,7 +17,7 @@ interface HashTableEntry {
 }
 
 const HashTableView: React.FC<HashTableViewProps> = ({}) => {
-  // Получаем доступ к внутренней структуре хеш-таблицы через новый метод
+  // ИСПРАВЛЕНО: Получаем доступ к внутренней структуре хеш-таблицы через публичный метод
   const getHashTableStructure = (): HashTableEntry[] => {
     return usersService.getHashTableEntries();
   };
@@ -26,31 +26,40 @@ const HashTableView: React.FC<HashTableViewProps> = ({}) => {
 
   const getStatusText = (status: string): string => {
     switch (status) {
-      case "empty": return "Пусто";
-      case "occupied": return "Занято";
-      case "deleted": return "Удалено";
-      default: return "—";
+      case "empty":
+        return "Пусто";
+      case "occupied":
+        return "Занято";
+      case "deleted":
+        return "Удалено";
+      default:
+        return "—";
     }
   };
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case "empty": return "#f0f0f0";
-      case "occupied": return "#e8f5e8";
-      case "deleted": return "#ffebee";
-      default: return "#ffffff";
+      case "empty":
+        return "#f0f0f0";
+      case "occupied":
+        return "#e8f5e8";
+      case "deleted":
+        return "#ffebee";
+      default:
+        return "#ffffff";
     }
   };
 
   return (
     <div className="hashtable-structure">
-      <div style={{ 
-        borderBottom: "1px solid #ccc", 
-        backgroundColor: "#f9f9f9",
-        fontSize: "12px"
-      }}>
-      </div>
-      
+      <div
+        style={{
+          borderBottom: "1px solid #ccc",
+          backgroundColor: "#f9f9f9",
+          fontSize: "12px",
+        }}
+      ></div>
+
       <table className="data-table">
         <thead>
           <tr>
@@ -70,10 +79,10 @@ const HashTableView: React.FC<HashTableViewProps> = ({}) => {
             </tr>
           ) : (
             hashTableEntries.map((entry, idx) => (
-              <tr 
+              <tr
                 key={idx}
-                style={{ 
-                  backgroundColor: getStatusColor(entry.status)
+                style={{
+                  backgroundColor: getStatusColor(entry.status),
                 }}
               >
                 <td style={{ textAlign: "center", fontWeight: "bold" }}>
@@ -81,18 +90,14 @@ const HashTableView: React.FC<HashTableViewProps> = ({}) => {
                 </td>
                 <td>{entry.key || "—"}</td>
                 <td>
-                  {entry.value && entry.status === "occupied" 
-                    ? `${entry.value.fullName}, ${entry.value.address}` 
-                    : entry.status === "deleted" && entry.value
-                    ? `(удалено) ${entry.value.fullName}`
-                    : "—"
-                  }
+                  {entry.value && entry.status === "occupied"
+                    ? `${entry.value.fullName}, ${entry.value.address}`
+                    : entry.status === "deleted"
+                    ? `(удалено)`
+                    : "—"}
                 </td>
                 <td style={{ textAlign: "center", fontFamily: "monospace" }}>
-                  {entry.hashValue !== undefined 
-                    ? entry.hashValue
-                    : "—"
-                  }
+                  {entry.hashValue !== undefined ? entry.hashValue : "—"}
                 </td>
                 <td style={{ textAlign: "center" }}>
                   {getStatusText(entry.status)}

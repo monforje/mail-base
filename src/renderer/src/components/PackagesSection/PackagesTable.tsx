@@ -1,3 +1,4 @@
+// src/renderer/src/components/PackagesSection/PackagesTable.tsx
 import React from "react";
 import { PackagesTableProps } from "../../types";
 import "../../assets/PackagesSectionStyles/PackagesTable.css";
@@ -23,8 +24,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({ packages }) => {
         ) : (
           packages.map((pkg, index) => (
             <tr key={index}>
-              <td>{pkg.senderPhone}</td>
-              <td>{pkg.receiverPhone}</td>
+              <td>{pkg.senderPhone.toString()}</td>
+              <td>{pkg.receiverPhone.toString()}</td>
               <td>{pkg.weight}</td>
               <td>{pkg.date}</td>
             </tr>

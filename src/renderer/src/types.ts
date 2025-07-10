@@ -1,18 +1,19 @@
 // src/renderer/src/types.ts
+// ИСПРАВЛЕНО: Телефоны теперь числа, а не строки (требование ПО)
 export interface User {
-  phone: string;
+  phone: number; // ИЗМЕНЕНО: было string, стало number
   fullName: string;
   address: string;
 }
 
 export interface Package {
-  senderPhone: string;
-  receiverPhone: string;
+  senderPhone: number; // ИЗМЕНЕНО: было string, стало number
+  receiverPhone: number; // ИЗМЕНЕНО: было string, стало number
   weight: number;
   date: string;
 }
 
-export type ViewMode = 'table' | 'structure';
+export type ViewMode = "table" | "structure";
 
 export interface MenuStripProps {
   onUsersClear: () => void;

@@ -27,22 +27,25 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     undefined
   );
 
-  const handleSearch = (phone: string) => {
+  // ИСПРАВЛЕНО: Обработчик поиска с числовым телефоном
+  const handleSearch = (phone: number) => {
     const user = usersService.getUser(phone);
     setSearchResult(user);
   };
 
   const handleAdd = (user: User) => {
-    if (usersService.hasUser(user.phone)) {
-      alert("Пользователь с таким телефоном уже существует");
-      return;
+    try {
+      usersService.addUser(user);
+      onDataChange();
+      alert("Пользователь успешно добавлен");
+    } catch (error) {
+      // ИСПРАВЛЕНО: Обработка ошибки дубликата
+      alert(`Ошибка добавления пользователя: ${error}`);
     }
-    usersService.addUser(user);
-    onDataChange();
-    alert("Пользователь успешно добавлен");
   };
 
-  const handleDelete = (phone: string) => {
+  // ИСПРАВЛЕНО: Обработчик удаления с числовым телефоном
+  const handleDelete = (phone: number) => {
     const success = usersService.removeUser(phone);
     if (success) {
       onDataChange();

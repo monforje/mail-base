@@ -1,7 +1,11 @@
 // src/renderer/src/handlers/AppHandlers.ts
 import { User, Package, ViewMode } from "../types";
 import { usersService, packagesService } from "../DataServices";
-import { detectFileType, validateFileContent } from "../utils";
+import {
+  detectFileType,
+  validateFileContent,
+  parsePhoneNumber,
+} from "../utils";
 
 export class AppHandlers {
   private setUsers: (users: User[]) => void;
@@ -23,18 +27,28 @@ export class AppHandlers {
 
   handleUsersLoad = (loadedUsers: User[]) => {
     console.log("Loading users:", loadedUsers);
-    usersService.loadUsers(loadedUsers);
-    const allUsers = usersService.getAllUsers();
-    console.log("Users in service after load:", allUsers);
-    this.setUsers(allUsers);
+    try {
+      usersService.loadUsers(loadedUsers);
+      const allUsers = usersService.getAllUsers();
+      console.log("Users in service after load:", allUsers);
+      this.setUsers(allUsers);
+    } catch (error) {
+      console.error("Error loading users:", error);
+      alert(`Ошибка при загрузке пользователей: ${error}`);
+    }
   };
 
   handlePackagesLoad = (loadedPackages: Package[]) => {
     console.log("Loading packages:", loadedPackages);
-    packagesService.loadPackages(loadedPackages);
-    const allPackages = packagesService.getAllPackages();
-    console.log("Packages in service after load:", allPackages);
-    this.setPackages(allPackages);
+    try {
+      packagesService.loadPackages(loadedPackages);
+      const allPackages = packagesService.getAllPackages();
+      console.log("Packages in service after load:", allPackages);
+      this.setPackages(allPackages);
+    } catch (error) {
+      console.error("Error loading packages:", error);
+      alert(`Ошибка при загрузке посылок: ${error}`);
+    }
   };
 
   handleUsersClear = () => {
@@ -68,8 +82,11 @@ export class AppHandlers {
       return;
     }
 
+    // ИСПРАВЛЕНО: Форматирование числовых телефонов для сохранения
     const data = currentUsers
-      .map((user) => `${user.phone}\t${user.fullName}\t${user.address}`)
+      .map(
+        (user) => `${user.phone.toString()}\t${user.fullName}\t${user.address}`
+      )
       .join("\n");
     const blob = new Blob([data], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -88,10 +105,13 @@ export class AppHandlers {
       return;
     }
 
+    // ИСПРАВЛЕНО: Форматирование числовых телефонов для сохранения
     const data = currentPackages
       .map(
         (pkg) =>
-          `${pkg.senderPhone}\t${pkg.receiverPhone}\t${pkg.weight}\t${pkg.date}`
+          `${pkg.senderPhone.toString()}\t${pkg.receiverPhone.toString()}\t${
+            pkg.weight
+          }\t${pkg.date}`
       )
       .join("\n");
     const blob = new Blob([data], { type: "text/plain" });
@@ -147,21 +167,80 @@ export class AppHandlers {
       const lines = content.split("\n").filter((line) => line.trim() !== "");
 
       if (expectedType === "users") {
-        const users: User[] = lines.map((line) => {
-          const [phone, fullName, address] = line.split("\t");
-          return { phone, fullName, address };
+        // ИСПРАВЛЕНО: Парсинг строковых телефонов в числа
+        const users: User[] = [];
+        const parseErrors: string[] = [];
+
+        lines.forEach((line, index) => {
+          const [phoneStr, fullName, address] = line.split("\t");
+          const phone = parsePhoneNumber(phoneStr);
+
+          if (phone === null) {
+            parseErrors.push(
+              `Строка ${index + 1}: неверный формат телефона ${phoneStr}`
+            );
+          } else {
+            users.push({ phone, fullName, address });
+          }
         });
+
+        if (parseErrors.length > 0) {
+          alert(`Ошибки парсинга телефонов:\n${parseErrors.join("\n")}`);
+          return;
+        }
+
         this.handleUsersLoad(users);
       } else {
-        const packages: Package[] = lines.map((line) => {
-          const [senderPhone, receiverPhone, weight, date] = line.split("\t");
-          return {
-            senderPhone,
-            receiverPhone,
-            weight: parseFloat(weight),
-            date,
-          };
+        // ИСПРАВЛЕНО: Парсинг строковых телефонов в числа для посылок
+        const packages: Package[] = [];
+        const parseErrors: string[] = [];
+
+        lines.forEach((line, index) => {
+          const [senderPhoneStr, receiverPhoneStr, weightStr, date] =
+            line.split("\t");
+          const senderPhone = parsePhoneNumber(senderPhoneStr);
+          const receiverPhone = parsePhoneNumber(receiverPhoneStr);
+          const weight = parseFloat(weightStr);
+
+          if (senderPhone === null) {
+            parseErrors.push(
+              `Строка ${
+                index + 1
+              }: неверный формат телефона отправителя ${senderPhoneStr}`
+            );
+          }
+          if (receiverPhone === null) {
+            parseErrors.push(
+              `Строка ${
+                index + 1
+              }: неверный формат телефона получателя ${receiverPhoneStr}`
+            );
+          }
+          if (isNaN(weight)) {
+            parseErrors.push(
+              `Строка ${index + 1}: неверный формат веса ${weightStr}`
+            );
+          }
+
+          if (
+            senderPhone !== null &&
+            receiverPhone !== null &&
+            !isNaN(weight)
+          ) {
+            packages.push({
+              senderPhone,
+              receiverPhone,
+              weight,
+              date,
+            });
+          }
         });
+
+        if (parseErrors.length > 0) {
+          alert(`Ошибки парсинга данных:\n${parseErrors.join("\n")}`);
+          return;
+        }
+
         this.handlePackagesLoad(packages);
       }
     };

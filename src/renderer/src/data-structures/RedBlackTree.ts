@@ -455,7 +455,13 @@ export class RedBlackTree<T> {
     if (node === this.NIL) {
       return 0;
     }
-    return 1 + Math.max(this.calculateHeight(node.left), this.calculateHeight(node.right));
+    return (
+      1 +
+      Math.max(
+        this.calculateHeight(node.left),
+        this.calculateHeight(node.right)
+      )
+    );
   }
 
   /**

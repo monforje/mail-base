@@ -1,15 +1,20 @@
 // src/renderer/src/components/PackagesSection/PackageModal.tsx
 import React, { useState, useEffect } from "react";
 import { Package } from "../../types";
-import { validatePhoneNumber, validateWeight, validateDate } from "../../utils";
+import {
+  validatePhoneNumber,
+  validateWeight,
+  validateDate,
+  parsePhoneNumber,
+} from "../../utils";
 
 interface PackageModalProps {
   isOpen: boolean;
   mode: "search" | "add" | "delete";
   onClose: () => void;
-  onSearch: (senderPhone: string) => void;
+  onSearch: (senderPhone: number) => void; // ИСПРАВЛЕНО: числовой телефон
   onAdd: (pkg: Package) => void;
-  onDelete: (senderPhone: string, receiverPhone: string, date: string) => void;
+  onDelete: (senderPhone: number, receiverPhone: number, date: string) => void; // ИСПРАВЛЕНО: числовые телефоны
   searchResults?: Package[];
 }
 
@@ -22,8 +27,8 @@ const PackageModal: React.FC<PackageModalProps> = ({
   onDelete,
   searchResults,
 }) => {
-  const [senderPhone, setSenderPhone] = useState("");
-  const [receiverPhone, setReceiverPhone] = useState("");
+  const [senderPhoneStr, setSenderPhoneStr] = useState(""); // Строка для ввода
+  const [receiverPhoneStr, setReceiverPhoneStr] = useState(""); // Строка для ввода
   const [weight, setWeight] = useState("");
   const [date, setDate] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
@@ -31,8 +36,8 @@ const PackageModal: React.FC<PackageModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       // Сброс формы при открытии
-      setSenderPhone("");
-      setReceiverPhone("");
+      setSenderPhoneStr("");
+      setReceiverPhoneStr("");
       setWeight("");
       setDate("");
       setErrors([]);
@@ -55,18 +60,18 @@ const PackageModal: React.FC<PackageModalProps> = ({
   const validateForm = (): boolean => {
     const newErrors: string[] = [];
 
-    if (!senderPhone.trim()) {
+    if (!senderPhoneStr.trim()) {
       newErrors.push("Телефон отправителя обязателен для заполнения");
-    } else if (!validatePhoneNumber(senderPhone)) {
+    } else if (!validatePhoneNumber(senderPhoneStr)) {
       newErrors.push(
         "Неверный формат телефона отправителя (ожидается 8XXXXXXXXXX)"
       );
     }
 
     if (mode === "add" || mode === "delete") {
-      if (!receiverPhone.trim()) {
+      if (!receiverPhoneStr.trim()) {
         newErrors.push("Телефон получателя обязателен для заполнения");
-      } else if (!validatePhoneNumber(receiverPhone)) {
+      } else if (!validatePhoneNumber(receiverPhoneStr)) {
         newErrors.push(
           "Неверный формат телефона получателя (ожидается 8XXXXXXXXXX)"
         );
@@ -96,11 +101,23 @@ const PackageModal: React.FC<PackageModalProps> = ({
 
     if (!validateForm()) return;
 
+    // ИСПРАВЛЕНО: Парсим телефоны в числа
+    const senderPhone = parsePhoneNumber(senderPhoneStr);
+    if (senderPhone === null) {
+      setErrors(["Ошибка парсинга номера телефона отправителя"]);
+      return;
+    }
+
     switch (mode) {
       case "search":
         onSearch(senderPhone);
         break;
       case "add":
+        const receiverPhone = parsePhoneNumber(receiverPhoneStr);
+        if (receiverPhone === null) {
+          setErrors(["Ошибка парсинга номера телефона получателя"]);
+          return;
+        }
         onAdd({
           senderPhone,
           receiverPhone,
@@ -110,12 +127,17 @@ const PackageModal: React.FC<PackageModalProps> = ({
         onClose();
         break;
       case "delete":
+        const receiverPhoneForDelete = parsePhoneNumber(receiverPhoneStr);
+        if (receiverPhoneForDelete === null) {
+          setErrors(["Ошибка парсинга номера телефона получателя"]);
+          return;
+        }
         if (
           window.confirm(
-            `Вы уверены, что хотите удалить посылку от ${senderPhone} к ${receiverPhone} от ${date}?`
+            `Вы уверены, что хотите удалить посылку от ${senderPhone} к ${receiverPhoneForDelete} от ${date}?`
           )
         ) {
-          onDelete(senderPhone, receiverPhone, date);
+          onDelete(senderPhone, receiverPhoneForDelete, date);
           onClose();
         }
         break;
@@ -150,8 +172,8 @@ const PackageModal: React.FC<PackageModalProps> = ({
             <input
               id="senderPhone"
               type="text"
-              value={senderPhone}
-              onChange={(e) => setSenderPhone(e.target.value)}
+              value={senderPhoneStr}
+              onChange={(e) => setSenderPhoneStr(e.target.value)}
               placeholder="8XXXXXXXXXX"
               autoFocus
             />
@@ -164,8 +186,8 @@ const PackageModal: React.FC<PackageModalProps> = ({
                 <input
                   id="receiverPhone"
                   type="text"
-                  value={receiverPhone}
-                  onChange={(e) => setReceiverPhone(e.target.value)}
+                  value={receiverPhoneStr}
+                  onChange={(e) => setReceiverPhoneStr(e.target.value)}
                   placeholder="8XXXXXXXXXX"
                 />
               </div>
@@ -222,8 +244,8 @@ const PackageModal: React.FC<PackageModalProps> = ({
                       <tbody>
                         {searchResults.slice(0, 5).map((pkg, index) => (
                           <tr key={index}>
-                            <td>{pkg.senderPhone}</td>
-                            <td>{pkg.receiverPhone}</td>
+                            <td>{pkg.senderPhone.toString()}</td>
+                            <td>{pkg.receiverPhone.toString()}</td>
                             <td>{pkg.weight}</td>
                             <td>{pkg.date}</td>
                           </tr>
@@ -239,7 +261,7 @@ const PackageModal: React.FC<PackageModalProps> = ({
                 </div>
               ) : (
                 <div className="result-not-found">
-                  <p>Посылки от отправителя {senderPhone} не найдены</p>
+                  <p>Посылки от отправителя {senderPhoneStr} не найдены</p>
                 </div>
               )}
             </div>

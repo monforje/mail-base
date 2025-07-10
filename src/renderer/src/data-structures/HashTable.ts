@@ -3,18 +3,19 @@
  * Упрощенная хеш-таблица для курсовой работы по ФСДИА
  * - Метод серединного квадрата для хеш-функции
  * - Линейный пробинг с шагом: h_i(k) = (h(k) + i * k) mod m
+ * - ИСПРАВЛЕНО: Правильная обработка статуса 2 (tombstone) при вставке
  */
 
 export interface HashTableEntry<T> {
   key: string;
   value: T;
-  isDeleted: boolean; // Для обработки удаленных элементов
+  isDeleted: boolean; // Для обработки удаленных элементов (статус 2)
 }
 
 export class HashTable<T> {
   private table: Array<HashTableEntry<T> | null>;
-  private size: number;        // Количество элементов
-  private capacity: number;    // Размер таблицы
+  private size: number; // Количество активных элементов
+  private capacity: number; // Размер таблицы
   private readonly maxLoadFactor: number = 0.75;
 
   constructor(initialCapacity: number = 11) {
@@ -27,7 +28,7 @@ export class HashTable<T> {
 
   /**
    * Метод серединного квадрата для хеш-функции
-   * Возводим числовое представление ключа в квадрат и берем средние разряды
+   * Возвращает беззнаковое значение (положительное число)
    */
   private hash(key: string): number {
     // Преобразуем строку в число
@@ -42,7 +43,7 @@ export class HashTable<T> {
     // Берем средние разряды (метод серединного квадрата)
     const squaredStr = squared.toString();
     const len = squaredStr.length;
-    
+
     let middleDigits: string;
     if (len >= 6) {
       // Берем 4 средних разряда
@@ -58,7 +59,8 @@ export class HashTable<T> {
     }
 
     const hashValue = parseInt(middleDigits, 10);
-    return hashValue % this.capacity;
+    // Возвращаем беззнаковое значение (положительное)
+    return Math.abs(hashValue) % this.capacity;
   }
 
   /**
@@ -83,7 +85,12 @@ export class HashTable<T> {
   }
 
   /**
-   * Вставка элемента
+   * ИСПРАВЛЕННАЯ вставка элемента с правильной обработкой tombstone
+   * Алгоритм "как по книжке":
+   * 1. Ищем ключ по всей цепочке
+   * 2. Запоминаем первый найденный tombstone
+   * 3. Если ключ найден - обновляем
+   * 4. Если ключ не найден - вставляем в первый tombstone или свободную ячейку
    */
   public put(key: string, value: T): void {
     if (key === null || key === undefined) {
@@ -96,20 +103,33 @@ export class HashTable<T> {
     }
 
     let step = 0;
+    let firstTombstoneIndex = -1; // Индекс первого найденного tombstone
     let index = this.probe(key, step);
 
+    // ПРАВИЛЬНЫЙ алгоритм обработки tombstone
     while (step < this.capacity) {
       const entry = this.table[index];
 
-      // Свободная ячейка или удаленная запись
-      if (entry === null || entry.isDeleted) {
-        this.table[index] = { key, value, isDeleted: false };
+      // Пустая ячейка (статус 0) - конец поиска
+      if (entry === null) {
+        // Если есть сохраненный tombstone, используем его
+        const insertIndex =
+          firstTombstoneIndex !== -1 ? firstTombstoneIndex : index;
+        this.table[insertIndex] = { key, value, isDeleted: false };
         this.size++;
         return;
       }
 
-      // Обновление существующего ключа
-      if (entry.key === key && !entry.isDeleted) {
+      // Удаленная запись (статус 2/tombstone)
+      if (entry.isDeleted) {
+        // Запоминаем первый встреченный tombstone, но продолжаем поиск
+        if (firstTombstoneIndex === -1) {
+          firstTombstoneIndex = index;
+        }
+      }
+      // Занятая ячейка (статус 1)
+      else if (entry.key === key) {
+        // Обновление существующего ключа
         entry.value = value;
         return;
       }
@@ -117,6 +137,13 @@ export class HashTable<T> {
       // Переходим к следующей позиции
       step++;
       index = this.probe(key, step);
+    }
+
+    // Если дошли до сюда и есть tombstone, используем его
+    if (firstTombstoneIndex !== -1) {
+      this.table[firstTombstoneIndex] = { key, value, isDeleted: false };
+      this.size++;
+      return;
     }
 
     throw new Error("Hash table is full");
@@ -141,12 +168,12 @@ export class HashTable<T> {
         return null;
       }
 
-      // Найден нужный ключ
+      // Найден нужный ключ (не удаленный)
       if (entry.key === key && !entry.isDeleted) {
         return entry.value;
       }
 
-      // Переходим к следующей позиции
+      // Переходим к следующей позиции (пропускаем tombstone)
       step++;
       index = this.probe(key, step);
     }
@@ -155,7 +182,8 @@ export class HashTable<T> {
   }
 
   /**
-   * Удаление элемента (ленивое удаление)
+   * Удаление элемента (ленивое удаление - tombstone)
+   * Помечаем как удаленный, не нарушая цепочки поиска
    */
   public delete(key: string): boolean {
     if (key === null || key === undefined) {
@@ -173,9 +201,9 @@ export class HashTable<T> {
         return false;
       }
 
-      // Найден нужный ключ
+      // Найден нужный ключ (не удаленный)
       if (entry.key === key && !entry.isDeleted) {
-        entry.isDeleted = true;
+        entry.isDeleted = true; // Помечаем как удаленный (tombstone)
         this.size--;
         return true;
       }
@@ -196,7 +224,8 @@ export class HashTable<T> {
   }
 
   /**
-   * Расширение таблицы
+   * Расширение таблицы с перехешированием
+   * При расширении tombstone не переносятся
    */
   private resize(): void {
     const oldTable = this.table;
@@ -207,7 +236,7 @@ export class HashTable<T> {
     this.table = new Array(this.capacity);
     this.table.fill(null);
 
-    // Перехеширование
+    // Перехеширование только активных элементов
     for (let i = 0; i < oldCapacity; i++) {
       const entry = oldTable[i];
       if (entry !== null && !entry.isDeleted) {
@@ -225,7 +254,7 @@ export class HashTable<T> {
   }
 
   /**
-   * Получение всех ключей
+   * Получение всех ключей (только активных)
    */
   public keys(): string[] {
     const keys: string[] = [];
@@ -239,7 +268,7 @@ export class HashTable<T> {
   }
 
   /**
-   * Получение всех значений
+   * Получение всех значений (только активных)
    */
   public values(): T[] {
     const values: T[] = [];
@@ -289,6 +318,49 @@ export class HashTable<T> {
   }
 
   /**
+   * ДОБАВЛЕН: Публичный метод для получения состояния таблицы
+   * Заменяет прямое обращение к приватному полю table
+   */
+  public getTableStructure(): Array<{
+    index: number;
+    key: string | null;
+    hasValue: boolean;
+    isDeleted: boolean;
+    hashValue: number | null;
+  }> {
+    const structure: Array<{
+      index: number;
+      key: string | null;
+      hasValue: boolean;
+      isDeleted: boolean;
+      hashValue: number | null;
+    }> = [];
+
+    for (let i = 0; i < this.capacity; i++) {
+      const entry = this.table[i];
+      if (entry === null) {
+        structure.push({
+          index: i,
+          key: null,
+          hasValue: false,
+          isDeleted: false,
+          hashValue: null,
+        });
+      } else {
+        structure.push({
+          index: i,
+          key: entry.key,
+          hasValue: true,
+          isDeleted: entry.isDeleted,
+          hashValue: this.hash(entry.key),
+        });
+      }
+    }
+
+    return structure;
+  }
+
+  /**
    * Найти следующее простое число
    */
   private getNextPrime(n: number): number {
@@ -314,7 +386,7 @@ export class HashTable<T> {
   }
 
   /**
-   * Итератор для обхода элементов
+   * Итератор для обхода элементов (только активных)
    */
   public *entries(): IterableIterator<[string, T]> {
     for (let i = 0; i < this.capacity; i++) {

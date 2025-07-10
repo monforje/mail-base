@@ -54,13 +54,15 @@ export class UsersArray {
    * @param index Индекс удаляемых данных пользователя
    * @returns Объект с информацией о перемещении или null если удаление невозможно
    */
-  public remove(index: number): { movedFromIndex: number; newIndex: number } | null {
+  public remove(
+    index: number
+  ): { movedFromIndex: number; newIndex: number } | null {
     if (index < 0 || index >= this.data.length) {
       return null;
     }
 
     const lastIndex = this.data.length - 1;
-    
+
     if (index === lastIndex) {
       // Удаляем последний элемент - просто убираем его
       this.data.pop();
@@ -69,10 +71,10 @@ export class UsersArray {
       // Перемещаем последний элемент на место удаляемого
       this.data[index] = this.data[lastIndex];
       this.data.pop();
-      
+
       return {
         movedFromIndex: lastIndex,
-        newIndex: index
+        newIndex: index,
       };
     }
   }
