@@ -76,6 +76,27 @@ export class PackagesService {
     return removedCount;
   }
 
+  public getArrayIndexForPackage(pkg: Package): number | null {
+    // 1. Берём список индексов для данного отправителя
+    const key = this.generateKey(pkg.senderPhone);
+    const list = this.redBlackTree.search(key);
+    if (!list) return null;
+
+    // 2. Ищем в списке ту самую посылку
+    for (const idx of list) {
+      const data = this.packagesArray.get(idx);
+      if (
+        data &&
+        parseInt(data.receiverPhone, 10) === pkg.receiverPhone &&
+        data.date === pkg.date &&
+        data.weight === pkg.weight // вес даёт 99 % уникальности
+      ) {
+        return idx; // ← настоящий индекс
+      }
+    }
+    return null;
+  }
+
   // Основные операции CRUD
   public addPackage(pkg: Package): void {
     const key = this.generateKey(pkg.senderPhone);

@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Package } from "../../types";
 import "../../assets/ArrayView.css";
+import { packagesService } from "../../DataServices"; // ← вот эта строка нужна
 
 interface PackagesArrayViewProps {
   packages: Package[];
@@ -12,26 +13,20 @@ const PackagesArrayView: React.FC<PackagesArrayViewProps> = ({ packages }) => {
 
   // Получаем все элементы массива (включая пустые)
   const getArrayElements = () => {
-    if (packages.length === 0) {
-      return [];
-    }
+    if (packages.length === 0) return [];
 
-    // Создаем массив элементов на основе данных
-    const elements: Array<{
-      index: number;
-      package: Package | null;
-      isEmpty: boolean;
-    }> = [];
+    const elements: { index: number; package: Package; isEmpty: boolean }[] =
+      [];
 
-    // Добавляем все посылки в соответствии с их позициями в массиве
-    packages.forEach((pkg, index) => {
-      elements.push({
-        index,
-        package: pkg,
-        isEmpty: false,
-      });
+    packages.forEach((pkg) => {
+      const arrayIndex = packagesService.getArrayIndexForPackage(pkg);
+      if (arrayIndex === null) return; // безопасно пропускаем
+
+      elements.push({ index: arrayIndex, package: pkg, isEmpty: false });
     });
 
+    // сортируем, чтобы шло [0] → [1] → …
+    elements.sort((a, b) => a.index - b.index);
     return elements;
   };
 

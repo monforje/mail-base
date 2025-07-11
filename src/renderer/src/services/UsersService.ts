@@ -324,6 +324,11 @@ export class UsersService {
     this.logStatistics();
   }
 
+  public getArrayIndexByPhone(phone: string): number | null {
+    const idx = this.hashTable.get(phone);
+    return typeof idx === "number" ? idx : null; // null, если ещё не найден
+  }
+
   /**
    * Внутренний метод добавления без проверки дубликатов
    * Используется при массовой загрузке после проверки

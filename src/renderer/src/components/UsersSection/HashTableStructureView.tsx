@@ -165,31 +165,10 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
         </thead>
         <tbody>
           {hashTableEntries.map((entry, idx) => {
-            // Получаем индекс в массиве данных для занятых ячеек
-            let arrayIndex: number | null = null;
-            if (entry.status === "occupied" && entry.key) {
-              // Получаем индекс напрямую из хеш-таблицы через публичный API
-              const phoneKey = entry.key;
-              // Используем приватный доступ через any для получения реального индекса
-              try {
-                const hashTable = (usersService as any).hashTable;
-                if (hashTable && hashTable.get) {
-                  const result = hashTable.get(phoneKey);
-                  arrayIndex = typeof result === "number" ? result : null;
-                }
-              } catch (e) {
-                // Fallback - используем порядковый номер среди занятых ячеек
-                const occupiedEntries = hashTableEntries.filter(
-                  (e) => e.status === "occupied"
-                );
-                const currentOccupiedIndex = occupiedEntries.findIndex(
-                  (e) => e.key === entry.key
-                );
-                arrayIndex =
-                  currentOccupiedIndex >= 0 ? currentOccupiedIndex : null;
-              }
-            }
-
+            const arrayIndex: number | null =
+              entry.status === "occupied" && entry.key
+                ? usersService.getArrayIndexByPhone(entry.key) // 👈 новый публичный метод
+                : null;
             return (
               <tr
                 key={idx}

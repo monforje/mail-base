@@ -14,27 +14,32 @@ const UsersArrayView: React.FC<UsersArrayViewProps> = ({ users }) => {
   // Проверяем инициализацию хеш-таблицы
   const isInitialized = usersService.isInitialized();
 
-  // Получаем все элементы массива (включая пустые)
   const getArrayElements = () => {
-    if (!isInitialized || users.length === 0) {
-      return [];
-    }
+    if (!isInitialized || users.length === 0) return [];
 
-    // Создаем массив элементов на основе данных
-    const elements: Array<{
+    const elements: {
       index: number;
       user: User | null;
       isEmpty: boolean;
-    }> = [];
+    }[] = [];
 
-    // Добавляем всех пользователей в соответствии с их позициями в массиве
-    users.forEach((user, index) => {
+    users.forEach((user) => {
+      const arrayIndex = usersService.getArrayIndexByPhone(
+        user.phone.toString()
+      );
+
+      // пропустим, если индекс не найден
+      if (arrayIndex === null) return;
+
       elements.push({
-        index,
+        index: arrayIndex,
         user,
         isEmpty: false,
       });
     });
+
+    // 👉 сортировка по возрастанию индекса
+    elements.sort((a, b) => a.index - b.index);
 
     return elements;
   };
