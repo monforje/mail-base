@@ -2,6 +2,7 @@
 import React from "react";
 import { User } from "../../types";
 import { usersService } from "../../DataServices";
+import "../../assets/StructureView.css";
 
 interface HashTableStructureViewProps {
   users: User[];
@@ -72,7 +73,10 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
   // Отображение неинициализированного состояния
   if (!isInitialized) {
     return (
-      <div className="hashtable-structure-view" style={{ width: "100%", height: "100%", overflow: "auto" }}>
+      <div
+        className="hashtable-structure-view structure-view"
+        style={{ width: "100%", height: "100%", overflow: "auto" }}
+      >
         <div
           style={{
             padding: "40px 20px",
@@ -93,7 +97,10 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
   }
 
   return (
-    <div className="hashtable-structure-view" style={{ width: "100%", height: "100%", overflow: "auto" }}>
+    <div
+      className="hashtable-structure-view structure-view"
+      style={{ width: "100%", height: "100%", overflow: "auto" }}
+    >
       {/* Заголовок с информацией о хеш-таблице */}
       <div
         style={{
@@ -107,11 +114,12 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
         }}
       >
         <span>
-          <strong>Хеш-таблица:</strong> {stats.capacity} ячеек, {stats.size} записей
+          <strong>Хеш-таблица:</strong> {stats.capacity} ячеек, {stats.size}{" "}
+          записей
         </span>
         <span style={{ color: "#666" }}>
-          Загрузка: {(stats.loadFactor * 100).toFixed(1)}% | 
-          Метод серединного квадрата + линейный пробинг
+          Загрузка: {(stats.loadFactor * 100).toFixed(1)}% | Метод серединного
+          квадрата + линейный пробинг
         </span>
       </div>
 
@@ -148,7 +156,9 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
             <th style={{ width: "100px" }}>Статус</th>
             <th style={{ width: "140px" }}>Ключ (Телефон)</th>
             <th style={{ width: "80px", textAlign: "center" }}>Хеш</th>
-            <th style={{ width: "80px", textAlign: "center" }}>Индекс массива</th>
+            <th style={{ width: "80px", textAlign: "center" }}>
+              Индекс массива
+            </th>
             <th style={{ width: "180px" }}>ФИО</th>
             <th>Адрес</th>
           </tr>
@@ -165,13 +175,18 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
                 const hashTable = (usersService as any).hashTable;
                 if (hashTable && hashTable.get) {
                   const result = hashTable.get(phoneKey);
-                  arrayIndex = typeof result === 'number' ? result : null;
+                  arrayIndex = typeof result === "number" ? result : null;
                 }
               } catch (e) {
                 // Fallback - используем порядковый номер среди занятых ячеек
-                const occupiedEntries = hashTableEntries.filter(e => e.status === "occupied");
-                const currentOccupiedIndex = occupiedEntries.findIndex(e => e.key === entry.key);
-                arrayIndex = currentOccupiedIndex >= 0 ? currentOccupiedIndex : null;
+                const occupiedEntries = hashTableEntries.filter(
+                  (e) => e.status === "occupied"
+                );
+                const currentOccupiedIndex = occupiedEntries.findIndex(
+                  (e) => e.key === entry.key
+                );
+                arrayIndex =
+                  currentOccupiedIndex >= 0 ? currentOccupiedIndex : null;
               }
             }
 
@@ -183,40 +198,33 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
                   borderLeft: `3px solid ${getStatusBadgeColor(entry.status)}`,
                 }}
               >
-                <td style={{ textAlign: "center", fontWeight: "bold", fontFamily: "monospace" }}>
+                <td
+                  style={{
+                    textAlign: "center",
+                    fontWeight: "bold",
+                    fontFamily: "monospace",
+                  }}
+                >
                   {entry.index}
                 </td>
                 <td>
-                  <span
-                    style={{
-                      display: "inline-block",
-                      padding: "2px 6px",
-                      borderRadius: "3px",
-                      fontSize: "10px",
-                      fontWeight: "bold",
-                      color: "white",
-                      backgroundColor: getStatusBadgeColor(entry.status),
-                    }}
-                  >
+                  <span className={`status-badge ${entry.status}`}>
                     {getStatusText(entry.status)}
                   </span>
                 </td>
-                <td style={{ fontFamily: "monospace" }}>
-                  {entry.key || "—"}
-                </td>
+                <td style={{ fontFamily: "monospace" }}>{entry.key || "—"}</td>
                 <td style={{ textAlign: "center", fontFamily: "monospace" }}>
                   {entry.hashValue !== undefined ? entry.hashValue : "—"}
                 </td>
-                <td style={{ textAlign: "center", fontFamily: "monospace", fontWeight: "bold" }}>
+                <td
+                  style={{
+                    textAlign: "center",
+                    fontFamily: "monospace",
+                    fontWeight: "bold",
+                  }}
+                >
                   {entry.status === "occupied" && arrayIndex !== null ? (
-                    <span style={{ 
-                      backgroundColor: "#e3f2fd", 
-                      padding: "2px 4px", 
-                      borderRadius: "3px",
-                      color: "#1976d2"
-                    }}>
-                      [{arrayIndex}]
-                    </span>
+                    <span className="array-index">[{arrayIndex}]</span>
                   ) : entry.status === "deleted" ? (
                     <span style={{ color: "#999" }}>(удален)</span>
                   ) : (
@@ -257,21 +265,38 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
           <strong>Алгоритм хеширования:</strong> Метод серединного квадрата
         </div>
         <div style={{ marginBottom: "4px" }}>
-          <strong>Разрешение коллизий:</strong> Линейный пробинг с шагом h_i(k) = (h(k) + i × k) mod m
+          <strong>Разрешение коллизий:</strong> Линейный пробинг с шагом h_i(k)
+          = (h(k) + i × k) mod m
         </div>
         <div style={{ marginBottom: "4px" }}>
-          <strong>Ленивое удаление:</strong> Удаленные записи помечаются как tombstone (статус "Удалено")
+          <strong>Ленивое удаление:</strong> Удаленные записи помечаются как
+          tombstone (статус "Удалено")
         </div>
         <div style={{ marginBottom: "4px" }}>
-          <strong>Архитектура:</strong> 
-          <span style={{ color: "#1976d2", marginLeft: "8px" }}>Индекс ХТ</span> → 
-          <span style={{ color: "#4caf50", marginLeft: "4px" }}>Ключ (телефон)</span> → 
-          <span style={{ color: "#ff9800", marginLeft: "4px" }}>Хеш-значение</span> → 
-          <span style={{ color: "#1976d2", marginLeft: "4px" }}>[Индекс массива]</span> → 
-          <span style={{ color: "#666", marginLeft: "4px" }}>Данные пользователя</span>
+          <strong>Архитектура:</strong>
+          <span style={{ color: "#1976d2", marginLeft: "8px" }}>
+            Индекс ХТ
+          </span>{" "}
+          →
+          <span style={{ color: "#4caf50", marginLeft: "4px" }}>
+            Ключ (телефон)
+          </span>{" "}
+          →
+          <span style={{ color: "#ff9800", marginLeft: "4px" }}>
+            Хеш-значение
+          </span>{" "}
+          →
+          <span style={{ color: "#1976d2", marginLeft: "4px" }}>
+            [Индекс массива]
+          </span>{" "}
+          →
+          <span style={{ color: "#666", marginLeft: "4px" }}>
+            Данные пользователя
+          </span>
         </div>
         <div>
-          <strong>Связь данных:</strong> Хеш-таблица хранит только индексы, фактические данные (ФИО + адрес) находятся в массиве
+          <strong>Связь данных:</strong> Хеш-таблица хранит только индексы,
+          фактические данные (ФИО + адрес) находятся в массиве
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import PackagesTable from "./PackagesTable";
 import RBTreeView from "./RBTreeView";
 import RBTreeStructureView from "./RBTreeStructureView";
+import PackagesArrayView from "./PackagesArrayView";
 import PackageModal from "./PackageModal";
 import { Package, ViewMode } from "../../types";
 import { packagesService } from "../../DataServices";
@@ -87,6 +88,8 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
       return `Посылки (Красно-черное дерево: ${stats.uniqueSenders} отправителей)`;
     } else if (viewMode === "datastructure") {
       return `Посылки (Детальная структура красно-черного дерева)`;
+    } else if (viewMode === "arrayview") {
+      return `Посылки (Массив данных: ${stats.size} элементов)`;
     } else {
       return `Посылки`;
     }
@@ -101,6 +104,8 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
         return <RBTreeView packages={packages} />;
       case "datastructure":
         return <RBTreeStructureView packages={packages} />;
+      case "arrayview":
+        return <PackagesArrayView packages={packages} />;
       default:
         return <PackagesTable packages={packages} />;
     }
@@ -135,9 +140,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
             </button>
           </div>
         </div>
-        <div className="table-container">
-          {renderContent()}
-        </div>
+        <div className="table-container">{renderContent()}</div>
       </div>
 
       <PackageModal

@@ -34,7 +34,9 @@ const MenuStrip: React.FC<MenuStripProps> = ({
     }
   };
 
-  const handleViewModeChange = (mode: "table" | "structure" | "datastructure") => {
+  const handleViewModeChange = (
+    mode: "table" | "structure" | "datastructure" | "arrayview"
+  ) => {
     onViewModeChange(mode);
   };
 
@@ -110,6 +112,14 @@ const MenuStrip: React.FC<MenuStripProps> = ({
               onClick={() => handleViewModeChange("datastructure")}
             >
               Структура данных (детальная)
+            </button>
+            <button
+              className={`menu-button ${
+                currentViewMode === "arrayview" ? "active" : ""
+              }`}
+              onClick={() => handleViewModeChange("arrayview")}
+            >
+              Отобразить массив данных
             </button>
           </div>
         </div>

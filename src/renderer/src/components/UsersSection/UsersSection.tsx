@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import UsersTable from "./UsersTable";
 import HashTableView from "./HashTableView";
 import HashTableStructureView from "./HashTableStructureView";
+import UsersArrayView from "./UsersArrayView";
 import UserModal from "./UserModal";
 import { User, ViewMode } from "../../types";
 import { usersService } from "../../DataServices";
@@ -94,7 +95,11 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     const info = getHashTableInfo();
 
     if (!info.isInitialized) {
-      if (viewMode === "structure" || viewMode === "datastructure") {
+      if (
+        viewMode === "structure" ||
+        viewMode === "datastructure" ||
+        viewMode === "arrayview"
+      ) {
         return "Пользователи (Хеш-таблица: не инициализирована)";
       } else {
         return `Пользователи`;
@@ -107,6 +112,8 @@ const UsersSection: React.FC<UsersSectionProps> = ({
       ).toFixed(1)}%)`;
     } else if (viewMode === "datastructure") {
       return `Пользователи (Детальная структура хеш-таблицы)`;
+    } else if (viewMode === "arrayview") {
+      return `Пользователи (Массив данных: ${info.size} элементов)`;
     } else {
       return `Пользователи`;
     }
@@ -121,6 +128,8 @@ const UsersSection: React.FC<UsersSectionProps> = ({
         return <HashTableView users={users} />;
       case "datastructure":
         return <HashTableStructureView users={users} />;
+      case "arrayview":
+        return <UsersArrayView users={users} />;
       default:
         return <UsersTable users={users} />;
     }
@@ -155,9 +164,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
             </button>
           </div>
         </div>
-        <div className="table-container">
-          {renderContent()}
-        </div>
+        <div className="table-container">{renderContent()}</div>
       </div>
 
       <UserModal
