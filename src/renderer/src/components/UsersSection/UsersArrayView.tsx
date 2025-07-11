@@ -50,7 +50,9 @@ const UsersArrayView: React.FC<UsersArrayViewProps> = ({ users }) => {
   };
 
   const formatTooltipContent = (user: User) => {
-    return `ФИО: ${user.fullName}\nАдрес: ${user.address}`;
+    return `Телефон: ${user.phone.toString()}\nФИО: ${user.fullName}\nАдрес: ${
+      user.address
+    }`;
   };
 
   if (!isInitialized) {
@@ -83,41 +85,39 @@ const UsersArrayView: React.FC<UsersArrayViewProps> = ({ users }) => {
 
   return (
     <div className="array-view">
-      <div className="array-container">
-        {/* Элементы массива */}
-        <div className="array-elements">
-          {arrayElements.map((element) => (
-            <div
-              key={element.index}
-              className={`array-element ${element.isEmpty ? "empty" : ""}`}
-              onMouseEnter={() => handleMouseEnter(element.index)}
-              onMouseLeave={handleMouseLeave}
-            >
-              {/* Индекс элемента */}
-              <div className="element-index">[{element.index}]</div>
+      {/* Элементы массива */}
+      <div className="array-elements">
+        {arrayElements.map((element) => (
+          <div
+            key={element.index}
+            className={`array-element ${element.isEmpty ? "empty" : ""}`}
+            onMouseEnter={() => handleMouseEnter(element.index)}
+            onMouseLeave={handleMouseLeave}
+          >
+            {/* Индекс элемента */}
+            <div className="element-index">[{element.index}]</div>
 
-              {element.isEmpty ? (
-                <div className="element-empty">Пусто</div>
-              ) : element.user ? (
-                <>
-                  {/* Ключ (телефон) */}
-                  <div className="element-key">
-                    {element.user.phone.toString()}
+            {element.isEmpty ? (
+              <div className="element-empty">Пусто</div>
+            ) : element.user ? (
+              <>
+                {/* Ключ (телефон) */}
+                <div className="element-key">
+                  {element.user.phone.toString()}
+                </div>
+
+                {/* Tooltip с полной информацией */}
+                {hoveredIndex === element.index && (
+                  <div className="array-tooltip">
+                    {formatTooltipContent(element.user)}
                   </div>
-
-                  {/* Tooltip с полной информацией */}
-                  {hoveredIndex === element.index && (
-                    <div className="array-tooltip">
-                      {formatTooltipContent(element.user)}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="element-empty">Ошибка данных</div>
-              )}
-            </div>
-          ))}
-        </div>
+                )}
+              </>
+            ) : (
+              <div className="element-empty">Ошибка данных</div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -46,9 +46,9 @@ const PackagesArrayView: React.FC<PackagesArrayViewProps> = ({ packages }) => {
   };
 
   const formatTooltipContent = (pkg: Package) => {
-    return `К: ${pkg.receiverPhone.toString()}\nВес: ${pkg.weight} кг\nДата: ${
-      pkg.date
-    }`;
+    return `Телефон: ${pkg.senderPhone.toString()}\nПолучатель: ${pkg.receiverPhone.toString()}\nВес: ${
+      pkg.weight
+    } кг\nДата: ${pkg.date}`;
   };
 
   const getElementKey = (pkg: Package) => {
@@ -57,6 +57,8 @@ const PackagesArrayView: React.FC<PackagesArrayViewProps> = ({ packages }) => {
   };
 
   if (arrayElements.length === 0) {
+    console.log("Current hoveredIndex:", hoveredIndex); // Отладка
+
     return (
       <div className="array-view">
         <div className="array-empty-state">
@@ -72,41 +74,39 @@ const PackagesArrayView: React.FC<PackagesArrayViewProps> = ({ packages }) => {
 
   return (
     <div className="array-view">
-      <div className="array-container">
-        {/* Элементы массива */}
-        <div className="array-elements">
-          {arrayElements.map((element) => (
-            <div
-              key={element.index}
-              className={`array-element ${element.isEmpty ? "empty" : ""}`}
-              onMouseEnter={() => handleMouseEnter(element.index)}
-              onMouseLeave={handleMouseLeave}
-            >
-              {/* Индекс элемента */}
-              <div className="element-index">[{element.index}]</div>
+      {/* Элементы массива */}
+      <div className="array-elements">
+        {arrayElements.map((element) => (
+          <div
+            key={element.index}
+            className={`array-element ${element.isEmpty ? "empty" : ""}`}
+            onMouseEnter={() => handleMouseEnter(element.index)}
+            onMouseLeave={handleMouseLeave}
+          >
+            {/* Индекс элемента */}
+            <div className="element-index">[{element.index}]</div>
 
-              {element.isEmpty ? (
-                <div className="element-empty">Пусто</div>
-              ) : element.package ? (
-                <>
-                  {/* Ключ (отправитель) - показываем для понимания связи с деревом */}
-                  <div className="element-key">
-                    {getElementKey(element.package)}
+            {element.isEmpty ? (
+              <div className="element-empty">Пусто</div>
+            ) : element.package ? (
+              <>
+                {/* Ключ (отправитель) - показываем для понимания связи с деревом */}
+                <div className="element-key">
+                  {getElementKey(element.package)}
+                </div>
+
+                {/* Tooltip с полной информацией */}
+                {hoveredIndex === element.index && (
+                  <div className="array-tooltip">
+                    {formatTooltipContent(element.package)}
                   </div>
-
-                  {/* Tooltip с полной информацией */}
-                  {hoveredIndex === element.index && (
-                    <div className="array-tooltip">
-                      {formatTooltipContent(element.package)}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="element-empty">Ошибка данных</div>
-              )}
-            </div>
-          ))}
-        </div>
+                )}
+              </>
+            ) : (
+              <div className="element-empty">Ошибка данных</div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
