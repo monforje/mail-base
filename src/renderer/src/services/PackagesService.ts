@@ -22,10 +22,64 @@ export class PackagesService {
     return senderPhone.toString();
   }
 
+  // ДОБАВЛЕНО: Метод для каскадного удаления всех посылок отправителя
+  public removeAllPackagesBySender(senderPhone: number): number {
+    const key = this.generateKey(senderPhone);
+    const indexList = this.redBlackTree.search(key);
+
+    if (indexList === null) {
+      logger.debug(
+        `PackagesService: Cascade delete - no packages found for sender ${senderPhone}`
+      );
+      return 0;
+    }
+
+    // Получаем все индексы для удаления
+    const indicesToRemove = indexList.toArray();
+    const removedCount = indicesToRemove.length;
+
+    logger.info(
+      `PackagesService: Starting cascade deletion for sender ${senderPhone} - ${removedCount} packages to remove`
+    );
+
+    // Удаляем ключ из дерева (это удалит весь список)
+    this.redBlackTree.delete(key);
+
+    // Сортируем индексы по убыванию для корректного удаления из массива
+    indicesToRemove.sort((a, b) => b - a);
+
+    // Удаляем элементы из массива и обновляем индексы в других списках
+    for (const targetIndex of indicesToRemove) {
+      const moveInfo = this.packagesArray.remove(targetIndex);
+
+      if (moveInfo) {
+        // Обновляем все списки, которые содержат перемещенный индекс
+        const allKeys = this.redBlackTree.keys();
+        for (const searchKey of allKeys) {
+          const list = this.redBlackTree.search(searchKey);
+          if (list !== null) {
+            // Заменяем старый индекс на новый во всех списках
+            if (list.remove(moveInfo.movedFromIndex)) {
+              list.append(moveInfo.newIndex);
+              logger.debug(
+                `PackagesService: Cascade delete - updated index in list for key ${searchKey} from ${moveInfo.movedFromIndex} to ${moveInfo.newIndex}`
+              );
+            }
+          }
+        }
+      }
+    }
+
+    logger.info(
+      `PackagesService: Cascade deletion completed for sender ${senderPhone} - ${removedCount} packages removed`
+    );
+    return removedCount;
+  }
+
   // Основные операции CRUD
   public addPackage(pkg: Package): void {
     const key = this.generateKey(pkg.senderPhone);
-    
+
     // Извлекаем данные без senderPhone
     const packageData: PackageData = {
       receiverPhone: pkg.receiverPhone.toString(),
@@ -38,7 +92,7 @@ export class PackagesService {
 
     // Ищем список для данного отправителя
     let indexList = this.redBlackTree.search(key);
-    
+
     if (indexList === null) {
       // Создаем новый список для нового отправителя
       indexList = new DoublyLinkedList<number>();
@@ -60,7 +114,7 @@ export class PackagesService {
     for (const key of allKeys) {
       const senderPhone = parseInt(key, 10);
       const indexList = this.redBlackTree.search(key);
-      
+
       if (indexList !== null) {
         for (const index of indexList) {
           const packageData = this.packagesArray.get(index);
@@ -135,9 +189,11 @@ export class PackagesService {
     let targetIndex = -1;
     for (const index of indexList) {
       const packageData = this.packagesArray.get(index);
-      if (packageData && 
-          parseInt(packageData.receiverPhone, 10) === receiverPhone && 
-          packageData.date === date) {
+      if (
+        packageData &&
+        parseInt(packageData.receiverPhone, 10) === receiverPhone &&
+        packageData.date === date
+      ) {
         targetIndex = index;
         break;
       }
@@ -265,9 +321,7 @@ export class PackagesService {
           );
         }
       } catch (error) {
-        logger.error(
-          `PackagesService: Failed to load package: ${error}`
-        );
+        logger.error(`PackagesService: Failed to load package: ${error}`);
       }
     });
 
@@ -289,13 +343,13 @@ export class PackagesService {
 
     const index = this.packagesArray.add(packageData);
     const key = this.generateKey(pkg.senderPhone);
-    
+
     let indexList = this.redBlackTree.search(key);
     if (indexList === null) {
       indexList = new DoublyLinkedList<number>();
       this.redBlackTree.insert(key, indexList);
     }
-    
+
     indexList.append(index);
     logger.debug(
       `PackagesService: Internal add package ${key} at index ${index}`
@@ -366,11 +420,11 @@ export class PackagesService {
     for (const key of allKeys) {
       const senderPhone = parseInt(key, 10);
       const indexList = this.redBlackTree.search(key);
-      
+
       if (indexList !== null) {
         let count = 0;
         let totalWeight = 0;
-        
+
         for (const index of indexList) {
           const packageData = this.packagesArray.get(index);
           if (packageData) {
@@ -378,7 +432,7 @@ export class PackagesService {
             totalWeight += packageData.weight;
           }
         }
-        
+
         senderStats.set(senderPhone, { count, totalWeight });
       }
     }
@@ -427,7 +481,8 @@ export class PackagesService {
     const totalPackages = this.getCount();
     const uniqueSenders = this.redBlackTree.getSize();
     const height = this.getHeight();
-    const theoreticalHeight = uniqueSenders > 0 ? Math.ceil(Math.log2(uniqueSenders + 1)) : 0;
+    const theoreticalHeight =
+      uniqueSenders > 0 ? Math.ceil(Math.log2(uniqueSenders + 1)) : 0;
 
     const stats = {
       size: totalPackages,
@@ -436,11 +491,14 @@ export class PackagesService {
       isValid: this.isTreeValid(),
       efficiency: theoreticalHeight > 0 ? theoreticalHeight / height : 1,
       uniqueSenders,
-      averagePackagesPerSender: uniqueSenders > 0 ? totalPackages / uniqueSenders : 0,
+      averagePackagesPerSender:
+        uniqueSenders > 0 ? totalPackages / uniqueSenders : 0,
     };
 
     logger.debug(
-      `PackagesService: Tree statistics - Total packages: ${stats.size}, Unique senders: ${stats.uniqueSenders}, Height: ${
+      `PackagesService: Tree statistics - Total packages: ${
+        stats.size
+      }, Unique senders: ${stats.uniqueSenders}, Height: ${
         stats.height
       }, Efficiency: ${stats.efficiency.toFixed(3)}`
     );
@@ -452,7 +510,9 @@ export class PackagesService {
     logger.debug(
       `RedBlackTree Performance: Height: ${stats.height}, Black Height: ${
         stats.blackHeight
-      }, Efficiency: ${stats.efficiency.toFixed(3)}, Valid: ${stats.isValid}, Unique Senders: ${stats.uniqueSenders}`
+      }, Efficiency: ${stats.efficiency.toFixed(3)}, Valid: ${
+        stats.isValid
+      }, Unique Senders: ${stats.uniqueSenders}`
     );
   }
 
@@ -472,7 +532,7 @@ export class PackagesService {
     for (const key of allKeys) {
       const senderPhone = parseInt(key, 10);
       const indexList = this.redBlackTree.search(key);
-      
+
       if (indexList !== null) {
         const indices = indexList.toArray();
         structure.push({

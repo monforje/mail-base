@@ -18,7 +18,28 @@ export class ServiceRegistry {
     this.usersService = new UsersService();
     this.packagesService = new PackagesService();
 
+    // ДОБАВЛЕНО: Настройка каскадного удаления
+    this.setupCascadeDelete();
+
     logger.info("ServiceRegistry: All services initialized successfully");
+  }
+
+  // ДОБАВЛЕНО: Метод для настройки каскадного удаления
+  private setupCascadeDelete(): void {
+    // Устанавливаем callback для каскадного удаления посылок при удалении пользователя
+    this.usersService.setUserDeleteCallback((userPhone: number) => {
+      const removedCount =
+        this.packagesService.removeAllPackagesBySender(userPhone);
+      if (removedCount > 0) {
+        logger.info(
+          `ServiceRegistry: Cascade delete - removed ${removedCount} packages for user ${userPhone}`
+        );
+      }
+    });
+
+    logger.info(
+      "ServiceRegistry: Cascade deletion configured - user deletion will remove related packages"
+    );
   }
 
   public static getInstance(): ServiceRegistry {
@@ -44,6 +65,9 @@ export class ServiceRegistry {
 
     this.usersService.clear();
     this.packagesService.clear();
+
+    // ДОБАВЛЕНО: Переустанавливаем каскадное удаление после сброса
+    this.setupCascadeDelete();
 
     logger.info("ServiceRegistry: Services reset complete");
   }

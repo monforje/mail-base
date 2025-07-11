@@ -1,7 +1,8 @@
 // src/renderer/src/components/UsersSection/UserModal.tsx
 import React, { useState, useEffect } from "react";
-import { User } from "../../types";
+import { User, Package } from "../../types";
 import { validatePhoneNumber, parsePhoneNumber } from "../../utils";
+import { packagesService } from "../../DataServices";
 
 interface UserModalProps {
   isOpen: boolean;
@@ -26,6 +27,9 @@ const UserModal: React.FC<UserModalProps> = ({
   const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
+  // ДОБАВЛЕНО: Состояние для отображения информации о каскадном удалении
+  const [relatedPackages, setRelatedPackages] = useState<Package[]>([]);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -34,6 +38,8 @@ const UserModal: React.FC<UserModalProps> = ({
       setFullName("");
       setAddress("");
       setErrors([]);
+      setRelatedPackages([]);
+      setShowDeleteConfirmation(false);
     }
   }, [isOpen, mode]);
 
@@ -72,6 +78,45 @@ const UserModal: React.FC<UserModalProps> = ({
     return newErrors.length === 0;
   };
 
+  // ДОБАВЛЕНО: Функция для проверки связанных посылок перед удалением
+  const checkRelatedPackages = (phone: number): Package[] => {
+    return packagesService.findPackagesBySender(phone);
+  };
+
+  // ДОБАВЛЕНО: Обработчик первого этапа удаления (проверка связанных данных)
+  const handleDeleteStep1 = () => {
+    if (!validateForm()) return;
+
+    const phone = parsePhoneNumber(phoneStr);
+    if (phone === null) {
+      setErrors(["Ошибка парсинга номера телефона"]);
+      return;
+    }
+
+    // Проверяем связанные посылки
+    const packages = checkRelatedPackages(phone);
+    setRelatedPackages(packages);
+    setShowDeleteConfirmation(true);
+  };
+
+  // ДОБАВЛЕНО: Обработчик подтверждения удаления
+  const handleDeleteConfirm = () => {
+    const phone = parsePhoneNumber(phoneStr);
+    if (phone === null) {
+      setErrors(["Ошибка парсинга номера телефона"]);
+      return;
+    }
+
+    onDelete(phone);
+    onClose();
+  };
+
+  // ДОБАВЛЕНО: Обработчик отмены удаления
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirmation(false);
+    setRelatedPackages([]);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -93,125 +138,324 @@ const UserModal: React.FC<UserModalProps> = ({
         onClose();
         break;
       case "delete":
-        if (
-          window.confirm(
-            `Вы уверены, что хотите удалить пользователя ${phone}?`
-          )
-        ) {
-          onDelete(phone);
-          onClose();
-        }
+        // ИЗМЕНЕНО: Переходим к проверке связанных данных вместо прямого удаления
+        handleDeleteStep1();
         break;
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
-      onClose();
+      if (showDeleteConfirmation) {
+        handleDeleteCancel();
+      } else {
+        onClose();
+      }
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div
+      className="modal-overlay"
+      onClick={showDeleteConfirmation ? undefined : onClose}
+    >
       <div
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
+        style={{ maxWidth: showDeleteConfirmation ? "600px" : "400px" }}
       >
         <div className="modal-header">
           <h3>{getTitle()}</h3>
-          <button className="modal-close" onClick={onClose}>
+          <button
+            className="modal-close"
+            onClick={showDeleteConfirmation ? handleDeleteCancel : onClose}
+          >
             ✕
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-group">
-            <label htmlFor="phone">Телефон:</label>
-            <input
-              id="phone"
-              type="text"
-              value={phoneStr}
-              onChange={(e) => setPhoneStr(e.target.value)}
-              placeholder="8XXXXXXXXXX"
-              autoFocus
-            />
-          </div>
-
-          {mode === "add" && (
-            <>
-              <div className="form-group">
-                <label htmlFor="fullName">ФИО:</label>
-                <input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Иванов Иван Иванович"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="address">Адрес:</label>
-                <input
-                  id="address"
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="г. Москва, ул. Примерная, д. 1"
-                />
-              </div>
-            </>
-          )}
-
-          {errors.length > 0 && (
-            <div className="error-list">
-              {errors.map((error, index) => (
-                <div key={index} className="error-message">
-                  {error}
-                </div>
-              ))}
+        {/* ДОБАВЛЕНО: Экран подтверждения удаления с информацией о связанных посылках */}
+        {showDeleteConfirmation ? (
+          <div className="modal-form">
+            <div style={{ marginBottom: "16px" }}>
+              <p
+                style={{
+                  margin: "0 0 12px 0",
+                  fontWeight: "bold",
+                  fontSize: "16px",
+                }}
+              >
+                ⚠️ Подтверждение удаления пользователя
+              </p>
+              <p style={{ margin: "0 0 8px 0" }}>
+                Вы собираетесь удалить пользователя: <strong>{phoneStr}</strong>
+              </p>
             </div>
-          )}
 
-          {mode === "search" && searchResult !== undefined && (
-            <div className="search-result">
-              {searchResult ? (
-                <div className="result-found">
-                  <h4>Пользователь найден:</h4>
-                  <p>
-                    <strong>Телефон:</strong> {searchResult.phone.toString()}
+            {relatedPackages.length > 0 ? (
+              <div style={{ marginBottom: "16px" }}>
+                <div
+                  style={{
+                    padding: "12px",
+                    backgroundColor: "#fff3cd",
+                    border: "1px solid #ffeaa7",
+                    borderRadius: "4px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: "0 0 8px 0",
+                      fontWeight: "bold",
+                      color: "#856404",
+                    }}
+                  >
+                    🚚 Связанные посылки (будут удалены)
                   </p>
-                  <p>
-                    <strong>ФИО:</strong> {searchResult.fullName}
-                  </p>
-                  <p>
-                    <strong>Адрес:</strong> {searchResult.address}
+                  <p
+                    style={{ margin: "0", fontSize: "12px", color: "#856404" }}
+                  >
+                    Найдено {relatedPackages.length} посылок от этого
+                    отправителя. При удалении пользователя все его посылки также
+                    будут удалены.
                   </p>
                 </div>
-              ) : (
-                <div className="result-not-found">
-                  <p>Пользователь с телефоном {phoneStr} не найден</p>
+
+                <div
+                  style={{
+                    maxHeight: "200px",
+                    overflowY: "auto",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: "12px",
+                    }}
+                  >
+                    <thead>
+                      <tr style={{ backgroundColor: "#f8f9fa" }}>
+                        <th
+                          style={{
+                            padding: "6px 8px",
+                            textAlign: "left",
+                            borderBottom: "1px solid #ddd",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Получатель
+                        </th>
+                        <th
+                          style={{
+                            padding: "6px 8px",
+                            textAlign: "left",
+                            borderBottom: "1px solid #ddd",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Вес
+                        </th>
+                        <th
+                          style={{
+                            padding: "6px 8px",
+                            textAlign: "left",
+                            borderBottom: "1px solid #ddd",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Дата
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {relatedPackages.map((pkg, index) => (
+                        <tr
+                          key={index}
+                          style={{
+                            backgroundColor:
+                              index % 2 === 0 ? "#ffffff" : "#f8f9fa",
+                          }}
+                        >
+                          <td
+                            style={{
+                              padding: "4px 8px",
+                              borderBottom: "1px solid #eee",
+                            }}
+                          >
+                            {pkg.receiverPhone.toString()}
+                          </td>
+                          <td
+                            style={{
+                              padding: "4px 8px",
+                              borderBottom: "1px solid #eee",
+                            }}
+                          >
+                            {pkg.weight} кг
+                          </td>
+                          <td
+                            style={{
+                              padding: "4px 8px",
+                              borderBottom: "1px solid #eee",
+                            }}
+                          >
+                            {pkg.date}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              )}
+              </div>
+            ) : (
+              <div style={{ marginBottom: "16px" }}>
+                <div
+                  style={{
+                    padding: "12px",
+                    backgroundColor: "#e8f5e8",
+                    border: "1px solid #c3e6c3",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <p
+                    style={{ margin: "0", fontSize: "14px", color: "#2d5a2d" }}
+                  >
+                    ✅ У этого пользователя нет связанных посылок.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div
+              style={{
+                padding: "12px",
+                backgroundColor: "#ffebee",
+                border: "1px solid #ffcdd2",
+                borderRadius: "4px",
+                marginBottom: "16px",
+              }}
+            >
+              <p style={{ margin: "0", fontSize: "12px", color: "#c62828" }}>
+                <strong>Внимание!</strong> Это действие необратимо.
+                {relatedPackages.length > 0
+                  ? ` Будет удален пользователь и ${relatedPackages.length} связанных посылок.`
+                  : " Будет удален только пользователь."}
+              </p>
             </div>
-          )}
 
-          <div className="modal-actions">
-            <button type="button" onClick={onClose} className="btn-cancel">
-              Отмена
-            </button>
-            <button type="submit" className="btn-primary">
-              {mode === "search"
-                ? "Найти"
-                : mode === "add"
-                ? "Добавить"
-                : "Удалить"}
-            </button>
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={handleDeleteCancel}
+                className="btn-cancel"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                className="btn-primary"
+                style={{ backgroundColor: "#d32f2f", borderColor: "#d32f2f" }}
+              >
+                {relatedPackages.length > 0
+                  ? `Удалить пользователя и ${relatedPackages.length} посылок`
+                  : "Удалить пользователя"}
+              </button>
+            </div>
           </div>
-        </form>
+        ) : (
+          /* Обычная форма */
+          <form onSubmit={handleSubmit} className="modal-form">
+            <div className="form-group">
+              <label htmlFor="phone">Телефон:</label>
+              <input
+                id="phone"
+                type="text"
+                value={phoneStr}
+                onChange={(e) => setPhoneStr(e.target.value)}
+                placeholder="8XXXXXXXXXX"
+                autoFocus
+              />
+            </div>
+
+            {mode === "add" && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="fullName">ФИО:</label>
+                  <input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Иванов Иван Иванович"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="address">Адрес:</label>
+                  <input
+                    id="address"
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="г. Москва, ул. Примерная, д. 1"
+                  />
+                </div>
+              </>
+            )}
+
+            {errors.length > 0 && (
+              <div className="error-list">
+                {errors.map((error, index) => (
+                  <div key={index} className="error-message">
+                    {error}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {mode === "search" && searchResult !== undefined && (
+              <div className="search-result">
+                {searchResult ? (
+                  <div className="result-found">
+                    <h4>Пользователь найден:</h4>
+                    <p>
+                      <strong>Телефон:</strong> {searchResult.phone.toString()}
+                    </p>
+                    <p>
+                      <strong>ФИО:</strong> {searchResult.fullName}
+                    </p>
+                    <p>
+                      <strong>Адрес:</strong> {searchResult.address}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="result-not-found">
+                    <p>Пользователь с телефоном {phoneStr} не найден</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button type="button" onClick={onClose} className="btn-cancel">
+                Отмена
+              </button>
+              <button type="submit" className="btn-primary">
+                {mode === "search"
+                  ? "Найти"
+                  : mode === "add"
+                  ? "Добавить"
+                  : "Проверить связанные данные"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

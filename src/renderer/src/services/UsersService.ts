@@ -7,6 +7,8 @@ import { logger } from "./Logger";
 export class UsersService {
   private hashTable: HashTable<number>; // Ключ: телефон (как строка), Значение: индекс массива
   private usersArray: UsersArray; // Массив с данными (без телефона)
+  // ДОБАВЛЕНО: Callback для каскадного удаления посылок
+  private onUserDeleteCallback: ((phone: number) => void) | null = null;
 
   constructor() {
     // ИЗМЕНЕНО: Создаем неинициализированную хеш-таблицу (размер 0)
@@ -15,6 +17,12 @@ export class UsersService {
     logger.info(
       "UsersService: Initialized with empty hash table (size 0) and users array"
     );
+  }
+
+  // ДОБАВЛЕНО: Метод для установки callback'а каскадного удаления
+  public setUserDeleteCallback(callback: (phone: number) => void): void {
+    this.onUserDeleteCallback = callback;
+    logger.debug("UsersService: Set user delete callback for cascade deletion");
   }
 
   // ДОБАВЛЕНО: Метод для пересоздания хеш-таблицы с новым размером
@@ -147,6 +155,22 @@ export class UsersService {
     if (index === null) {
       logger.warning(`UsersService: Remove user ${phone} - not found`);
       return false;
+    }
+
+    // ДОБАВЛЕНО: Каскадное удаление посылок перед удалением пользователя
+    if (this.onUserDeleteCallback) {
+      logger.info(`UsersService: Executing cascade deletion for user ${phone}`);
+      try {
+        this.onUserDeleteCallback(phone);
+        logger.info(
+          `UsersService: Cascade deletion completed for user ${phone}`
+        );
+      } catch (error) {
+        logger.error(
+          `UsersService: Cascade deletion failed for user ${phone}: ${error}`
+        );
+        // Продолжаем удаление пользователя даже если каскадное удаление не удалось
+      }
     }
 
     // Удаляем из хеш-таблицы
