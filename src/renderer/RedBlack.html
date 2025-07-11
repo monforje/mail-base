@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Red/Black Tree Visualization</title>
+
+    <!-- css sheet for how the page is laid out -->
+
+    <link rel="stylesheet" href="visualizationPageStyle.css" />
+
+    <!-- jqueury stuff.  Only used for the animation speed slider. -->
+    <link rel="stylesheet" href="ThirdParty/jquery-ui-1.8.11.custom.css" />
+    <script src="ThirdParty/jquery-1.5.2.min.js"></script>
+    <script src="ThirdParty/jquery-ui-1.8.11.custom.min.js"></script>
+
+    <!-- Javascript for the actual visualization code -->
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/CustomEvents.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/UndoFunctions.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimatedObject.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimatedLabel.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimatedCircle.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimatedRectangle.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimatedLinkedList.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/HighlightCircle.js"
+    ></script>
+    <script type="text/javascript" src="AnimationLibrary/Line.js"></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/ObjectManager.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimationMain.js"
+    ></script>
+
+    <script type="text/javascript" src="AlgorithmLibrary/Algorithm.js"></script>
+    <script type="text/javascript" src="AlgorithmLibrary/RedBlack.js"></script>
+    <script>
+      window.initialPackages = [
+        {
+          senderPhone: 1234567890,
+          receiverPhone: 9876543210,
+          weight: 2.5,
+          date: "2025-07-12",
+        },
+        {
+          senderPhone: 1112223333,
+          receiverPhone: 4445556666,
+          weight: 1.2,
+          date: "2025-07-11",
+        },
+        // …
+      ];
+    </script>
+
+    <script>
+      (function () {
+        // Переопределяем init, чтобы после init() запустить поллинг
+        if (typeof window.init !== "function") {
+          console.error("init() не найдено");
+          return;
+        }
+        const originalInit = window.init;
+        window.init = function () {
+          // 1) Штатная отрисовка пустого дерева
+          originalInit();
+
+          // 2) Теперь поллинг — ждём, пока PackagesService загрузит данные
+          const interval = setInterval(() => {
+            const svc = window.packagesService; // <- ваш глобальный экземпляр (подключён из main.bundle.js)
+            if (!svc) {
+              console.warn("packagesService не инициализирован");
+              return;
+            }
+            const pkgs = svc.getAllPackages();
+            if (pkgs.length === 0) {
+              // ещё не загрузились
+              return;
+            }
+            clearInterval(interval);
+
+            // 3) Когда появились пакеты — эмулируем клики «Insert» для каждого senderPhone
+            const field = currentAlg.insertField;
+            const button = currentAlg.insertButton;
+            if (!field || !button) {
+              console.error("Не найдено insertField/insertButton в currentAlg");
+              return;
+            }
+
+            pkgs.forEach((pkg) => {
+              const key = pkg.senderPhone.toString();
+              console.log("🔹 вставка пакета через UI:", key);
+              field.value = key;
+              button.click();
+            });
+          }, 300);
+        };
+      })();
+    </script>
+  </head>
+
+  <body onload="init();" class="VisualizationMainPage">
+    <div id="container">
+      <div id="header">
+        <h1>Red/Black Tree</h1>
+      </div>
+
+      <div id="mainContent">
+        <div id="algoControlSection">
+          <!-- Table for buttons to control specific animation (insert/find/etc) -->
+          <!-- (filled in by javascript code specific to the animtion) -->
+          <table id="AlgorithmSpecificControls"></table>
+        </div>
+
+        <!-- Drawing canvas where all animation is done.  Note:  can be resized in code -->
+
+        <canvas id="canvas" width="1000" height="500"></canvas>
+
+        <div id="generalAnimationControlSection">
+          <table id="GeneralAnimationControls"></table>
+        </div>
+      </div>
+
+      <div id="footer">
+        <p><a href="Algorithms.html">Algorithm Visualizations</a></p>
+      </div>
+    </div>
+    <!-- container -->
+  </body>
+</html>

@@ -567,3 +567,4 @@ export class PackagesService {
     return structure;
   }
 }
+export const packagesService = new PackagesService();
