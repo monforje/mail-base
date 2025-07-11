@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Red/Black Tree Visualization</title>
+    <meta charset="UTF-8" />
+
+    <!-- Прямые пути к файлам в src/renderer -->
+    <script src="ThirdParty/jquery-1.5.2.min.js"></script>
+    <script src="ThirdParty/jquery-ui-1.8.11.custom.min.js"></script>
+
+    <!-- Javascript для анимации -->
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/CustomEvents.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/UndoFunctions.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimatedObject.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimatedLabel.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimatedCircle.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimatedRectangle.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimatedLinkedList.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/HighlightCircle.js"
+    ></script>
+    <script type="text/javascript" src="AnimationLibrary/Line.js"></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/ObjectManager.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="AnimationLibrary/AnimationMain.js"
+    ></script>
+
+    <script type="text/javascript" src="AlgorithmLibrary/Algorithm.js"></script>
+    <script type="text/javascript" src="AlgorithmLibrary/RedBlack.js"></script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      #container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      #header h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+      }
+      #canvas {
+        border: 2px solid #ddd;
+        background-color: white;
+        display: block;
+        margin: 0 auto;
+        cursor: grab;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+      }
+      #canvas:active {
+        cursor: grabbing;
+      }
+      #canvas-container {
+        overflow: hidden;
+        position: relative;
+        border: 2px solid #ddd;
+        margin: 0 auto;
+        width: 1000px;
+        height: 500px;
+        background-color: white;
+      }
+      table {
+        margin: 10px auto;
+      }
+      button,
+      input {
+        margin: 0 5px;
+        padding: 5px 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+      button {
+        background-color: #007cba;
+        color: white;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #005a87;
+      }
+      #status {
+        text-align: center;
+        padding: 10px;
+        margin: 10px 0;
+        background-color: #e3f2fd;
+        border-radius: 4px;
+        color: #1565c0;
+      }
+    </style>
+
+    <script>
+      // Глобальные переменные для данных
+      window.packagesToLoad = [];
+      window.treeInitialized = false;
+
+      // Переменные для высокого DPI и перемещения
+      window.canvasScale = 1;
+      window.canvasOffset = { x: 0, y: 0 };
+      window.isDragging = false;
+      window.lastMousePos = { x: 0, y: 0 };
+
+      // Функция для настройки высокого DPI
+      function setupHighDPICanvas(canvas) {
+        const ctx = canvas.getContext("2d");
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        const backingStoreRatio =
+          ctx.webkitBackingStorePixelRatio ||
+          ctx.mozBackingStorePixelRatio ||
+          ctx.msBackingStorePixelRatio ||
+          ctx.oBackingStorePixelRatio ||
+          ctx.backingStorePixelRatio ||
+          1;
+
+        const ratio = devicePixelRatio / backingStoreRatio;
+
+        if (devicePixelRatio !== backingStoreRatio) {
+          const oldWidth = canvas.width;
+          const oldHeight = canvas.height;
+
+          canvas.width = oldWidth * ratio;
+          canvas.height = oldHeight * ratio;
+
+          canvas.style.width = oldWidth + "px";
+          canvas.style.height = oldHeight + "px";
+
+          ctx.scale(ratio, ratio);
+        }
+
+        // Улучшенное сглаживание
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+
+        window.canvasScale = ratio;
+        console.log(`Canvas DPI настроен: ratio = ${ratio}`);
+
+        return ctx;
+      }
+
+      // Функция для настройки перемещения канваса
+      function setupCanvasPanning(canvas) {
+        let isDragging = false;
+        let lastX = 0;
+        let lastY = 0;
+        let translateX = 0;
+        let translateY = 0;
+        let scale = 1;
+
+        // Обработчики мыши
+        canvas.addEventListener("mousedown", function (e) {
+          isDragging = true;
+          lastX = e.clientX;
+          lastY = e.clientY;
+          canvas.style.cursor = "grabbing";
+          e.preventDefault();
+        });
+
+        canvas.addEventListener("mousemove", function (e) {
+          if (!isDragging) return;
+
+          const deltaX = e.clientX - lastX;
+          const deltaY = e.clientY - lastY;
+
+          translateX += deltaX;
+          translateY += deltaY;
+
+          // Применяем трансформацию
+          updateCanvasTransform();
+
+          lastX = e.clientX;
+          lastY = e.clientY;
+          e.preventDefault();
+        });
+
+        canvas.addEventListener("mouseup", function (e) {
+          isDragging = false;
+          canvas.style.cursor = "grab";
+        });
+
+        canvas.addEventListener("mouseleave", function (e) {
+          isDragging = false;
+          canvas.style.cursor = "grab";
+        });
+
+        // Масштабирование колесиком мыши
+        canvas.addEventListener("wheel", function (e) {
+          e.preventDefault();
+
+          const rect = canvas.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+
+          const wheel = e.deltaY < 0 ? 1.1 : 0.9;
+          const newScale = scale * wheel;
+
+          // Ограничиваем масштаб
+          if (newScale >= 0.5 && newScale <= 3) {
+            // Масштабируем относительно позиции мыши
+            translateX = mouseX - (mouseX - translateX) * wheel;
+            translateY = mouseY - (mouseY - translateY) * wheel;
+            scale = newScale;
+
+            updateCanvasTransform();
+          }
+        });
+
+        // Функция обновления трансформации
+        function updateCanvasTransform() {
+          canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        }
+
+        // Обработчики touch для мобильных устройств
+        canvas.addEventListener("touchstart", function (e) {
+          if (e.touches.length === 1) {
+            isDragging = true;
+            const touch = e.touches[0];
+            lastX = touch.clientX;
+            lastY = touch.clientY;
+            e.preventDefault();
+          }
+        });
+
+        canvas.addEventListener("touchmove", function (e) {
+          if (!isDragging || e.touches.length !== 1) return;
+
+          const touch = e.touches[0];
+          const deltaX = touch.clientX - lastX;
+          const deltaY = touch.clientY - lastY;
+
+          translateX += deltaX;
+          translateY += deltaY;
+
+          updateCanvasTransform();
+
+          lastX = touch.clientX;
+          lastY = touch.clientY;
+          e.preventDefault();
+        });
+
+        canvas.addEventListener("touchend", function (e) {
+          isDragging = false;
+        });
+
+        // Сброс позиции и масштаба
+        window.resetCanvasPosition = function () {
+          translateX = 0;
+          translateY = 0;
+          scale = 1;
+          updateCanvasTransform();
+        };
+
+        // Функции для управления масштабом
+        window.zoomIn = function () {
+          if (scale < 3) {
+            scale *= 1.2;
+            updateCanvasTransform();
+          }
+        };
+
+        window.zoomOut = function () {
+          if (scale > 0.5) {
+            scale *= 0.8;
+            updateCanvasTransform();
+          }
+        };
+
+        console.log("Canvas panning и zoom настроены");
+      }
+
+      // Слушаем сообщения от родительского окна
+      window.addEventListener("message", function (event) {
+        console.log("RedBlack.html: Получено сообщение", event.data);
+
+        if (event.data && event.data.type === "LOAD_PACKAGES") {
+          window.packagesToLoad = event.data.packages || [];
+          console.log(
+            `RedBlack.html: Получено ${window.packagesToLoad.length} посылок`
+          );
+
+          // Если дерево уже готово, загружаем сразу
+          if (window.treeInitialized && typeof currentAlg !== "undefined") {
+            loadPackagesIntoTree();
+          }
+        }
+      });
+
+      // Функция загрузки посылок в дерево
+      function loadPackagesIntoTree() {
+        if (!window.packagesToLoad || window.packagesToLoad.length === 0) {
+          console.log("RedBlack.html: Нет посылок для загрузки");
+          return;
+        }
+
+        if (typeof currentAlg === "undefined" || !currentAlg) {
+          console.error("RedBlack.html: currentAlg не определен");
+          return;
+        }
+
+        console.log(
+          `RedBlack.html: Начинаем загрузку ${window.packagesToLoad.length} посылок`
+        );
+
+        // Очищаем дерево
+        try {
+          if (typeof currentAlg.clearCallback === "function") {
+            currentAlg.clearCallback();
+          }
+        } catch (e) {
+          console.warn("RedBlack.html: Не удалось очистить дерево:", e);
+        }
+
+        // Получаем уникальных отправителей
+        const uniqueSenders = [
+          ...new Set(
+            window.packagesToLoad.map((pkg) => pkg.senderPhone.toString())
+          ),
+        ];
+        console.log(
+          `RedBlack.html: Найдено ${uniqueSenders.length} уникальных отправителей`
+        );
+
+        // Вставляем каждого отправителя
+        uniqueSenders.forEach((senderPhone, index) => {
+          setTimeout(() => {
+            try {
+              console.log(
+                `RedBlack.html: Вставляем ключ ${index + 1}/${
+                  uniqueSenders.length
+                }: ${senderPhone}`
+              );
+
+              const commands = currentAlg.insertElement(senderPhone);
+              if (commands && currentAlg.animationManager) {
+                currentAlg.animationManager.StartNewAnimation(commands);
+                currentAlg.animationManager.skipForward();
+                currentAlg.animationManager.clearHistory();
+              }
+            } catch (error) {
+              console.error(
+                `RedBlack.html: Ошибка при вставке ${senderPhone}:`,
+                error
+              );
+            }
+          }, index * 100); // Небольшая задержка между вставками
+        });
+
+        updateStatus(`Загружено ${uniqueSenders.length} ключей в дерево`);
+      }
+
+      // Обновление статуса
+      function updateStatus(message) {
+        const statusDiv = document.getElementById("status");
+        if (statusDiv) {
+          statusDiv.textContent = message;
+        }
+        console.log("RedBlack.html: " + message);
+      }
+
+      // Перехватываем оригинальный init
+      function setupInit() {
+        // Ждем пока init станет доступен
+        if (typeof window.init === "function") {
+          const originalInit = window.init;
+
+          window.init = function () {
+            console.log("RedBlack.html: Вызов init()");
+            updateStatus("Инициализация дерева...");
+
+            try {
+              // Вызываем оригинальную инициализацию
+              originalInit();
+
+              window.treeInitialized = true;
+              updateStatus("Дерево готово к загрузке данных");
+
+              // Загружаем данные, если они уже есть
+              setTimeout(() => {
+                loadPackagesIntoTree();
+              }, 500);
+            } catch (error) {
+              console.error("RedBlack.html: Ошибка инициализации:", error);
+              updateStatus("Ошибка инициализации дерева");
+            }
+          };
+
+          console.log("RedBlack.html: init() перехвачен");
+        } else {
+          // Если init еще не готов, проверяем снова
+          setTimeout(setupInit, 100);
+        }
+      }
+
+      // Запускаем после загрузки DOM
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("RedBlack.html: DOM загружен");
+        updateStatus("Ожидание загрузки библиотек...");
+
+        // Настраиваем канвас сразу после загрузки DOM
+        setTimeout(() => {
+          const canvas = document.getElementById("canvas");
+          if (canvas) {
+            console.log("Настройка высокого DPI и перемещения канваса...");
+            setupHighDPICanvas(canvas);
+            setupCanvasPanning(canvas);
+          }
+        }, 100);
+
+        setupInit();
+      });
+
+      // Функция для ручной загрузки (для отладки)
+      function manualLoad() {
+        loadPackagesIntoTree();
+      }
+    </script>
+  </head>
+
+  <body onload="init();">
+    <div id="container">
+      <div id="header">
+        <h1>Red/Black Tree - Визуализация посылок</h1>
+      </div>
+
+      <div id="status">Загрузка...</div>
+
+      <div id="mainContent">
+        <div id="algoControlSection">
+          <table id="AlgorithmSpecificControls"></table>
+        </div>
+
+        <div id="canvas-container">
+          <canvas id="canvas" width="2000" height="1000"></canvas>
+        </div>
+
+        <div id="generalAnimationControlSection">
+          <table id="GeneralAnimationControls"></table>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div style="text-align: center; margin-top: 10px">
+          <button onclick="manualLoad()">Перезагрузить данные</button>
+          <button
+            onclick="window.resetCanvasPosition && window.resetCanvasPosition()"
+          >
+            Сбросить позицию
+          </button>
+          <button onclick="window.zoomIn && window.zoomIn()">Увеличить</button>
+          <button onclick="window.zoomOut && window.zoomOut()">
+            Уменьшить
+          </button>
+          <button
+            onclick="console.log('currentAlg:', typeof currentAlg, currentAlg)"
+          >
+            Проверить currentAlg
+          </button>
+        </div>
+
+        <!-- Инструкции -->
+        <div
+          style="
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+          "
+        >
+          💡 Перетаскивайте мышкой • Колесико для масштаба • Поддержка touch на
+          мобильных
+        </div>
+      </div>
+
+      <div
+        id="footer"
+        style="text-align: center; color: #666; margin-top: 20px"
+      >
+        <p>Ключи дерева: номера телефонов отправителей</p>
+      </div>
+    </div>
+  </body>
+</html>
