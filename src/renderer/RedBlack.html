@@ -74,48 +74,39 @@
         // …
       ];
     </script>
-
+    <script type="module" src="./usePackages.js"></script>
+    <script type="module" src="./insertPackages.js"></script>
     <script>
       (function () {
-        // Переопределяем init, чтобы после init() запустить поллинг
+        // обёртка, чтобы не засорять глобалы
         if (typeof window.init !== "function") {
           console.error("init() не найдено");
           return;
         }
+        // Перехватываем оригинальный init
         const originalInit = window.init;
         window.init = function () {
-          // 1) Штатная отрисовка пустого дерева
+          // 1) вызываем штатную инициализацию дерева
           originalInit();
 
-          // 2) Теперь поллинг — ждём, пока PackagesService загрузит данные
-          const interval = setInterval(() => {
-            const svc = window.packagesService; // <- ваш глобальный экземпляр (подключён из main.bundle.js)
-            if (!svc) {
-              console.warn("packagesService не инициализирован");
-              return;
-            }
-            const pkgs = svc.getAllPackages();
-            if (pkgs.length === 0) {
-              // ещё не загрузились
-              return;
-            }
-            clearInterval(interval);
-
-            // 3) Когда появились пакеты — эмулируем клики «Insert» для каждого senderPhone
-            const field = currentAlg.insertField;
-            const button = currentAlg.insertButton;
-            if (!field || !button) {
-              console.error("Не найдено insertField/insertButton в currentAlg");
-              return;
-            }
-
-            pkgs.forEach((pkg) => {
-              const key = pkg.senderPhone.toString();
-              console.log("🔹 вставка пакета через UI:", key);
-              field.value = key;
-              button.click();
-            });
-          }, 300);
+          // 2) теперь вставляем все ключи из initialPackages
+          if (
+            !Array.isArray(window.initialPackages) ||
+            !window.initialPackages.length
+          ) {
+            console.warn("initialPackages пуст или не массив");
+            return;
+          }
+          // Для каждого пакета вызываем insertElement и сразу рисуем
+          window.initialPackages.forEach((pkg) => {
+            const key = pkg.senderPhone.toString();
+            // возвращает список команд для одного узла
+            const cmds = currentAlg.insertElement(key);
+            // прогоняем анимацию сразу
+            currentAlg.animationManager.StartNewAnimation(cmds);
+            currentAlg.animationManager.skipForward();
+            currentAlg.animationManager.clearHistory();
+          });
         };
       })();
     </script>
