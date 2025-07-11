@@ -56,35 +56,47 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages }) => {
   };
 
   return (
-    <div className="rbtree-view" style={{ width: "100%", height: "100%" }}>
+    <div
+      className="rbtree-view"
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <iframe
         ref={iframeRef}
         src="/RedBlack.html"
         title="RB-Tree Visualization"
         style={{
           width: "100%",
-          height: "600px",
-          border: "1px solid #ddd",
-          borderRadius: "4px",
+          flex: 1,
+          border: "none",
+          minHeight: "600px",
         }}
         onLoad={handleIframeLoad}
       />
 
       <div
         style={{
-          padding: "10px 20px",
+          padding: "8px 20px",
           textAlign: "center",
           color: "#666",
           backgroundColor: "#f8f9fa",
           borderTop: "1px solid #ddd",
-          fontSize: "14px",
+          fontSize: "12px",
+          flexShrink: 0,
         }}
       >
         <strong>Всего посылок:</strong> {packages.length} |
         <strong> Уникальных отправителей:</strong>{" "}
         {[...new Set(packages.map((p) => p.senderPhone))].length}
-        <br />
-        <small>Ключи дерева: номера телефонов отправителей</small>
+        {packages.length > 0 && (
+          <span style={{ marginLeft: "20px", fontStyle: "italic" }}>
+            Ключи дерева: номера телефонов отправителей
+          </span>
+        )}
       </div>
     </div>
   );
