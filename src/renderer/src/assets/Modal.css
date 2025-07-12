@@ -1,4 +1,3 @@
-/* src/renderer/src/assets/Modal.css */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -202,7 +201,6 @@
     cursor: not-allowed;
 }
 
-/* Дополнительные стили для модального окна выбора размера хеш-таблицы */
 .hash-table-size-modal .modal-content {
     max-width: 500px;
 }

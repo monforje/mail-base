@@ -1,9 +1,3 @@
-// src/renderer/src/data-structures/RedBlackTree.ts
-/**
- * Красно-черное дерево - стандартная реализация для курсовой работы
- * Основано на классическом алгоритме из учебников по структурам данных
- */
-
 export enum Color {
   RED = 0,
   BLACK = 1,
@@ -24,7 +18,6 @@ export class RedBlackTree<T> {
   private size: number;
 
   constructor() {
-    // Создаем NIL узел (sentinel)
     this.NIL = {
       key: "",
       value: null as any,
@@ -34,7 +27,6 @@ export class RedBlackTree<T> {
       parent: null as any,
     };
 
-    // Инициализируем циклические ссылки для NIL
     this.NIL.left = this.NIL;
     this.NIL.right = this.NIL;
     this.NIL.parent = this.NIL;
@@ -43,9 +35,6 @@ export class RedBlackTree<T> {
     this.size = 0;
   }
 
-  /**
-   * Левый поворот
-   */
   private leftRotate(x: RBNode<T>): void {
     const y = x.right;
     x.right = y.left;
@@ -68,9 +57,6 @@ export class RedBlackTree<T> {
     x.parent = y;
   }
 
-  /**
-   * Правый поворот
-   */
   private rightRotate(y: RBNode<T>): void {
     const x = y.left;
     y.left = x.right;
@@ -93,9 +79,6 @@ export class RedBlackTree<T> {
     y.parent = x;
   }
 
-  /**
-   * Вставка элемента
-   */
   public insert(key: string, value: T): void {
     if (key === null || key === undefined) {
       throw new Error("Key cannot be null or undefined");
@@ -104,7 +87,6 @@ export class RedBlackTree<T> {
     let parent = this.NIL;
     let current = this.root;
 
-    // Обычная вставка как в BST
     while (current !== this.NIL) {
       parent = current;
       if (key < current.key) {
@@ -112,17 +94,15 @@ export class RedBlackTree<T> {
       } else if (key > current.key) {
         current = current.right;
       } else {
-        // Ключ уже существует, обновляем значение
         current.value = value;
         return;
       }
     }
 
-    // Создаем новый узел
     const newNode: RBNode<T> = {
       key,
       value,
-      color: Color.RED, // Новый узел всегда красный
+      color: Color.RED,
       left: this.NIL,
       right: this.NIL,
       parent,
@@ -138,37 +118,29 @@ export class RedBlackTree<T> {
 
     this.size++;
 
-    // Восстанавливаем свойства красно-черного дерева
     this.insertFixup(newNode);
   }
 
-  /**
-   * Восстановление свойств после вставки
-   */
   private insertFixup(node: RBNode<T>): void {
     while (node.parent.color === Color.RED) {
       if (node.parent === node.parent.parent.left) {
         const uncle = node.parent.parent.right;
 
         if (uncle.color === Color.RED) {
-          // Случай 1: дядя красный
           node.parent.color = Color.BLACK;
           uncle.color = Color.BLACK;
           node.parent.parent.color = Color.RED;
           node = node.parent.parent;
         } else {
           if (node === node.parent.right) {
-            // Случай 2: дядя черный, node - правый потомок
             node = node.parent;
             this.leftRotate(node);
           }
-          // Случай 3: дядя черный, node - левый потомок
           node.parent.color = Color.BLACK;
           node.parent.parent.color = Color.RED;
           this.rightRotate(node.parent.parent);
         }
       } else {
-        // Симметричные случаи (родитель справа)
         const uncle = node.parent.parent.left;
 
         if (uncle.color === Color.RED) {
@@ -191,9 +163,6 @@ export class RedBlackTree<T> {
     this.root.color = Color.BLACK;
   }
 
-  /**
-   * Поиск элемента
-   */
   public search(key: string): T | null {
     if (key === null || key === undefined) {
       return null;
@@ -214,16 +183,10 @@ export class RedBlackTree<T> {
     return null;
   }
 
-  /**
-   * Проверка существования ключа
-   */
   public contains(key: string): boolean {
     return this.search(key) !== null;
   }
 
-  /**
-   * Удаление элемента
-   */
   public delete(key: string): boolean {
     const nodeToDelete = this.findNode(key);
     if (nodeToDelete === this.NIL) {
@@ -235,9 +198,6 @@ export class RedBlackTree<T> {
     return true;
   }
 
-  /**
-   * Поиск узла
-   */
   private findNode(key: string): RBNode<T> {
     let current = this.root;
 
@@ -254,9 +214,6 @@ export class RedBlackTree<T> {
     return this.NIL;
   }
 
-  /**
-   * Удаление узла
-   */
   private deleteNode(z: RBNode<T>): void {
     let y = z;
     let yOriginalColor = y.color;
@@ -292,9 +249,6 @@ export class RedBlackTree<T> {
     }
   }
 
-  /**
-   * Пересадка поддерева
-   */
   private transplant(u: RBNode<T>, v: RBNode<T>): void {
     if (u.parent === this.NIL) {
       this.root = v;
@@ -306,9 +260,6 @@ export class RedBlackTree<T> {
     v.parent = u.parent;
   }
 
-  /**
-   * Поиск минимального элемента
-   */
   private minimum(node: RBNode<T>): RBNode<T> {
     while (node.left !== this.NIL) {
       node = node.left;
@@ -316,9 +267,6 @@ export class RedBlackTree<T> {
     return node;
   }
 
-  /**
-   * Восстановление свойств после удаления
-   */
   private deleteFixup(x: RBNode<T>): void {
     while (x !== this.root && x.color === Color.BLACK) {
       if (x === x.parent.left) {
@@ -381,9 +329,6 @@ export class RedBlackTree<T> {
     x.color = Color.BLACK;
   }
 
-  /**
-   * Симметричный обход (In-Order)
-   */
   public inOrder(): T[] {
     const result: T[] = [];
     this.inOrderHelper(this.root, result);
@@ -398,16 +343,10 @@ export class RedBlackTree<T> {
     }
   }
 
-  /**
-   * Получение всех значений (используем симметричный обход)
-   */
   public values(): T[] {
     return this.inOrder();
   }
 
-  /**
-   * Получение всех ключей
-   */
   public keys(): string[] {
     const result: string[] = [];
     this.keysHelper(this.root, result);
@@ -422,31 +361,19 @@ export class RedBlackTree<T> {
     }
   }
 
-  /**
-   * Очистка дерева
-   */
   public clear(): void {
     this.root = this.NIL;
     this.size = 0;
   }
 
-  /**
-   * Получение размера дерева
-   */
   public getSize(): number {
     return this.size;
   }
 
-  /**
-   * Проверка на пустоту
-   */
   public isEmpty(): boolean {
     return this.size === 0;
   }
 
-  /**
-   * Получение высоты дерева
-   */
   public getHeight(): number {
     return this.calculateHeight(this.root);
   }
@@ -464,16 +391,12 @@ export class RedBlackTree<T> {
     );
   }
 
-  /**
-   * Вычисление черной высоты
-   */
   public getBlackHeight(): number {
     if (this.root === this.NIL) return 0;
 
     let blackHeight = 0;
     let current = this.root;
 
-    // Идем по левому краю до листа
     while (current !== this.NIL) {
       if (current.color === Color.BLACK) {
         blackHeight++;
@@ -484,17 +407,11 @@ export class RedBlackTree<T> {
     return blackHeight;
   }
 
-  /**
-   * Получение минимального значения
-   */
   public getMin(): T | null {
     if (this.root === this.NIL) return null;
     return this.minimum(this.root).value;
   }
 
-  /**
-   * Получение максимального значения
-   */
   public getMax(): T | null {
     if (this.root === this.NIL) return null;
 
@@ -505,9 +422,6 @@ export class RedBlackTree<T> {
     return current.value;
   }
 
-  /**
-   * Проверка корректности дерева
-   */
   public isValid(): boolean {
     if (this.root === this.NIL) return true;
     if (this.root.color !== Color.BLACK) return false;
@@ -529,12 +443,10 @@ export class RedBlackTree<T> {
     const rightResult = this.validateSubtree(node.right);
     if (!rightResult.isValid) return { isValid: false, blackHeight: 0 };
 
-    // Проверка одинаковой черной высоты
     if (leftResult.blackHeight !== rightResult.blackHeight) {
       return { isValid: false, blackHeight: 0 };
     }
 
-    // Проверка красных узлов
     if (node.color === Color.RED) {
       if (node.left.color === Color.RED || node.right.color === Color.RED) {
         return { isValid: false, blackHeight: 0 };
@@ -548,9 +460,6 @@ export class RedBlackTree<T> {
     };
   }
 
-  /**
-   * Итератор для обхода элементов
-   */
   public *entries(): IterableIterator<[string, T]> {
     yield* this.inOrderEntries(this.root);
   }
@@ -563,7 +472,6 @@ export class RedBlackTree<T> {
     }
   }
 
-  // Синонимы для совместимости с интерфейсом
   public has(key: string): boolean {
     return this.contains(key);
   }

@@ -1,4 +1,3 @@
-// src/renderer/src/components/LoggerWindow.tsx
 import React, { useState, useEffect, useRef } from "react";
 import "../assets/LoggerConsole.css";
 
@@ -7,7 +6,6 @@ const LoggerWindow: React.FC = () => {
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Загружаем существующие логи при открытии окна
     const loadExistingLogs = async () => {
       try {
         const electron = (window as any).electron;
@@ -30,7 +28,6 @@ const LoggerWindow: React.FC = () => {
 
     loadExistingLogs();
 
-    // Слушаем обновления логов
     const handleLoggerUpdate = (...args: any[]) => {
       if (args.length >= 2 && Array.isArray(args[1])) {
         setLogs([...args[1]]);
@@ -51,13 +48,11 @@ const LoggerWindow: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Автоматически прокручиваем к последнему сообщению
     if (logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [logs]);
 
-  // Принудительная прокрутка вниз при добавлении новых логов
   useEffect(() => {
     const scrollToBottom = () => {
       const logsContainer = document.querySelector(".console-logs");

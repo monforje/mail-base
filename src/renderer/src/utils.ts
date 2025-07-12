@@ -1,13 +1,9 @@
-// ИСПРАВЛЕНО: Валидация для числовых телефонов вместо строковых
-
 export const validatePhoneNumber = (phone: string): boolean => {
-  // Проверяем, что номер состоит только из цифр и имеет длину 11 символов
   const phoneRegex = /^8\d{10}$/;
   return phoneRegex.test(phone.trim());
 };
 
 export const parsePhoneNumber = (phoneStr: string): number | null => {
-  // ДОБАВЛЕНО: Парсинг строки в число с валидацией
   if (!validatePhoneNumber(phoneStr)) {
     return null;
   }
@@ -16,7 +12,6 @@ export const parsePhoneNumber = (phoneStr: string): number | null => {
 };
 
 export const formatPhoneNumber = (phone: number): string => {
-  // ДОБАВЛЕНО: Форматирование числа обратно в строку для отображения
   return phone.toString();
 };
 
@@ -26,7 +21,6 @@ export const validateWeight = (weight: string): boolean => {
 };
 
 export const validateDate = (date: string): boolean => {
-  // Формат: dd mmm yyyy (например: 15 jan 2025)
   const dateRegex =
     /^\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{4}$/i;
   return dateRegex.test(date.trim());
@@ -38,13 +32,10 @@ export const validateUserLine = (line: string): boolean => {
 
   const [phone, fullName, address] = parts;
 
-  // Проверяем телефон
   if (!validatePhoneNumber(phone)) return false;
 
-  // Проверяем, что ФИО не пустое
   if (!fullName.trim()) return false;
 
-  // Проверяем, что адрес не пустой
   if (!address.trim()) return false;
 
   return true;
@@ -56,14 +47,11 @@ export const validatePackageLine = (line: string): boolean => {
 
   const [senderPhone, receiverPhone, weight, date] = parts;
 
-  // Проверяем телефоны
   if (!validatePhoneNumber(senderPhone)) return false;
   if (!validatePhoneNumber(receiverPhone)) return false;
 
-  // Проверяем вес
   if (!validateWeight(weight)) return false;
 
-  // Проверяем дату
   if (!validateDate(date)) return false;
 
   return true;
@@ -76,17 +64,14 @@ export const detectFileType = (
 
   if (lines.length === 0) return "invalid";
 
-  // Проверяем первую строку для определения типа
   const firstLine = lines[0];
   const parts = firstLine.split("\t");
 
   if (parts.length === 3) {
-    // Возможно файл пользователей
     if (validateUserLine(firstLine)) {
       return "users";
     }
   } else if (parts.length === 4) {
-    // Возможно файл посылок
     if (validatePackageLine(firstLine)) {
       return "packages";
     }

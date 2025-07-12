@@ -126,7 +126,6 @@
     text-align: center;
 }
 
-/* Скроллбар для горизонтального скролла */
 .array-elements::-webkit-scrollbar {
     height: 12px;
 }
@@ -146,13 +145,7 @@
     background: #999;
 }
 
-/* Для Firefox */
-.array-elements {
-    scrollbar-width: thin;
-    scrollbar-color: #ccc #f0f0f0;
-}
 
-/* Пустое состояние */
 .array-empty-state {
     display: flex;
     flex-direction: column;

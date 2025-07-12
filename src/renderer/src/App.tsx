@@ -1,13 +1,12 @@
-// src/renderer/src/App.tsx
-import React, { useState, useEffect } from "react";
-import MenuStrip from "./components/MenuStrip";
-import UsersSection from "./components/UsersSection/UsersSection";
-import PackagesSection from "./components/PackagesSection/PackagesSection";
+import { usersService, packagesService } from "./DataServices";
 import AboutModal from "./components/AboutModal";
 import HashTableSizeModal from "./components/HashTableSizeModal";
-import { User, Package, ViewMode } from "./types";
-import { usersService, packagesService } from "./DataServices";
+import MenuStrip from "./components/MenuStrip";
+import PackagesSection from "./components/PackagesSection/PackagesSection";
+import UsersSection from "./components/UsersSection/UsersSection";
 import { AppHandlers } from "./handlers/AppHandlers";
+import { User, Package, ViewMode } from "./types";
+import React, { useState, useEffect } from "react";
 import "./assets/App.css";
 import "./assets/SectionHeader.css";
 
@@ -17,7 +16,6 @@ const App: React.FC = () => {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
 
-  // Состояние для модального окна выбора размера хеш-таблицы
   const [isHashTableSizeModalOpen, setIsHashTableSizeModalOpen] =
     useState(false);
   const [hashTableUserCount, setHashTableUserCount] = useState(0);
@@ -26,7 +24,6 @@ const App: React.FC = () => {
     reject: () => void;
   } | null>(null);
 
-  // Создаем экземпляр обработчиков
   const handlers = new AppHandlers(
     setUsers,
     setPackages,
@@ -34,7 +31,6 @@ const App: React.FC = () => {
     setViewMode
   );
 
-  // Устанавливаем callback для выбора размера хеш-таблицы
   useEffect(() => {
     handlers.setHashTableSizeCallback((userCount, onConfirm, onCancel) => {
       setHashTableUserCount(userCount);
@@ -46,7 +42,6 @@ const App: React.FC = () => {
     });
   }, [handlers]);
 
-  // Обработчики для модального окна размера хеш-таблицы
   const handleHashTableSizeConfirm = (size: number) => {
     if (hashTableSizeResolver) {
       hashTableSizeResolver.resolve(size);
@@ -63,7 +58,6 @@ const App: React.FC = () => {
     setIsHashTableSizeModalOpen(false);
   };
 
-  // Проверяем состояние данных при монтировании и изменениях
   useEffect(() => {
     console.log(
       "App state - Users:",
@@ -79,18 +73,15 @@ const App: React.FC = () => {
     );
   }, [users, packages]);
 
-  // Обновляем состояние при изменении данных в сервисах
   const refreshData = () => {
     setUsers(usersService.getAllUsers());
     setPackages(packagesService.getAllPackages());
   };
 
-  // Обработчик изменения данных для секций
   const handleDataChange = () => {
     refreshData();
   };
 
-  // Закрытие модального окна по Escape
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {

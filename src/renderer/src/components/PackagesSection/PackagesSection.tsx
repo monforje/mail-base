@@ -1,12 +1,11 @@
-// src/renderer/src/components/PackagesSection/PackagesSection.tsx
-import React, { useState } from "react";
-import PackagesTable from "./PackagesTable";
-import RBTreeView from "./RBTreeView";
-import RBTreeStructureView from "./RBTreeStructureView";
-import PackagesArrayView from "./PackagesArrayView";
-import PackageModal from "./PackageModal";
-import { Package, ViewMode } from "../../types";
 import { packagesService } from "../../DataServices";
+import { Package, ViewMode } from "../../types";
+import PackageModal from "./PackageModal";
+import PackagesArrayView from "./PackagesArrayView";
+import PackagesTable from "./PackagesTable";
+import RBTreeStructureView from "./RBTreeStructureView";
+import RBTreeView from "./RBTreeView";
+import React, { useState } from "react";
 import "../../assets/PackagesSectionStyles/PackagesSection.css";
 import "../../assets/Modal.css";
 
@@ -29,7 +28,6 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     undefined
   );
 
-  // Обработчик поиска с числовым телефоном
   const handleSearch = (senderPhone: number) => {
     const results = packagesService.findPackagesBySender(senderPhone);
     setSearchResults(results);
@@ -45,7 +43,6 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     }
   };
 
-  // Обработчик удаления с числовыми телефонами
   const handleDelete = (
     senderPhone: number,
     receiverPhone: number,
@@ -75,12 +72,10 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     setSearchResults(undefined);
   };
 
-  // Получение статистики дерева
   const getTreeStats = () => {
     return packagesService.getTreeStatistics();
   };
 
-  // Форматированный заголовок с информацией о дереве
   const getSectionTitle = () => {
     const stats = getTreeStats();
 
@@ -95,7 +90,6 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     }
   };
 
-  // Выбор компонента для отображения
   const renderContent = () => {
     switch (viewMode) {
       case "table":

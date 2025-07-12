@@ -1,8 +1,7 @@
-// src/renderer/src/components/PackagesSection/PackagesArrayView.tsx
-import React, { useState } from "react";
 import { Package } from "../../types";
+import React, { useState } from "react";
 import "../../assets/ArrayView.css";
-import { packagesService } from "../../DataServices"; // ← вот эта строка нужна
+import { packagesService } from "../../DataServices";
 
 interface PackagesArrayViewProps {
   packages: Package[];
@@ -11,7 +10,6 @@ interface PackagesArrayViewProps {
 const PackagesArrayView: React.FC<PackagesArrayViewProps> = ({ packages }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Получаем все элементы массива (включая пустые)
   const getArrayElements = () => {
     if (packages.length === 0) return [];
 
@@ -25,7 +23,6 @@ const PackagesArrayView: React.FC<PackagesArrayViewProps> = ({ packages }) => {
       elements.push({ index: arrayIndex, package: pkg, isEmpty: false });
     });
 
-    // сортируем, чтобы шло [0] → [1] → …
     elements.sort((a, b) => a.index - b.index);
     return elements;
   };
@@ -47,12 +44,11 @@ const PackagesArrayView: React.FC<PackagesArrayViewProps> = ({ packages }) => {
   };
 
   const getElementKey = (pkg: Package) => {
-    // Показываем отправителя как ключ, т.к. по нему индексируется дерево
     return pkg.senderPhone.toString();
   };
 
   if (arrayElements.length === 0) {
-    console.log("Current hoveredIndex:", hoveredIndex); // Отладка
+    console.log("Current hoveredIndex:", hoveredIndex);
 
     return (
       <div className="array-view">
@@ -69,7 +65,6 @@ const PackagesArrayView: React.FC<PackagesArrayViewProps> = ({ packages }) => {
 
   return (
     <div className="array-view">
-      {/* Элементы массива */}
       <div className="array-elements">
         {arrayElements.map((element) => (
           <div
@@ -78,19 +73,16 @@ const PackagesArrayView: React.FC<PackagesArrayViewProps> = ({ packages }) => {
             onMouseEnter={() => handleMouseEnter(element.index)}
             onMouseLeave={handleMouseLeave}
           >
-            {/* Индекс элемента */}
             <div className="element-index">[{element.index}]</div>
 
             {element.isEmpty ? (
               <div className="element-empty">Пусто</div>
             ) : element.package ? (
               <>
-                {/* Ключ (отправитель) - показываем для понимания связи с деревом */}
                 <div className="element-key">
                   {getElementKey(element.package)}
                 </div>
 
-                {/* Tooltip с полной информацией */}
                 {hoveredIndex === element.index && (
                   <div className="array-tooltip">
                     {formatTooltipContent(element.package)}

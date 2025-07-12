@@ -1,19 +1,16 @@
-// src/renderer/src/types.ts
-// ИСПРАВЛЕНО: Телефоны теперь числа, а не строки (требование ПО)
 export interface User {
-  phone: number; // ИЗМЕНЕНО: было string, стало number
+  phone: number;
   fullName: string;
   address: string;
 }
 
 export interface Package {
-  senderPhone: number; // ИЗМЕНЕНО: было string, стало number
-  receiverPhone: number; // ИЗМЕНЕНО: было string, стало number
+  senderPhone: number;
+  receiverPhone: number;
   weight: number;
   date: string;
 }
 
-// ДОБАВЛЕНО: Новый режим просмотра "arrayview"
 export type ViewMode = "table" | "structure" | "datastructure" | "arrayview";
 
 export interface MenuStripProps {
@@ -39,7 +36,6 @@ export interface PackagesTableProps {
   packages: Package[];
 }
 
-// ДОБАВЛЕНО: Новые типы для модального окна выбора размера хеш-таблицы
 export interface HashTableSizeOption {
   size: number;
   loadFactor: number;
@@ -54,7 +50,6 @@ export interface HashTableSizeModalProps {
   onConfirm: (size: number) => void;
 }
 
-// ДОБАВЛЕНО: Типы для статистики хеш-таблицы
 export interface HashTableStatistics {
   size: number;
   capacity: number;
@@ -66,7 +61,6 @@ export interface HashTableStatistics {
   };
 }
 
-// ДОБАВЛЕНО: Типы для статистики красно-черного дерева
 export interface RBTreeStatistics {
   size: number;
   height: number;

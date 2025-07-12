@@ -1,7 +1,6 @@
-// src/renderer/src/components/UsersSection/HashTableStructureView.tsx
-import React from "react";
-import { User } from "../../types";
 import { usersService } from "../../DataServices";
+import { User } from "../../types";
+import React from "react";
 import "../../assets/StructureView.css";
 
 interface HashTableStructureViewProps {
@@ -17,11 +16,9 @@ interface HashTableEntry {
 }
 
 const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
-  // Проверка инициализации хеш-таблицы
   const isInitialized = usersService.isInitialized();
   const stats = usersService.getStatistics();
 
-  // Получаем структуру хеш-таблицы
   const getHashTableStructure = (): HashTableEntry[] => {
     if (!isInitialized) {
       return [];
@@ -70,7 +67,6 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
     }
   };
 
-  // Отображение неинициализированного состояния
   if (!isInitialized) {
     return (
       <div
@@ -101,7 +97,6 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
       className="hashtable-structure-view structure-view"
       style={{ width: "100%", height: "100%", overflow: "auto" }}
     >
-      {/* Заголовок с информацией о хеш-таблице */}
       <div
         style={{
           borderBottom: "1px solid #ccc",
@@ -123,7 +118,6 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
         </span>
       </div>
 
-      {/* Статистика */}
       <div
         style={{
           borderBottom: "1px solid #eee",
@@ -148,7 +142,6 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
         </span>
       </div>
 
-      {/* Таблица структуры */}
       <table className="data-table" style={{ fontSize: "11px" }}>
         <thead>
           <tr>
@@ -167,7 +160,7 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
           {hashTableEntries.map((entry, idx) => {
             const arrayIndex: number | null =
               entry.status === "occupied" && entry.key
-                ? usersService.getArrayIndexByPhone(entry.key) // 👈 новый публичный метод
+                ? usersService.getArrayIndexByPhone(entry.key)
                 : null;
             return (
               <tr
@@ -230,7 +223,6 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
         </tbody>
       </table>
 
-      {/* Информация о структуре */}
       <div
         style={{
           borderTop: "1px solid #ccc",

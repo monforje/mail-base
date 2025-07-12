@@ -1,16 +1,15 @@
-// src/renderer/src/components/UsersSection/UserModal.tsx
-import React, { useState, useEffect } from "react";
+import { packagesService } from "../../DataServices";
 import { User, Package } from "../../types";
 import { validatePhoneNumber, parsePhoneNumber } from "../../utils";
-import { packagesService } from "../../DataServices";
+import React, { useState, useEffect } from "react";
 
 interface UserModalProps {
   isOpen: boolean;
   mode: "search" | "add" | "delete";
   onClose: () => void;
-  onSearch: (phone: number) => void; // ИСПРАВЛЕНО: числовой телефон
+  onSearch: (phone: number) => void;
   onAdd: (user: User) => void;
-  onDelete: (phone: number) => void; // ИСПРАВЛЕНО: числовой телефон
+  onDelete: (phone: number) => void;
   searchResult?: User | null;
 }
 
@@ -23,17 +22,15 @@ const UserModal: React.FC<UserModalProps> = ({
   onDelete,
   searchResult,
 }) => {
-  const [phoneStr, setPhoneStr] = useState(""); // Строка для ввода
+  const [phoneStr, setPhoneStr] = useState("");
   const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
-  // ДОБАВЛЕНО: Состояние для отображения информации о каскадном удалении
   const [relatedPackages, setRelatedPackages] = useState<Package[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      // Сброс формы при открытии
       setPhoneStr("");
       setFullName("");
       setAddress("");
@@ -78,12 +75,10 @@ const UserModal: React.FC<UserModalProps> = ({
     return newErrors.length === 0;
   };
 
-  // ДОБАВЛЕНО: Функция для проверки связанных посылок перед удалением
   const checkRelatedPackages = (phone: number): Package[] => {
     return packagesService.findPackagesBySender(phone);
   };
 
-  // ДОБАВЛЕНО: Обработчик первого этапа удаления (проверка связанных данных)
   const handleDeleteStep1 = () => {
     if (!validateForm()) return;
 
@@ -93,13 +88,11 @@ const UserModal: React.FC<UserModalProps> = ({
       return;
     }
 
-    // Проверяем связанные посылки
     const packages = checkRelatedPackages(phone);
     setRelatedPackages(packages);
     setShowDeleteConfirmation(true);
   };
 
-  // ДОБАВЛЕНО: Обработчик подтверждения удаления
   const handleDeleteConfirm = () => {
     const phone = parsePhoneNumber(phoneStr);
     if (phone === null) {
@@ -111,7 +104,6 @@ const UserModal: React.FC<UserModalProps> = ({
     onClose();
   };
 
-  // ДОБАВЛЕНО: Обработчик отмены удаления
   const handleDeleteCancel = () => {
     setShowDeleteConfirmation(false);
     setRelatedPackages([]);
@@ -122,7 +114,6 @@ const UserModal: React.FC<UserModalProps> = ({
 
     if (!validateForm()) return;
 
-    // ИСПРАВЛЕНО: Парсим телефон в число
     const phone = parsePhoneNumber(phoneStr);
     if (phone === null) {
       setErrors(["Ошибка парсинга номера телефона"]);
@@ -138,7 +129,6 @@ const UserModal: React.FC<UserModalProps> = ({
         onClose();
         break;
       case "delete":
-        // ИЗМЕНЕНО: Переходим к проверке связанных данных вместо прямого удаления
         handleDeleteStep1();
         break;
     }
@@ -177,7 +167,6 @@ const UserModal: React.FC<UserModalProps> = ({
           </button>
         </div>
 
-        {/* ДОБАВЛЕНО: Экран подтверждения удаления с информацией о связанных посылках */}
         {showDeleteConfirmation ? (
           <div className="modal-form">
             <div style={{ marginBottom: "16px" }}>
@@ -369,7 +358,6 @@ const UserModal: React.FC<UserModalProps> = ({
             </div>
           </div>
         ) : (
-          /* Обычная форма */
           <form onSubmit={handleSubmit} className="modal-form">
             <div className="form-group">
               <label htmlFor="phone">Телефон:</label>

@@ -1,4 +1,3 @@
-// src/renderer/src/services/Logger.ts
 export class Logger {
   private static instance: Logger;
 

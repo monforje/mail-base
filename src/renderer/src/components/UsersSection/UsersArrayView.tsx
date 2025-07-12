@@ -1,7 +1,6 @@
-// src/renderer/src/components/UsersSection/UsersArrayView.tsx
-import React, { useState } from "react";
-import { User } from "../../types";
 import { usersService } from "../../DataServices";
+import { User } from "../../types";
+import React, { useState } from "react";
 import "../../assets/ArrayView.css";
 
 interface UsersArrayViewProps {
@@ -11,7 +10,6 @@ interface UsersArrayViewProps {
 const UsersArrayView: React.FC<UsersArrayViewProps> = ({ users }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Проверяем инициализацию хеш-таблицы
   const isInitialized = usersService.isInitialized();
 
   const getArrayElements = () => {
@@ -28,7 +26,6 @@ const UsersArrayView: React.FC<UsersArrayViewProps> = ({ users }) => {
         user.phone.toString()
       );
 
-      // пропустим, если индекс не найден
       if (arrayIndex === null) return;
 
       elements.push({
@@ -38,7 +35,6 @@ const UsersArrayView: React.FC<UsersArrayViewProps> = ({ users }) => {
       });
     });
 
-    // 👉 сортировка по возрастанию индекса
     elements.sort((a, b) => a.index - b.index);
 
     return elements;
@@ -90,7 +86,6 @@ const UsersArrayView: React.FC<UsersArrayViewProps> = ({ users }) => {
 
   return (
     <div className="array-view">
-      {/* Элементы массива */}
       <div className="array-elements">
         {arrayElements.map((element) => (
           <div
@@ -99,19 +94,16 @@ const UsersArrayView: React.FC<UsersArrayViewProps> = ({ users }) => {
             onMouseEnter={() => handleMouseEnter(element.index)}
             onMouseLeave={handleMouseLeave}
           >
-            {/* Индекс элемента */}
             <div className="element-index">[{element.index}]</div>
 
             {element.isEmpty ? (
               <div className="element-empty">Пусто</div>
             ) : element.user ? (
               <>
-                {/* Ключ (телефон) */}
                 <div className="element-key">
                   {element.user.phone.toString()}
                 </div>
 
-                {/* Tooltip с полной информацией */}
                 {hoveredIndex === element.index && (
                   <div className="array-tooltip">
                     {formatTooltipContent(element.user)}

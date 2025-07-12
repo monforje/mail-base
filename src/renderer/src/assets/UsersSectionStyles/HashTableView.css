@@ -1,5 +1,3 @@
-/* src/renderer/src/assets/UsersSectionStyles/HashTableView.css */
-
 .hashtable-structure {
     width: 100%;
     height: 100%;
@@ -23,7 +21,6 @@
     z-index: 10;
 }
 
-/* Используем ту же верстку, что и в UsersTable */
 .hashtable-structure .data-table th:nth-child(1),
 .hashtable-structure .data-table td:nth-child(1) {
     width: 60px;

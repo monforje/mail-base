@@ -1,6 +1,5 @@
-// src/renderer/src/components/PackagesSection/PackagesTable.tsx
-import React from "react";
 import { PackagesTableProps } from "../../types";
+import React from "react";
 import "../../assets/PackagesSectionStyles/PackagesTable.css";
 
 const PackagesTable: React.FC<PackagesTableProps> = ({ packages }) => {

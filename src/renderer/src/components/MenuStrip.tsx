@@ -1,6 +1,5 @@
-// src/renderer/src/components/MenuStrip.tsx
-import React from "react";
 import { MenuStripProps } from "../types";
+import React from "react";
 import "../assets/MenuStrip.css";
 
 const MenuStrip: React.FC<MenuStripProps> = ({
@@ -25,7 +24,6 @@ const MenuStrip: React.FC<MenuStripProps> = ({
   };
 
   const handleOpenLogger = () => {
-    // Отправляем сообщение в главный процесс для открытия логгера
     const electron = (window as any).electron;
     if (electron?.ipcRenderer) {
       electron.ipcRenderer.send("open-logger");

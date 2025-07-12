@@ -1,7 +1,6 @@
-// src/renderer/src/components/UsersSection/HashTableView.tsx
-import React from "react";
-import { User } from "../../types";
 import { usersService } from "../../DataServices";
+import { User } from "../../types";
+import React from "react";
 import "../../assets/UsersSectionStyles/HashTableView.css";
 
 interface HashTableViewProps {
@@ -17,10 +16,8 @@ interface HashTableEntry {
 }
 
 const HashTableView: React.FC<HashTableViewProps> = ({}) => {
-  // ДОБАВЛЕНО: Проверка инициализации хеш-таблицы
   const isInitialized = usersService.isInitialized();
 
-  // ИСПРАВЛЕНО: Получаем доступ к внутренней структуре хеш-таблицы через публичный метод
   const getHashTableStructure = (): HashTableEntry[] => {
     if (!isInitialized) {
       return [];
@@ -56,7 +53,6 @@ const HashTableView: React.FC<HashTableViewProps> = ({}) => {
     }
   };
 
-  // ДОБАВЛЕНО: Отображение неинициализированного состояния
   if (!isInitialized) {
     return (
       <div className="hashtable-structure">

@@ -1,7 +1,5 @@
-// src/renderer/src/components/PackagesSection/RBTreeView.tsx
-import React from "react";
 import { Package } from "../../types";
-
+import React from "react";
 
 interface RBTreeViewProps {
   packages: Package[];
@@ -10,7 +8,6 @@ interface RBTreeViewProps {
 const RBTreeView: React.FC<RBTreeViewProps> = ({ packages }) => {
   return (
     <div className="rbtree-view">
-      {/* Пустой блок для будущей реализации визуализации красно-черного дерева */}
       <div style={{ padding: "20px", textAlign: "center", color: "#666" }}>
         Визуализация красно-черного дерева посылок
         <br />

@@ -1,6 +1,5 @@
-// src/renderer/src/components/AboutModal.tsx
-import React from "react";
 import { usersService, packagesService } from "../DataServices";
+import React from "react";
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -10,7 +9,6 @@ interface AboutModalProps {
 const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
-  // ОБНОВЛЕНО: Получаем детальную статистику с новой структурой данных
   const userStats = usersService.getStatistics();
   const packageStats = packagesService.getTreeStatistics();
   const isHashTableInitialized = usersService.isInitialized();
@@ -38,7 +36,9 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
   • Высота дерева: ${packageStats.height}
   • Черная высота: ${packageStats.blackHeight}
   • Эффективность: ${(packageStats.efficiency * 100).toFixed(1)}%
-  • Среднее посылок на отправителя: ${packageStats.averagePackagesPerSender.toFixed(1)}
+  • Среднее посылок на отправителя: ${packageStats.averagePackagesPerSender.toFixed(
+    1
+  )}
   • Валидность дерева: ${packageStats.isValid ? "корректное" : "некорректное"}`;
   };
 

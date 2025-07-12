@@ -1,12 +1,7 @@
-// src/renderer/src/services/ServiceRegistry.ts
-import { UsersService } from "./UsersService";
-import { PackagesService } from "./PackagesService";
 import { logger } from "./Logger";
+import { PackagesService } from "./PackagesService";
+import { UsersService } from "./UsersService";
 
-/**
- * Центральный реестр сервисов приложения
- * Реализует паттерн Service Locator для управления зависимостями
- */
 export class ServiceRegistry {
   private static instance: ServiceRegistry;
   private usersService: UsersService;
@@ -18,15 +13,12 @@ export class ServiceRegistry {
     this.usersService = new UsersService();
     this.packagesService = new PackagesService();
 
-    // ДОБАВЛЕНО: Настройка каскадного удаления
     this.setupCascadeDelete();
 
     logger.info("ServiceRegistry: All services initialized successfully");
   }
 
-  // ДОБАВЛЕНО: Метод для настройки каскадного удаления
   private setupCascadeDelete(): void {
-    // Устанавливаем callback для каскадного удаления посылок при удалении пользователя
     this.usersService.setUserDeleteCallback((userPhone: number) => {
       const removedCount =
         this.packagesService.removeAllPackagesBySender(userPhone);
@@ -57,24 +49,17 @@ export class ServiceRegistry {
     return this.packagesService;
   }
 
-  /**
-   * Перезапуск всех сервисов (для тестирования)
-   */
   public resetServices(): void {
     logger.warning("ServiceRegistry: Resetting all services");
 
     this.usersService.clear();
     this.packagesService.clear();
 
-    // ДОБАВЛЕНО: Переустанавливаем каскадное удаление после сброса
     this.setupCascadeDelete();
 
     logger.info("ServiceRegistry: Services reset complete");
   }
 
-  /**
-   * Получение общей статистики приложения
-   */
   public getApplicationStatistics(): {
     users: { count: number; loadFactor: number };
     packages: { count: number; height: number; isValid: boolean };
@@ -101,7 +86,6 @@ export class ServiceRegistry {
   }
 }
 
-// Экспортируем синглтон сервисы для обратной совместимости
 const serviceRegistry = ServiceRegistry.getInstance();
 export const usersService = serviceRegistry.getUsersService();
 export const packagesService = serviceRegistry.getPackagesService();

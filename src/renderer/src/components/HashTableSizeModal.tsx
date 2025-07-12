@@ -1,4 +1,3 @@
-// src/renderer/src/components/HashTableSizeModal.tsx
 import React, { useState, useEffect } from "react";
 
 interface HashTableSizeModalProps {
@@ -18,7 +17,6 @@ const HashTableSizeModal: React.FC<HashTableSizeModalProps> = ({
   const [customSize, setCustomSize] = useState<string>("");
   const [errors, setErrors] = useState<string[]>([]);
 
-  // Поиск следующего простого числа
   const getNextPrime = (n: number): number => {
     let candidate = n;
     while (!isPrime(candidate)) {
@@ -27,7 +25,6 @@ const HashTableSizeModal: React.FC<HashTableSizeModalProps> = ({
     return candidate;
   };
 
-  // Проверка на простое число
   const isPrime = (n: number): boolean => {
     if (n < 2) return false;
     if (n === 2) return true;
@@ -39,7 +36,6 @@ const HashTableSizeModal: React.FC<HashTableSizeModalProps> = ({
     return true;
   };
 
-  // Вычисление рекомендуемых размеров
   const getRecommendedSizes = () => {
     const baseSize75 = Math.max(11, Math.ceil(userCount / 0.75));
     const baseSize50 = Math.max(17, Math.ceil(userCount / 0.5));

@@ -1,17 +1,14 @@
-// src/renderer/src/services/UsersService.ts
 import { HashTable } from "../data-structures/HashTable";
 import { UsersArray, UserData } from "../data-structures/UsersArray";
 import { User } from "../types";
 import { logger } from "./Logger";
 
 export class UsersService {
-  private hashTable: HashTable<number>; // Ключ: телефон (как строка), Значение: индекс массива
-  private usersArray: UsersArray; // Массив с данными (без телефона)
-  // ДОБАВЛЕНО: Callback для каскадного удаления посылок
+  private hashTable: HashTable<number>;
+  private usersArray: UsersArray;
   private onUserDeleteCallback: ((phone: number) => void) | null = null;
 
   constructor() {
-    // ИЗМЕНЕНО: Создаем неинициализированную хеш-таблицу (размер 0)
     this.hashTable = new HashTable<number>(0);
     this.usersArray = new UsersArray();
     logger.info(
@@ -19,24 +16,19 @@ export class UsersService {
     );
   }
 
-  // ДОБАВЛЕНО: Метод для установки callback'а каскадного удаления
   public setUserDeleteCallback(callback: (phone: number) => void): void {
     this.onUserDeleteCallback = callback;
     logger.debug("UsersService: Set user delete callback for cascade deletion");
   }
 
-  // ДОБАВЛЕНО: Метод для пересоздания хеш-таблицы с новым размером
   public reinitializeHashTable(newSize: number): void {
-    // Сохраняем текущие данные
     const currentUsers = this.getAllUsers();
 
-    // Создаем новую хеш-таблицу с указанным размером
     this.hashTable = new HashTable<number>(newSize);
     this.usersArray = new UsersArray();
 
     logger.info(`UsersService: Reinitialized hash table with size ${newSize}`);
 
-    // Восстанавливаем данные
     if (currentUsers.length > 0) {
       currentUsers.forEach((user) => {
         this.addUserInternal(user);
@@ -47,7 +39,6 @@ export class UsersService {
     }
   }
 
-  // ДОБАВЛЕНО: Проверка инициализации хеш-таблицы
   private ensureHashTableInitialized(): void {
     if (!this.hashTable.getIsInitialized()) {
       throw new Error(
@@ -56,11 +47,9 @@ export class UsersService {
     }
   }
 
-  // Основные операции CRUD
   public addUser(user: User): void {
     this.ensureHashTableInitialized();
 
-    // ИСПРАВЛЕНО: Проверка на дубликат перед добавлением
     const phoneKey = user.phone.toString();
     if (this.hashTable.containsKey(phoneKey)) {
       logger.warning(
@@ -69,15 +58,12 @@ export class UsersService {
       throw new Error(`User with phone ${user.phone} already exists`);
     }
 
-    // Извлекаем данные без телефона
     const userData: UserData = {
       fullName: user.fullName,
       address: user.address,
     };
 
-    // Добавляем данные в массив
     const index = this.usersArray.add(userData);
-    // Сохраняем индекс в хеш-таблице с телефоном как ключом
     this.hashTable.put(phoneKey, index);
     logger.info(
       `UsersService: Added user ${user.phone} (${user.fullName}) at index ${index}`
@@ -92,7 +78,6 @@ export class UsersService {
       return null;
     }
 
-    // Получаем индекс из хеш-таблицы по телефону
     const phoneKey = phone.toString();
     const index = this.hashTable.get(phoneKey);
     if (index === null) {
@@ -100,7 +85,6 @@ export class UsersService {
       return null;
     }
 
-    // Получаем данные из массива по индексу
     const userData = this.usersArray.get(index);
     if (userData === null) {
       logger.error(
@@ -109,7 +93,6 @@ export class UsersService {
       return null;
     }
 
-    // Собираем полного пользователя с телефоном
     const user: User = {
       phone: phone,
       fullName: userData.fullName,
@@ -149,7 +132,6 @@ export class UsersService {
       return false;
     }
 
-    // Получаем индекс удаляемого пользователя
     const phoneKey = phone.toString();
     const index = this.hashTable.get(phoneKey);
     if (index === null) {
@@ -157,7 +139,6 @@ export class UsersService {
       return false;
     }
 
-    // ДОБАВЛЕНО: Каскадное удаление посылок перед удалением пользователя
     if (this.onUserDeleteCallback) {
       logger.info(`UsersService: Executing cascade deletion for user ${phone}`);
       try {
@@ -169,23 +150,18 @@ export class UsersService {
         logger.error(
           `UsersService: Cascade deletion failed for user ${phone}: ${error}`
         );
-        // Продолжаем удаление пользователя даже если каскадное удаление не удалось
       }
     }
 
-    // Удаляем из хеш-таблицы
     const hashRemoved = this.hashTable.delete(phoneKey);
     if (!hashRemoved) {
       logger.error(`UsersService: Failed to remove ${phone} from hash table`);
       return false;
     }
 
-    // Удаляем из массива и получаем информацию о перемещении
     const moveInfo = this.usersArray.remove(index);
 
     if (moveInfo) {
-      // Если элемент был перемещен, нужно найти телефон, который указывал на старый индекс
-      // и обновить его на новый индекс
       const allPhoneKeys = this.hashTable.keys();
       for (const phoneKey of allPhoneKeys) {
         const currentIndex = this.hashTable.get(phoneKey);
@@ -219,8 +195,7 @@ export class UsersService {
   public clear(): void {
     const countBefore = this.usersArray.size();
 
-    // ИЗМЕНЕНО: Сбрасываем хеш-таблицу к размеру 0
-    this.hashTable.clear(); // Теперь вернет к неинициализированному состоянию
+    this.hashTable.clear();
     this.usersArray.clear();
 
     logger.warning(
@@ -228,7 +203,6 @@ export class UsersService {
     );
   }
 
-  // Операции поиска
   public searchByName(namePart: string): User[] {
     const results = this.getAllUsers().filter((user) =>
       user.fullName.toLowerCase().includes(namePart.toLowerCase())
@@ -249,18 +223,15 @@ export class UsersService {
     return results;
   }
 
-  // ИЗМЕНЕНО: Массовые операции с поддержкой пользовательского размера хеш-таблицы
   public loadUsers(users: User[], customHashTableSize?: number): void {
     logger.info(`UsersService: Starting load of ${users.length} users`);
 
-    // ИЗМЕНЕНО: Всегда создаем новую хеш-таблицу с указанным размером
     if (customHashTableSize && customHashTableSize > 0) {
       logger.info(
         `UsersService: Creating hash table with custom size: ${customHashTableSize}`
       );
       this.hashTable = new HashTable<number>(customHashTableSize);
     } else {
-      // Если размер не указан, используем оптимальный размер на основе количества пользователей
       const optimalSize = Math.max(11, Math.ceil(users.length / 0.75));
       logger.info(
         `UsersService: Creating hash table with optimal size: ${optimalSize}`
@@ -276,7 +247,6 @@ export class UsersService {
     users.forEach((user, index) => {
       const phoneKey = user.phone.toString();
 
-      // ИСПРАВЛЕНО: Проверка на дубликаты в загружаемых данных
       if (this.hashTable.containsKey(phoneKey)) {
         duplicates.push(user.phone);
         logger.warning(
@@ -286,7 +256,7 @@ export class UsersService {
         );
       } else {
         try {
-          this.addUserInternal(user); // Используем внутренний метод без дополнительной проверки
+          this.addUserInternal(user);
           loaded.push(user.phone);
           if (loaded.length % 10 === 0 || index === users.length - 1) {
             logger.debug(
@@ -301,7 +271,6 @@ export class UsersService {
       }
     });
 
-    // ИСПРАВЛЕНО: Отчет о дубликатах как требуется по ТЗ
     if (duplicates.length > 0) {
       logger.warning(
         `UsersService: Found ${
@@ -310,7 +279,6 @@ export class UsersService {
       );
     }
 
-    // ДОБАВЛЕНО: Логирование финального размера хеш-таблицы
     const finalStats = this.getStatistics();
     logger.info(
       `UsersService: Load complete - ${loaded.length} users loaded, ${duplicates.length} duplicates skipped`
@@ -329,10 +297,6 @@ export class UsersService {
     return typeof idx === "number" ? idx : null; // null, если ещё не найден
   }
 
-  /**
-   * Внутренний метод добавления без проверки дубликатов
-   * Используется при массовой загрузке после проверки
-   */
   private addUserInternal(user: User): void {
     const userData: UserData = {
       fullName: user.fullName,
@@ -347,7 +311,6 @@ export class UsersService {
     );
   }
 
-  // Статистика и метрики
   public getCount(): number {
     return this.usersArray.size();
   }
@@ -360,7 +323,6 @@ export class UsersService {
     return this.hashTable.getLoadFactor();
   }
 
-  // ДОБАВЛЕНО: Проверка инициализации для внешнего использования
   public isInitialized(): boolean {
     return this.hashTable.getIsInitialized();
   }
@@ -394,7 +356,6 @@ export class UsersService {
     );
   }
 
-  // Метод для демонстрации работы хеш-функции
   public demonstrateHashing(key: string): {
     originalKey: string;
     numericRepresentation: number;
@@ -414,7 +375,6 @@ export class UsersService {
       };
     }
 
-    // Дублируем логику хеш-функции для демонстрации
     let numericKey = 0;
     for (let i = 0; i < key.length; i++) {
       numericKey += key.charCodeAt(i) * (i + 1);
@@ -448,7 +408,6 @@ export class UsersService {
     };
   }
 
-  // ИСПРАВЛЕНО: Метод для доступа к внутренней структуре через публичный интерфейс
   public getHashTableEntries(): Array<{
     index: number;
     key: string;
@@ -460,7 +419,6 @@ export class UsersService {
       return [];
     }
 
-    // ИСПРАВЛЕНО: Используем публичный метод вместо прямого доступа к приватному полю
     const tableStructure = this.hashTable.getTableStructure();
     const entries: Array<{
       index: number;
@@ -472,7 +430,6 @@ export class UsersService {
 
     for (const struct of tableStructure) {
       if (!struct.hasValue) {
-        // Пустая ячейка
         entries.push({
           index: struct.index,
           key: "",
@@ -480,16 +437,14 @@ export class UsersService {
           status: "empty",
         });
       } else if (struct.isDeleted) {
-        // Удаленная запись - пытаемся восстановить для отображения
         entries.push({
           index: struct.index,
           key: struct.key || "",
-          value: null, // Не показываем данные удаленного пользователя
+          value: null,
           status: "deleted",
           hashValue: struct.hashValue || 0,
         });
       } else {
-        // Занятая ячейка - восстанавливаем пользователя
         const phone = struct.key ? parseInt(struct.key, 10) : 0;
         const user = this.getUser(phone);
 

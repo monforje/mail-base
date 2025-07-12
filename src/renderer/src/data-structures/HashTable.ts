@@ -1,33 +1,23 @@
-// src/renderer/src/data-structures/HashTable.ts
-/**
- * Упрощенная хеш-таблица для курсовой работы по ФСДИА
- * - Метод серединного квадрата для хеш-функции
- * - Линейный пробинг с шагом: h_i(k) = (h(k) + i * k) mod m
- * - ДОБАВЛЕНО: Поддержка нулевого размера для неинициализированного состояния
- */
-
 export interface HashTableEntry<T> {
   key: string;
   value: T;
-  isDeleted: boolean; // Для обработки удаленных элементов (статус 2)
+  isDeleted: boolean;
 }
 
 export class HashTable<T> {
   private table: Array<HashTableEntry<T> | null>;
-  private size: number; // Количество активных элементов
-  private capacity: number; // Размер таблицы
+  private size: number;
+  private capacity: number;
   private readonly maxLoadFactor: number = 0.75;
-  private isInitialized: boolean; // ДОБАВЛЕНО: флаг инициализации
+  private isInitialized: boolean;
 
   constructor(initialCapacity: number = 0) {
-    // ИЗМЕНЕНО: По умолчанию создаем пустую таблицу
     if (initialCapacity === 0) {
       this.capacity = 0;
       this.size = 0;
       this.table = [];
       this.isInitialized = false;
     } else {
-      // Используем простое число для лучшего распределения
       this.capacity = this.getNextPrime(Math.max(11, initialCapacity));
       this.size = 0;
       this.table = new Array(this.capacity);
@@ -36,9 +26,6 @@ export class HashTable<T> {
     }
   }
 
-  /**
-   * ДОБАВЛЕНО: Инициализация таблицы с заданным размером
-   */
   public initialize(capacity: number): void {
     if (capacity <= 0) {
       throw new Error("Capacity must be greater than 0");
@@ -51,9 +38,6 @@ export class HashTable<T> {
     this.isInitialized = true;
   }
 
-  /**
-   * ДОБАВЛЕНО: Сброс к неинициализированному состоянию
-   */
   public reset(): void {
     this.capacity = 0;
     this.size = 0;
@@ -61,9 +45,6 @@ export class HashTable<T> {
     this.isInitialized = false;
   }
 
-  /**
-   * ДОБАВЛЕНО: Проверка инициализации перед операциями
-   */
   private ensureInitialized(): void {
     if (!this.isInitialized) {
       throw new Error(
@@ -72,58 +53,40 @@ export class HashTable<T> {
     }
   }
 
-  /**
-   * Метод серединного квадрата для хеш-функции
-   * Возвращает беззнаковое значение (положительное число)
-   */
   private hash(key: string): number {
     this.ensureInitialized();
 
-    // Преобразуем строку в число
     let numericKey = 0;
     for (let i = 0; i < key.length; i++) {
       numericKey += key.charCodeAt(i) * (i + 1);
     }
 
-    // Возводим в квадрат
     const squared = numericKey * numericKey;
 
-    // Берем средние разряды (метод серединного квадрата)
     const squaredStr = squared.toString();
     const len = squaredStr.length;
 
     let middleDigits: string;
     if (len >= 6) {
-      // Берем 4 средних разряда
       const start = Math.floor((len - 4) / 2);
       middleDigits = squaredStr.substring(start, start + 4);
     } else if (len >= 4) {
-      // Берем 2 средних разряда
       const start = Math.floor((len - 2) / 2);
       middleDigits = squaredStr.substring(start, start + 2);
     } else {
-      // Если число слишком маленькое, используем его целиком
       middleDigits = squaredStr;
     }
 
     const hashValue = parseInt(middleDigits, 10);
-    // Возвращаем беззнаковое значение (положительное)
     return Math.abs(hashValue) % this.capacity;
   }
 
-  /**
-   * Линейный пробинг с шагом
-   * h_i(k) = (h(k) + i * k) mod m
-   */
   private probe(key: string, step: number): number {
     const baseHash = this.hash(key);
     const numericKey = this.stringToNumber(key);
     return (baseHash + step * numericKey) % this.capacity;
   }
 
-  /**
-   * Преобразование строки в число для пробинга
-   */
   private stringToNumber(key: string): number {
     let result = 0;
     for (let i = 0; i < key.length; i++) {
@@ -132,9 +95,6 @@ export class HashTable<T> {
     return result;
   }
 
-  /**
-   * ИСПРАВЛЕННАЯ вставка элемента с правильной обработкой tombstone
-   */
   public put(key: string, value: T): void {
     if (key === null || key === undefined) {
       throw new Error("Key cannot be null or undefined");
@@ -142,22 +102,18 @@ export class HashTable<T> {
 
     this.ensureInitialized();
 
-    // Проверяем коэффициент загрузки
     if (this.size >= this.capacity * this.maxLoadFactor) {
       this.resize();
     }
 
     let step = 0;
-    let firstTombstoneIndex = -1; // Индекс первого найденного tombstone
+    let firstTombstoneIndex = -1;
     let index = this.probe(key, step);
 
-    // ПРАВИЛЬНЫЙ алгоритм обработки tombstone
     while (step < this.capacity) {
       const entry = this.table[index];
 
-      // Пустая ячейка (статус 0) - конец поиска
       if (entry === null) {
-        // Если есть сохраненный tombstone, используем его
         const insertIndex =
           firstTombstoneIndex !== -1 ? firstTombstoneIndex : index;
         this.table[insertIndex] = { key, value, isDeleted: false };
@@ -165,26 +121,19 @@ export class HashTable<T> {
         return;
       }
 
-      // Удаленная запись (статус 2/tombstone)
       if (entry.isDeleted) {
-        // Запоминаем первый встреченный tombstone, но продолжаем поиск
         if (firstTombstoneIndex === -1) {
           firstTombstoneIndex = index;
         }
-      }
-      // Занятая ячейка (статус 1)
-      else if (entry.key === key) {
-        // Обновление существующего ключа
+      } else if (entry.key === key) {
         entry.value = value;
         return;
       }
 
-      // Переходим к следующей позиции
       step++;
       index = this.probe(key, step);
     }
 
-    // Если дошли до сюда и есть tombstone, используем его
     if (firstTombstoneIndex !== -1) {
       this.table[firstTombstoneIndex] = { key, value, isDeleted: false };
       this.size++;
@@ -194,9 +143,6 @@ export class HashTable<T> {
     throw new Error("Hash table is full");
   }
 
-  /**
-   * Поиск элемента
-   */
   public get(key: string): T | null {
     if (key === null || key === undefined) {
       return null;
@@ -212,17 +158,14 @@ export class HashTable<T> {
     while (step < this.capacity) {
       const entry = this.table[index];
 
-      // Пустая ячейка - элемент не найден
       if (entry === null) {
         return null;
       }
 
-      // Найден нужный ключ (не удаленный)
       if (entry.key === key && !entry.isDeleted) {
         return entry.value;
       }
 
-      // Переходим к следующей позиции (пропускаем tombstone)
       step++;
       index = this.probe(key, step);
     }
@@ -230,9 +173,6 @@ export class HashTable<T> {
     return null;
   }
 
-  /**
-   * Удаление элемента (ленивое удаление - tombstone)
-   */
   public delete(key: string): boolean {
     if (key === null || key === undefined) {
       return false;
@@ -248,19 +188,16 @@ export class HashTable<T> {
     while (step < this.capacity) {
       const entry = this.table[index];
 
-      // Пустая ячейка - элемент не найден
       if (entry === null) {
         return false;
       }
 
-      // Найден нужный ключ (не удаленный)
       if (entry.key === key && !entry.isDeleted) {
-        entry.isDeleted = true; // Помечаем как удаленный (tombstone)
+        entry.isDeleted = true;
         this.size--;
         return true;
       }
 
-      // Переходим к следующей позиции
       step++;
       index = this.probe(key, step);
     }
@@ -268,16 +205,10 @@ export class HashTable<T> {
     return false;
   }
 
-  /**
-   * Проверка наличия ключа
-   */
   public containsKey(key: string): boolean {
     return this.get(key) !== null;
   }
 
-  /**
-   * Расширение таблицы с перехешированием
-   */
   private resize(): void {
     const oldTable = this.table;
     const oldCapacity = this.capacity;
@@ -287,7 +218,6 @@ export class HashTable<T> {
     this.table = new Array(this.capacity);
     this.table.fill(null);
 
-    // Перехеширование только активных элементов
     for (let i = 0; i < oldCapacity; i++) {
       const entry = oldTable[i];
       if (entry !== null && !entry.isDeleted) {
@@ -296,16 +226,10 @@ export class HashTable<T> {
     }
   }
 
-  /**
-   * ИЗМЕНЕНО: Очистка таблицы - возвращаем к неинициализированному состоянию
-   */
   public clear(): void {
     this.reset();
   }
 
-  /**
-   * Получение всех ключей (только активных)
-   */
   public keys(): string[] {
     if (!this.isInitialized) {
       return [];
@@ -321,9 +245,6 @@ export class HashTable<T> {
     return keys;
   }
 
-  /**
-   * Получение всех значений (только активных)
-   */
   public values(): T[] {
     if (!this.isInitialized) {
       return [];
@@ -339,9 +260,6 @@ export class HashTable<T> {
     return values;
   }
 
-  /**
-   * Получение статистики таблицы
-   */
   public getPerformanceStats(): {
     size: number;
     capacity: number;
@@ -386,9 +304,6 @@ export class HashTable<T> {
     };
   }
 
-  /**
-   * ДОБАВЛЕН: Публичный метод для получения состояния таблицы
-   */
   public getTableStructure(): Array<{
     index: number;
     key: string | null;
@@ -432,9 +347,6 @@ export class HashTable<T> {
     return structure;
   }
 
-  /**
-   * Найти следующее простое число
-   */
   private getNextPrime(n: number): number {
     let candidate = n;
     while (!this.isPrime(candidate)) {
@@ -443,9 +355,6 @@ export class HashTable<T> {
     return candidate;
   }
 
-  /**
-   * Проверка на простое число
-   */
   private isPrime(n: number): boolean {
     if (n < 2) return false;
     if (n === 2) return true;
@@ -457,9 +366,6 @@ export class HashTable<T> {
     return true;
   }
 
-  /**
-   * Итератор для обхода элементов (только активных)
-   */
   public *entries(): IterableIterator<[string, T]> {
     if (!this.isInitialized) {
       return;
@@ -473,7 +379,6 @@ export class HashTable<T> {
     }
   }
 
-  // Геттеры
   public getSize(): number {
     return this.size;
   }
@@ -490,12 +395,10 @@ export class HashTable<T> {
     return this.size === 0;
   }
 
-  // ДОБАВЛЕНО: Проверка инициализации
   public getIsInitialized(): boolean {
     return this.isInitialized;
   }
 
-  // Синонимы для совместимости
   public set(key: string, value: T): void {
     this.put(key, value);
   }

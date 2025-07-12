@@ -1,6 +1,6 @@
+import LoggerWindow from "./components/LoggerWindow";
 import React from "react";
 import ReactDOM from "react-dom/client";
-import LoggerWindow from "./components/LoggerWindow";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

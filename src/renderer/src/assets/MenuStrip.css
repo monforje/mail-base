@@ -3,11 +3,8 @@
   border-bottom: 1px solid #ccc;
   padding: 0;
   height: 40px;
-  /* Фиксированная высота меню */
   flex-shrink: 0;
-  /* Меню не сжимается */
   overflow: visible;
-  /* Разрешаем показ выпадающих меню */
 }
 
 .menu-bar {
@@ -27,7 +24,6 @@
   border: none;
   font-size: 14px;
   height: 40px;
-  /* Фиксированная высота кнопки */
   display: flex;
   align-items: center;
 }
@@ -47,9 +43,7 @@
   z-index: 1000;
   min-width: 200px;
   max-height: 400px;
-  /* Ограничиваем высоту выпадающего меню */
   overflow-y: auto;
-  /* Добавляем скролл если нужно */
 }
 
 .menu-item:hover .dropdown-menu {
@@ -66,7 +60,6 @@
   cursor: pointer;
   font-size: 14px;
   white-space: nowrap;
-  /* Предотвращаем перенос текста */
 }
 
 .menu-button:hover {

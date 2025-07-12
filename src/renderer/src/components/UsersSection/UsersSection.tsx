@@ -1,12 +1,11 @@
-// src/renderer/src/components/UsersSection/UsersSection.tsx
-import React, { useState } from "react";
-import UsersTable from "./UsersTable";
-import HashTableView from "./HashTableView";
-import HashTableStructureView from "./HashTableStructureView";
-import UsersArrayView from "./UsersArrayView";
-import UserModal from "./UserModal";
-import { User, ViewMode } from "../../types";
 import { usersService } from "../../DataServices";
+import { User, ViewMode } from "../../types";
+import HashTableStructureView from "./HashTableStructureView";
+import HashTableView from "./HashTableView";
+import UserModal from "./UserModal";
+import UsersArrayView from "./UsersArrayView";
+import UsersTable from "./UsersTable";
+import React, { useState } from "react";
 import "../../assets/UsersSectionStyles/UsersSection.css";
 import "../../assets/Modal.css";
 
@@ -29,7 +28,6 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     undefined
   );
 
-  // Получение статистики хеш-таблицы
   const getHashTableInfo = () => {
     const stats = usersService.getStatistics();
     const isInitialized = usersService.isInitialized();
@@ -69,7 +67,6 @@ const UsersSection: React.FC<UsersSectionProps> = ({
   const openModal = (mode: "search" | "add" | "delete") => {
     const info = getHashTableInfo();
 
-    // Проверка инициализации для операций добавления/удаления/поиска
     if (
       !info.isInitialized &&
       (mode === "add" || mode === "delete" || mode === "search")
@@ -90,7 +87,6 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     setSearchResult(undefined);
   };
 
-  // Форматированный заголовок с информацией о хеш-таблице
   const getSectionTitle = () => {
     const info = getHashTableInfo();
 
@@ -119,7 +115,6 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     }
   };
 
-  // Выбор компонента для отображения
   const renderContent = () => {
     switch (viewMode) {
       case "table":

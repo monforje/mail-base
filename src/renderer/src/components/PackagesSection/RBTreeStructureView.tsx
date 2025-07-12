@@ -1,7 +1,6 @@
-// src/renderer/src/components/PackagesSection/RBTreeStructureView.tsx
-import React from "react";
-import { Package } from "../../types";
 import { packagesService } from "../../DataServices";
+import { Package } from "../../types";
+import React from "react";
 import "../../assets/StructureView.css";
 
 interface RBTreeStructureViewProps {
@@ -9,7 +8,6 @@ interface RBTreeStructureViewProps {
 }
 
 const RBTreeStructureView: React.FC<RBTreeStructureViewProps> = () => {
-  // Получаем структуру дерева для отображения
   const getTreeStructure = () => {
     return packagesService.getTreeStructure();
   };
@@ -18,10 +16,10 @@ const RBTreeStructureView: React.FC<RBTreeStructureViewProps> = () => {
   const treeStats = packagesService.getTreeStatistics();
 
   const getCollisionColor = (packageCount: number): string => {
-    if (packageCount === 1) return "#e8f5e8"; // Зеленый - нет коллизий
-    if (packageCount <= 3) return "#fff3cd"; // Желтый - мало коллизий
-    if (packageCount <= 5) return "#ffeaa7"; // Оранжевый - средне коллизий
-    return "#ffebee"; // Красный - много коллизий
+    if (packageCount === 1) return "#e8f5e8";
+    if (packageCount <= 3) return "#fff3cd";
+    if (packageCount <= 5) return "#ffeaa7";
+    return "#ffebee";
   };
 
   return (
@@ -29,7 +27,6 @@ const RBTreeStructureView: React.FC<RBTreeStructureViewProps> = () => {
       className="rbtree-structure-view structure-view"
       style={{ width: "100%", height: "100%", overflow: "auto" }}
     >
-      {/* Заголовок с информацией о дереве */}
       <div
         style={{
           borderBottom: "1px solid #ccc",
@@ -51,7 +48,6 @@ const RBTreeStructureView: React.FC<RBTreeStructureViewProps> = () => {
         </span>
       </div>
 
-      {/* Статистика */}
       <div
         style={{
           borderBottom: "1px solid #eee",
@@ -114,7 +110,6 @@ const RBTreeStructureView: React.FC<RBTreeStructureViewProps> = () => {
           </thead>
           <tbody>
             {treeStructure.map((node, nodeIndex) => {
-              // Получаем данные посылок для этого отправителя
               const senderPackages = packagesService.findPackagesBySender(
                 node.senderPhone
               );
@@ -212,7 +207,6 @@ const RBTreeStructureView: React.FC<RBTreeStructureViewProps> = () => {
         </table>
       )}
 
-      {/* Информация о структуре */}
       {treeStructure.length > 0 && (
         <div
           style={{

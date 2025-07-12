@@ -1,4 +1,3 @@
-// src/renderer/src/components/PackagesSection/PackageModal.tsx
 import React, { useState, useEffect } from "react";
 import { Package } from "../../types";
 import {
@@ -12,9 +11,9 @@ interface PackageModalProps {
   isOpen: boolean;
   mode: "search" | "add" | "delete";
   onClose: () => void;
-  onSearch: (senderPhone: number) => void; // ИСПРАВЛЕНО: числовой телефон
+  onSearch: (senderPhone: number) => void;
   onAdd: (pkg: Package) => void;
-  onDelete: (senderPhone: number, receiverPhone: number, date: string) => void; // ИСПРАВЛЕНО: числовые телефоны
+  onDelete: (senderPhone: number, receiverPhone: number, date: string) => void;
   searchResults?: Package[];
 }
 
@@ -27,15 +26,14 @@ const PackageModal: React.FC<PackageModalProps> = ({
   onDelete,
   searchResults,
 }) => {
-  const [senderPhoneStr, setSenderPhoneStr] = useState(""); // Строка для ввода
-  const [receiverPhoneStr, setReceiverPhoneStr] = useState(""); // Строка для ввода
+  const [senderPhoneStr, setSenderPhoneStr] = useState("");
+  const [receiverPhoneStr, setReceiverPhoneStr] = useState("");
   const [weight, setWeight] = useState("");
   const [date, setDate] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
     if (isOpen) {
-      // Сброс формы при открытии
       setSenderPhoneStr("");
       setReceiverPhoneStr("");
       setWeight("");
@@ -101,7 +99,6 @@ const PackageModal: React.FC<PackageModalProps> = ({
 
     if (!validateForm()) return;
 
-    // ИСПРАВЛЕНО: Парсим телефоны в числа
     const senderPhone = parsePhoneNumber(senderPhoneStr);
     if (senderPhone === null) {
       setErrors(["Ошибка парсинга номера телефона отправителя"]);

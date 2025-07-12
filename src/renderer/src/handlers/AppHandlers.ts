@@ -1,6 +1,5 @@
-// src/renderer/src/handlers/AppHandlers.ts
-import { User, Package, ViewMode } from "../types";
 import { usersService, packagesService } from "../DataServices";
+import { User, Package, ViewMode } from "../types";
 import {
   detectFileType,
   validateFileContent,
@@ -25,7 +24,6 @@ export class AppHandlers {
     this.setViewMode = setViewMode;
   }
 
-  // ДОБАВЛЕНО: Метод для установки callback'а для выбора размера хеш-таблицы
   private hashTableSizeCallback:
     | ((
         userCount: number,
@@ -44,7 +42,6 @@ export class AppHandlers {
     this.hashTableSizeCallback = callback;
   }
 
-  // ДОБАВЛЕНО: Асинхронный выбор размера хеш-таблицы через UI
   private askForHashTableSize(userCount: number): Promise<number | null> {
     return new Promise((resolve) => {
       if (this.hashTableSizeCallback) {
@@ -54,7 +51,6 @@ export class AppHandlers {
           () => resolve(null)
         );
       } else {
-        // Fallback к простому prompt если callback не установлен
         const choice = prompt(
           `Введите размер хеш-таблицы для ${userCount} пользователей:`
         );
@@ -177,10 +173,8 @@ export class AppHandlers {
     reader.onload = (e) => {
       const content = e.target?.result as string;
 
-      // Определяем тип файла автоматически
       const detectedType = detectFileType(content);
 
-      // Проверяем, соответствует ли тип ожидаемому
       if (detectedType === "invalid") {
         alert("Неверный формат файла. Проверьте структуру данных.");
         return;
@@ -197,7 +191,6 @@ export class AppHandlers {
         return;
       }
 
-      // Валидируем содержимое файла
       const validation = validateFileContent(content, expectedType);
 
       if (!validation.isValid) {
@@ -209,7 +202,6 @@ export class AppHandlers {
       const lines = content.split("\n").filter((line) => line.trim() !== "");
 
       if (expectedType === "users") {
-        // ИЗМЕНЕНО: Сначала парсим пользователей, затем спрашиваем размер хеш-таблицы
         const users: User[] = [];
         const parseErrors: string[] = [];
 
@@ -231,7 +223,6 @@ export class AppHandlers {
           return;
         }
 
-        // ИЗМЕНЕНО: Используем асинхронный выбор размера хеш-таблицы
         this.askForHashTableSize(users.length)
           .then((hashTableSize) => {
             if (hashTableSize === null) {
@@ -252,7 +243,6 @@ export class AppHandlers {
             this.handleUsersLoad(users);
           });
       } else {
-        // Обработка посылок без изменений
         const packages: Package[] = [];
         const parseErrors: string[] = [];
 

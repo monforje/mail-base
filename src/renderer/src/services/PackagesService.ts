@@ -1,13 +1,12 @@
-// src/renderer/src/services/PackagesService.ts
-import { RedBlackTree } from "../data-structures/RedBlackTree";
 import { DoublyLinkedList } from "../data-structures/DoublyLinkedList";
 import { PackagesArray, PackageData } from "../data-structures/PackagesArray";
+import { RedBlackTree } from "../data-structures/RedBlackTree";
 import { Package } from "../types";
 import { logger } from "./Logger";
 
 export class PackagesService {
-  private redBlackTree: RedBlackTree<DoublyLinkedList<number>>; // Ключ: номер телефона отправителя, Значение: список индексов
-  private packagesArray: PackagesArray; // Массив с данными (без senderPhone)
+  private redBlackTree: RedBlackTree<DoublyLinkedList<number>>;
+  private packagesArray: PackagesArray;
 
   constructor() {
     this.redBlackTree = new RedBlackTree<DoublyLinkedList<number>>();
@@ -17,12 +16,10 @@ export class PackagesService {
     );
   }
 
-  // Генерация ключа - номер телефона отправителя
   private generateKey(senderPhone: number): string {
     return senderPhone.toString();
   }
 
-  // ДОБАВЛЕНО: Метод для каскадного удаления всех посылок отправителя
   public removeAllPackagesBySender(senderPhone: number): number {
     const key = this.generateKey(senderPhone);
     const indexList = this.redBlackTree.search(key);
@@ -34,7 +31,6 @@ export class PackagesService {
       return 0;
     }
 
-    // Получаем все индексы для удаления
     const indicesToRemove = indexList.toArray();
     const removedCount = indicesToRemove.length;
 
@@ -42,23 +38,18 @@ export class PackagesService {
       `PackagesService: Starting cascade deletion for sender ${senderPhone} - ${removedCount} packages to remove`
     );
 
-    // Удаляем ключ из дерева (это удалит весь список)
     this.redBlackTree.delete(key);
 
-    // Сортируем индексы по убыванию для корректного удаления из массива
     indicesToRemove.sort((a, b) => b - a);
 
-    // Удаляем элементы из массива и обновляем индексы в других списках
     for (const targetIndex of indicesToRemove) {
       const moveInfo = this.packagesArray.remove(targetIndex);
 
       if (moveInfo) {
-        // Обновляем все списки, которые содержат перемещенный индекс
         const allKeys = this.redBlackTree.keys();
         for (const searchKey of allKeys) {
           const list = this.redBlackTree.search(searchKey);
           if (list !== null) {
-            // Заменяем старый индекс на новый во всех списках
             if (list.remove(moveInfo.movedFromIndex)) {
               list.append(moveInfo.newIndex);
               logger.debug(
@@ -82,45 +73,38 @@ export class PackagesService {
     const list = this.redBlackTree.search(key);
     if (!list) return null;
 
-    // 2. Ищем в списке ту самую посылку
     for (const idx of list) {
       const data = this.packagesArray.get(idx);
       if (
         data &&
         parseInt(data.receiverPhone, 10) === pkg.receiverPhone &&
         data.date === pkg.date &&
-        data.weight === pkg.weight // вес даёт 99 % уникальности
+        data.weight === pkg.weight
       ) {
-        return idx; // ← настоящий индекс
+        return idx;
       }
     }
     return null;
   }
 
-  // Основные операции CRUD
   public addPackage(pkg: Package): void {
     const key = this.generateKey(pkg.senderPhone);
 
-    // Извлекаем данные без senderPhone
     const packageData: PackageData = {
       receiverPhone: pkg.receiverPhone.toString(),
       weight: pkg.weight,
       date: pkg.date,
     };
 
-    // Добавляем данные в массив
     const index = this.packagesArray.add(packageData);
 
-    // Ищем список для данного отправителя
     let indexList = this.redBlackTree.search(key);
 
     if (indexList === null) {
-      // Создаем новый список для нового отправителя
       indexList = new DoublyLinkedList<number>();
       this.redBlackTree.insert(key, indexList);
     }
 
-    // Добавляем индекс в список
     indexList.append(index);
 
     logger.info(
@@ -206,7 +190,6 @@ export class PackagesService {
       return false;
     }
 
-    // Ищем нужную посылку в списке индексов
     let targetIndex = -1;
     for (const index of indexList) {
       const packageData = this.packagesArray.get(index);
@@ -227,24 +210,19 @@ export class PackagesService {
       return false;
     }
 
-    // Удаляем индекс из списка
     indexList.remove(targetIndex);
 
-    // Если список стал пустым, удаляем ключ из дерева
     if (indexList.isEmpty()) {
       this.redBlackTree.delete(key);
     }
 
-    // Удаляем из массива и получаем информацию о перемещении
     const moveInfo = this.packagesArray.remove(targetIndex);
 
     if (moveInfo) {
-      // Обновляем все списки, которые содержат перемещенный индекс
       const allKeys = this.redBlackTree.keys();
       for (const searchKey of allKeys) {
         const list = this.redBlackTree.search(searchKey);
         if (list !== null) {
-          // Заменяем старый индекс на новый во всех списках
           if (list.remove(moveInfo.movedFromIndex)) {
             list.append(moveInfo.newIndex);
             logger.debug(
@@ -270,7 +248,6 @@ export class PackagesService {
     );
   }
 
-  // Операции поиска
   public findPackagesBySender(senderPhone: number): Package[] {
     const results = this.getPackagesBySender(senderPhone);
     logger.info(
@@ -323,7 +300,6 @@ export class PackagesService {
     return results;
   }
 
-  // Массовые операции
   public loadPackages(packages: Package[]): void {
     logger.info(
       `PackagesService: Starting load of ${packages.length} packages`
@@ -352,9 +328,6 @@ export class PackagesService {
     this.logTreeStatistics();
   }
 
-  /**
-   * Внутренний метод добавления
-   */
   private addPackageInternal(pkg: Package): void {
     const packageData: PackageData = {
       receiverPhone: pkg.receiverPhone.toString(),
@@ -377,7 +350,6 @@ export class PackagesService {
     );
   }
 
-  // Аналитика и статистика
   public getWeightStatistics(): {
     total: number;
     average: number;
@@ -436,7 +408,6 @@ export class PackagesService {
       { count: number; totalWeight: number }
     >();
 
-    // Проходим по всем ключам в дереве
     const allKeys = this.redBlackTree.keys();
     for (const key of allKeys) {
       const senderPhone = parseInt(key, 10);
@@ -469,7 +440,6 @@ export class PackagesService {
     return results;
   }
 
-  // Метрики дерева
   public getCount(): number {
     return this.packagesArray.size();
   }
@@ -537,7 +507,6 @@ export class PackagesService {
     );
   }
 
-  // Метод для получения структуры дерева (для отладки)
   public getTreeStructure(): Array<{
     senderPhone: number;
     packageCount: number;
