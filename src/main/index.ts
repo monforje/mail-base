@@ -5,6 +5,7 @@ import { join } from "path";
 
 let mainWindow: BrowserWindow | null = null;
 let loggerWindow: BrowserWindow | null = null;
+let splashWindow: BrowserWindow | null = null;
 
 let logs: string[] = [];
 
@@ -22,6 +23,10 @@ function createWindow(): void {
   });
 
   mainWindow.on("ready-to-show", () => {
+    if (splashWindow) {
+      splashWindow.close();
+      splashWindow = null;
+    }
     mainWindow?.show();
   });
 
@@ -86,6 +91,22 @@ function createLoggerWindow(): void {
   }
 }
 
+function createSplashWindow(): void {
+  splashWindow = new BrowserWindow({
+    width: 400,
+    height: 350,
+    frame: false,
+    alwaysOnTop: true,
+    transparent: false,
+    resizable: false,
+    show: true,
+    icon: icon,
+    autoHideMenuBar: true,
+  });
+  splashWindow.setMenuBarVisibility(false);
+  splashWindow.loadFile(join(__dirname, "../renderer/splash.html"));
+}
+
 app.whenReady().then(() => {
   electronApp.setAppUserModelId("com.electron");
 
@@ -122,7 +143,10 @@ app.whenReady().then(() => {
     return logs;
   });
 
-  createWindow();
+  createSplashWindow();
+  setTimeout(() => {
+    createWindow();
+  }, 1200); // splash минимум 1.2 сек
 
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

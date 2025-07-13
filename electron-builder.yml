@@ -15,7 +15,15 @@ win:
   executableName: pochta
   icon: build/icon.ico
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+  installerHeader: resources/header.bmp
+  installerSidebar: resources/sidebar.bmp
+  artifactName: "Почта-Setup-${version}.${ext}"
+  language: 1049
   shortcutName: Почта
   uninstallDisplayName: Почта
   createDesktopShortcut: always

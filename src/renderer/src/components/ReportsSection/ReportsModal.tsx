@@ -18,7 +18,6 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
   availableDates,
   dateRange,
   availablePhones,
-  availableAddresses,
 }) => {
   const [filterType, setFilterType] = useState<"all" | "date" | "range">("all");
   const [selectedDate, setSelectedDate] = useState("");

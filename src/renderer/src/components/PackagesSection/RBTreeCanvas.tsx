@@ -173,13 +173,7 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
     return calculatePositions(treeData, 0, 0, width);
   }, [treeData, width, calculatePositions]);
 
-  // Преобразование координат мыши в координаты канваса с учетом viewport
-  const screenToCanvas = useCallback((screenX: number, screenY: number) => {
-    return {
-      x: (screenX - viewport.offsetX) / viewport.scale,
-      y: (screenY - viewport.offsetY) / viewport.scale,
-    };
-  }, [viewport]);
+
 
   // Преобразование координат канваса в экранные координаты
   const canvasToScreen = useCallback((canvasX: number, canvasY: number) => {
