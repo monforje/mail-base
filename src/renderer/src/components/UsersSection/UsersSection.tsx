@@ -5,7 +5,7 @@ import HashTableView from "./HashTableView";
 import UserModal from "./UserModal";
 import UsersArrayView from "./UsersArrayView";
 import UsersTable from "./UsersTable";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../../assets/UsersSectionStyles/UsersSection.css";
 import "../../assets/Modal.css";
 
@@ -28,6 +28,28 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     undefined
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Добавляем обработку клавиши Escape для выхода из полноэкранного режима
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+
+    if (isFullscreen) {
+      document.addEventListener("keydown", handleKeyDown);
+      // Предотвращаем скролл страницы в полноэкранном режиме
+      document.body.classList.add("fullscreen-mode");
+    } else {
+      document.body.classList.remove("fullscreen-mode");
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.classList.remove("fullscreen-mode");
+    };
+  }, [isFullscreen]);
 
   const getHashTableInfo = () => {
     const stats = usersService.getStatistics();
@@ -131,22 +153,14 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     }
   };
 
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
   return (
     <>
       <div
-        className="table-section"
-        style={isFullscreen ? {
-          position: 'fixed',
-          inset: 0,
-          width: '100vw',
-          height: '100vh',
-          zIndex: 10000,
-          background: 'white',
-          padding: 0,
-          margin: 0,
-          boxShadow: '0 0 32px 0 rgba(0,0,0,0.25)',
-          overflow: 'auto',
-        } : {}}
+        className={`table-section ${isFullscreen ? 'fullscreen' : ''}`}
       >
         <div className="section-header">
           <div className="section-title">{getSectionTitle()}</div>
@@ -173,15 +187,17 @@ const UsersSection: React.FC<UsersSectionProps> = ({
               🗑️
             </button>
             <button
-              className="action-icon"
-              onClick={() => setIsFullscreen(f => !f)}
-              title={isFullscreen ? "Свернуть" : "На весь экран"}
+              className={`action-icon ${isFullscreen ? 'fullscreen-active' : ''}`}
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Выйти из полноэкранного режима (Esc)" : "Полноэкранный режим"}
             >
               {isFullscreen ? "🗗" : "⛶"}
             </button>
           </div>
         </div>
-        <div className="table-container">{renderContent()}</div>
+        <div className="table-container">
+          {renderContent()}
+        </div>
       </div>
 
       <UserModal

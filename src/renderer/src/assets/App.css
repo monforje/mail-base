@@ -26,3 +26,108 @@ body {
   min-height: 0;
   overflow: hidden;
 }
+
+/* Полноэкранный режим для секций */
+.table-section.fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+  background-color: white !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: 0 0 50px rgba(0,0,0,0.3) !important;
+  max-height: none !important;
+  max-width: none !important;
+}
+
+.table-section.fullscreen .table-container {
+  height: calc(100vh - 36px) !important;
+  max-height: calc(100vh - 36px) !important;
+  overflow: auto !important;
+}
+
+.table-section.fullscreen .section-header {
+  position: relative !important;
+  z-index: 10000 !important;
+}
+
+/* Анимация появления полноэкранного режима */
+.table-section.fullscreen {
+  animation: fullscreenIn 0.3s ease-out;
+}
+
+@keyframes fullscreenIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Подсказка для выхода из полноэкранного режима */
+.fullscreen-hint {
+  position: absolute;
+  top: 50px;
+  right: 20px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 10001;
+  animation: fadeInOut 3s ease-in-out;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes fadeInOut {
+  0% { 
+    opacity: 0; 
+    transform: translateX(20px); 
+  }
+  20% { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+  80% { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+  100% { 
+    opacity: 0; 
+    transform: translateX(20px); 
+  }
+}
+
+/* Кнопка полноэкранного режима - активное состояние */
+.action-icon.fullscreen-active {
+  background-color: #e3f2fd !important;
+  transform: scale(1.1) !important;
+  border: 2px solid #2196f3 !important;
+}
+
+/* Предотвращение скролла body в полноэкранном режиме */
+body.fullscreen-mode {
+  overflow: hidden !important;
+}
+
+/* Затемнение фона при полноэкранном режиме (опционально) */
+.fullscreen-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9998;
+  pointer-events: none;
+}
