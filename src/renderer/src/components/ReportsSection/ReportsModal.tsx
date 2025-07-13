@@ -51,10 +51,17 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
       if (!endDate.trim()) {
         newErrors.push("Дата окончания обязательна для заполнения");
       } else if (!validateDate(endDate)) {
-        newErrors.push('Неверный формат даты окончания (ожидается "dd mmm yyyy")');
+        newErrors.push(
+          'Неверный формат даты окончания (ожидается "dd mmm yyyy")'
+        );
       }
 
-      if (startDate && endDate && validateDate(startDate) && validateDate(endDate)) {
+      if (
+        startDate &&
+        endDate &&
+        validateDate(startDate) &&
+        validateDate(endDate)
+      ) {
         if (startDate > endDate) {
           newErrors.push("Дата начала не может быть позже даты окончания");
         }
@@ -123,7 +130,8 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
                 Доступные данные:
               </p>
               <p style={{ margin: "0", fontSize: "12px", color: "#666" }}>
-                Период: {dateRange.startDate} - {dateRange.endDate} ({availableDates.length} уникальных дат)
+                Период: {dateRange.startDate} - {dateRange.endDate} (
+                {availableDates.length} уникальных дат)
               </p>
             </div>
           )}
@@ -154,9 +162,7 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
                   style={{ marginRight: "8px" }}
                 />
                 <div>
-                  <div style={{ fontWeight: "bold" }}>
-                    Все записи
-                  </div>
+                  <div style={{ fontWeight: "bold" }}>Все записи</div>
                   <div style={{ fontSize: "12px", color: "#666" }}>
                     Показать все посылки без фильтрации
                   </div>
@@ -185,9 +191,7 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
                   style={{ marginRight: "8px" }}
                 />
                 <div>
-                  <div style={{ fontWeight: "bold" }}>
-                    Конкретная дата
-                  </div>
+                  <div style={{ fontWeight: "bold" }}>Конкретная дата</div>
                   <div style={{ fontSize: "12px", color: "#666" }}>
                     Показать посылки за определенную дату
                   </div>
@@ -238,9 +242,7 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
                   style={{ marginRight: "8px" }}
                 />
                 <div>
-                  <div style={{ fontWeight: "bold" }}>
-                    Период дат
-                  </div>
+                  <div style={{ fontWeight: "bold" }}>Период дат</div>
                   <div style={{ fontSize: "12px", color: "#666" }}>
                     Показать посылки за определенный период
                   </div>
@@ -251,7 +253,13 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
             {filterType === "range" && (
               <div style={{ marginTop: "8px", marginLeft: "24px" }}>
                 <div style={{ marginBottom: "8px" }}>
-                  <label style={{ display: "block", marginBottom: "4px", fontSize: "12px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "4px",
+                      fontSize: "12px",
+                    }}
+                  >
                     Дата начала:
                   </label>
                   <input
@@ -268,7 +276,13 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "4px", fontSize: "12px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "4px",
+                      fontSize: "12px",
+                    }}
+                  >
                     Дата окончания:
                   </label>
                   <input
@@ -308,9 +322,9 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
             }}
           >
             <p style={{ margin: "0", fontSize: "12px", color: "#1565c0" }}>
-              <strong>Информация:</strong> Отчет будет содержать данные о посылках
-              с полной информацией об отправителях (ФИО и адрес). Записи без
-              информации об отправителе будут исключены из отчета.
+              <strong>Информация:</strong> Отчет будет содержать данные о
+              посылках с полной информацией об отправителях (ФИО и адрес).
+              Записи без информации об отправителе будут исключены из отчета.
             </p>
           </div>
 

@@ -5,7 +5,7 @@
   table-layout: fixed;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(60,60,90,0.07);
+  box-shadow: 0 2px 12px rgba(60, 60, 90, 0.07);
   overflow: hidden;
   margin-bottom: 24px;
   font-size: 15px;
@@ -81,12 +81,15 @@
 .data-table th:first-child {
   border-top-left-radius: 12px;
 }
+
 .data-table th:last-child {
   border-top-right-radius: 12px;
 }
+
 .data-table tr:last-child td:first-child {
   border-bottom-left-radius: 12px;
 }
+
 .data-table tr:last-child td:last-child {
   border-bottom-right-radius: 12px;
 }

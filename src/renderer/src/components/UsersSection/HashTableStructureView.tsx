@@ -142,7 +142,10 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
         </span>
       </div>
 
-      <table className="data-table structure-table" style={{ fontSize: "11px" }}>
+      <table
+        className="data-table structure-table"
+        style={{ fontSize: "11px" }}
+      >
         <thead>
           <tr>
             <th style={{ width: "60px", textAlign: "center" }}>Индекс ХТ</th>

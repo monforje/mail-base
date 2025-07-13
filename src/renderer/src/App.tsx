@@ -18,7 +18,9 @@ const App: React.FC = () => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
-  const [currentView, setCurrentView] = useState<"main" | "reports" | "reportsTree">("main");
+  const [currentView, setCurrentView] = useState<
+    "main" | "reports" | "reportsTree"
+  >("main");
 
   const [isHashTableSizeModalOpen, setIsHashTableSizeModalOpen] =
     useState(false);
@@ -194,7 +196,7 @@ const App: React.FC = () => {
         onReportsTreeOpen={handleReportsTreeOpen}
         onMainView={handleBackToMain}
       />
-      
+
       {renderCurrentView()}
 
       <AboutModal

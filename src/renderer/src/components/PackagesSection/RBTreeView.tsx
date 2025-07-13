@@ -10,7 +10,11 @@ interface RBTreeViewProps {
   setPackages?: (pkgs: Package[]) => void;
 }
 
-const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange, setPackages }) => {
+const RBTreeView: React.FC<RBTreeViewProps> = ({
+  packages,
+  onDataChange,
+  setPackages,
+}) => {
   // Состояние выбранной ноды
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   // Получаем данные дерева и конвертируем для визуализации
@@ -18,7 +22,7 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange, setPack
     try {
       // Получаем внутреннее дерево из сервиса через рефлексию
       const tree = (packagesService as any).redBlackTree;
-      
+
       if (!tree || packages.length === 0) {
         return null;
       }
@@ -31,7 +35,7 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange, setPack
         return `${key}\n[${indices.join(", ")}]`;
       });
     } catch (error) {
-      console.error('Error converting tree data:', error);
+      console.error("Error converting tree data:", error);
       return null;
     }
   }, [packages]);
@@ -39,7 +43,7 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange, setPack
   // Получить подробные посылки по выбранному отправителю (selectedKey)
   const selectedPackages = useMemo(() => {
     if (!selectedKey) return [];
-    const senderPhone = parseInt(selectedKey.split('\n')[0], 10);
+    const senderPhone = parseInt(selectedKey.split("\n")[0], 10);
     if (isNaN(senderPhone)) return [];
     // Получаем индексы из value (DoublyLinkedList) напрямую из дерева
     const tree = (packagesService as any).redBlackTree;
@@ -49,25 +53,29 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange, setPack
     const indices = node.toArray();
     // Получаем посылки по индексам
     const arr = (packagesService as any).packagesArray;
-    return indices.map((idx: number) => {
-      const data = arr.get(idx);
-      if (!data) return null;
-      return {
-        senderPhone,
-        receiverPhone: parseInt(data.receiverPhone, 10),
-        weight: data.weight,
-        date: data.date,
-      };
-    }).filter(Boolean);
+    return indices
+      .map((idx: number) => {
+        const data = arr.get(idx);
+        if (!data) return null;
+        return {
+          senderPhone,
+          receiverPhone: parseInt(data.receiverPhone, 10),
+          weight: data.weight,
+          date: data.date,
+        };
+      })
+      .filter(Boolean);
   }, [selectedKey, packages]);
 
   // Удаление всех посылок выбранного отправителя по Delete
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' && selectedKey) {
-        const senderPhone = parseInt(selectedKey.split('\n')[0], 10);
+      if (e.key === "Delete" && selectedKey) {
+        const senderPhone = parseInt(selectedKey.split("\n")[0], 10);
         if (!isNaN(senderPhone)) {
-          if (window.confirm(`Удалить все посылки отправителя ${senderPhone}?`)) {
+          if (
+            window.confirm(`Удалить все посылки отправителя ${senderPhone}?`)
+          ) {
             (packagesService as any).removeAllPackagesBySender(senderPhone);
             setSelectedKey(null);
             if (setPackages) setPackages(packagesService.getAllPackages());
@@ -76,26 +84,30 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange, setPack
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedKey, onDataChange, setPackages]);
 
   return (
-    <div style={{
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }}>
-      {/* Канвас с деревом */}
-      <div style={{
-        flex: 1,
-        padding: "20px",
-        overflow: "auto",
+    <div
+      style={{
+        height: "100%",
         display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start"
-      }}>
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* Канвас с деревом */}
+      <div
+        style={{
+          flex: 1,
+          padding: "20px",
+          overflow: "auto",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "flex-start",
+        }}
+      >
         <RBTreeCanvas
           treeData={treeData}
           width={Math.max(800, window.innerWidth - 100)}
@@ -106,52 +118,74 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange, setPack
       </div>
 
       {/* Подсказки внизу */}
-      <div style={{
-        padding: "8px 12px",
-        backgroundColor: "#f0f0f0",
-        borderTop: "1px solid #ddd",
-        fontSize: "11px",
-        color: "#666",
-        flexShrink: 0
-      }}>
+      <div
+        style={{
+          padding: "8px 12px",
+          backgroundColor: "#f0f0f0",
+          borderTop: "1px solid #ddd",
+          fontSize: "11px",
+          color: "#666",
+          flexShrink: 0,
+        }}
+      >
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>
-            <strong>Структура:</strong> Ключ = телефон отправителя, Значение = список посылок
+            <strong>Структура:</strong> Ключ = телефон отправителя, Значение =
+            список посылок
           </span>
           <span>
-            <strong>Балансировка:</strong> Красно-черное дерево автоматически поддерживает логарифмическую высоту
+            <strong>Балансировка:</strong> Красно-черное дерево автоматически
+            поддерживает логарифмическую высоту
           </span>
         </div>
       </div>
 
       {selectedKey && (
-        <div style={{
-          padding: "12px",
-          backgroundColor: "#e3f2fd",
-          borderTop: "1px solid #bbdefb",
-          fontSize: "12px",
-          color: "#1565c0"
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <strong>Детализация по отправителю: {selectedKey.split('\n')[0]}</strong>
+        <div
+          style={{
+            padding: "12px",
+            backgroundColor: "#e3f2fd",
+            borderTop: "1px solid #bbdefb",
+            fontSize: "12px",
+            color: "#1565c0",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 8,
+            }}
+          >
+            <strong>
+              Детализация по отправителю: {selectedKey.split("\n")[0]}
+            </strong>
             <button
               style={{
-                background: '#f44336',
-                color: '#fff',
-                border: 'none',
+                background: "#f44336",
+                color: "#fff",
+                border: "none",
                 borderRadius: 4,
-                padding: '6px 16px',
+                padding: "6px 16px",
                 fontWeight: 500,
-                cursor: 'pointer',
-                marginLeft: 16
+                cursor: "pointer",
+                marginLeft: 16,
               }}
               onClick={() => {
-                const senderPhone = parseInt(selectedKey.split('\n')[0], 10);
+                const senderPhone = parseInt(selectedKey.split("\n")[0], 10);
                 if (!isNaN(senderPhone)) {
-                  if (window.confirm(`Удалить все посылки отправителя ${senderPhone}?`)) {
-                    (packagesService as any).removeAllPackagesBySender(senderPhone);
+                  if (
+                    window.confirm(
+                      `Удалить все посылки отправителя ${senderPhone}?`
+                    )
+                  ) {
+                    (packagesService as any).removeAllPackagesBySender(
+                      senderPhone
+                    );
                     setSelectedKey(null);
-                    if (setPackages) setPackages(packagesService.getAllPackages());
+                    if (setPackages)
+                      setPackages(packagesService.getAllPackages());
                     if (onDataChange) onDataChange();
                   }
                 }
@@ -160,7 +194,14 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange, setPack
               Удалить все посылки отправителя
             </button>
           </div>
-          <table style={{ width: "100%", marginTop: 8, background: "white", borderCollapse: "collapse" }}>
+          <table
+            style={{
+              width: "100%",
+              marginTop: 8,
+              background: "white",
+              borderCollapse: "collapse",
+            }}
+          >
             <thead>
               <tr>
                 <th>Тел. отправителя</th>
@@ -171,7 +212,14 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange, setPack
             </thead>
             <tbody>
               {selectedPackages.length === 0 ? (
-                <tr><td colSpan={4} style={{ textAlign: 'center', color: '#888' }}>Нет посылок по выбранному отправителю</td></tr>
+                <tr>
+                  <td
+                    colSpan={4}
+                    style={{ textAlign: "center", color: "#888" }}
+                  >
+                    Нет посылок по выбранному отправителю
+                  </td>
+                </tr>
               ) : (
                 selectedPackages.map((pkg: any, idx: number) => (
                   <tr key={idx}>

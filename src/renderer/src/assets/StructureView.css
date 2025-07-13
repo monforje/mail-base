@@ -5,7 +5,6 @@
     font-family: 'Consolas', 'Courier New', monospace;
 }
 
-/* Классический строгий стиль для таблиц структуры данных */
 .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -15,7 +14,8 @@
     margin-bottom: 12px;
 }
 
-.data-table th, .data-table td {
+.data-table th,
+.data-table td {
     border: 1px solid #ccc;
     padding: 4px 6px;
     text-align: left;

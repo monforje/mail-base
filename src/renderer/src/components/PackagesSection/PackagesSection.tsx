@@ -28,7 +28,6 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Добавляем обработку клавиши Escape для выхода из полноэкранного режима
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && isFullscreen) {
@@ -38,7 +37,6 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
 
     if (isFullscreen) {
       document.addEventListener("keydown", handleKeyDown);
-      // Предотвращаем скролл страницы в полноэкранном режиме
       document.body.classList.add("fullscreen-mode");
     } else {
       document.body.classList.remove("fullscreen-mode");
@@ -129,9 +127,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
 
   return (
     <>
-      <div
-        className={`table-section ${isFullscreen ? 'fullscreen' : ''}`}
-      >
+      <div className={`table-section ${isFullscreen ? "fullscreen" : ""}`}>
         <div className="section-header">
           <div className="section-title">{getSectionTitle()}</div>
           <div className="section-actions">
@@ -157,17 +153,21 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
               🗑️
             </button>
             <button
-              className={`action-icon ${isFullscreen ? 'fullscreen-active' : ''}`}
+              className={`action-icon ${
+                isFullscreen ? "fullscreen-active" : ""
+              }`}
               onClick={toggleFullscreen}
-              title={isFullscreen ? "Выйти из полноэкранного режима (Esc)" : "Полноэкранный режим"}
+              title={
+                isFullscreen
+                  ? "Выйти из полноэкранного режима (Esc)"
+                  : "Полноэкранный режим"
+              }
             >
               {isFullscreen ? "🗗" : "⛶"}
             </button>
           </div>
         </div>
-        <div className="table-container">
-          {renderContent()}
-        </div>
+        <div className="table-container">{renderContent()}</div>
       </div>
 
       <PackageModal

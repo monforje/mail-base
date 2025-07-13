@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { User, Package } from "../../types";
 import { ReportsService } from "../../services/ReportsService";
-import RBTreeCanvas, { convertRBTreeToVisualTree } from "../PackagesSection/RBTreeCanvas";
+import RBTreeCanvas, {
+  convertRBTreeToVisualTree,
+} from "../PackagesSection/RBTreeCanvas";
 import { DoublyLinkedList } from "../../data-structures/DoublyLinkedList";
 
 interface ReportsTreeViewProps {
@@ -9,7 +11,10 @@ interface ReportsTreeViewProps {
   packages: Package[];
 }
 
-const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) => {
+const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({
+  users,
+  packages,
+}) => {
   const [reportsService] = useState(() => new ReportsService());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
@@ -18,10 +23,10 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
     try {
       // Генерируем отчет
       reportsService.generateReport(users, packages);
-      
+
       // Получаем внутреннее дерево из сервиса
       const tree = (reportsService as any).dateTree;
-      
+
       if (!tree || packages.length === 0) {
         return { treeData: null, stats: null };
       }
@@ -38,24 +43,24 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
       const treeStats = reportsService.getTreeStatistics();
       const generalStats = reportsService.getStatistics();
 
-      return { 
-        treeData: visualTree, 
-        stats: { ...treeStats, ...generalStats }
+      return {
+        treeData: visualTree,
+        stats: { ...treeStats, ...generalStats },
       };
     } catch (error) {
-      console.error('Error generating reports tree:', error);
+      console.error("Error generating reports tree:", error);
       return { treeData: null, stats: null };
     }
   }, [users, packages, reportsService]);
 
   const uniqueDates = useMemo(() => {
-    return Array.from(new Set(packages.map(pkg => pkg.date))).sort();
+    return Array.from(new Set(packages.map((pkg) => pkg.date))).sort();
   }, [packages]);
 
   // Получить подробные отчеты по выбранной дате (selectedKey)
   const selectedReports = useMemo(() => {
     if (!selectedKey) return [];
-    const date = selectedKey.split('\n')[0];
+    const date = selectedKey.split("\n")[0];
     // Получаем индексы из value (DoublyLinkedList) напрямую из дерева
     const tree = (reportsService as any).dateTree;
     if (!tree) return [];
@@ -73,12 +78,14 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
   };
 
   return (
-    <div style={{
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      border: "1px solid #ccc"
-    }}>
+    <div
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        border: "1px solid #ccc",
+      }}
+    >
       <div className="section-header">
         <div className="section-title">
           Визуализация дерева отчетов ({uniqueDates.length} уникальных дат)
@@ -105,15 +112,17 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
       </div>
 
       {stats && (
-        <div style={{
-          padding: "12px",
-          backgroundColor: "#f9f9f9",
-          borderBottom: "1px solid #ddd",
-          fontSize: "12px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
-        }}>
+        <div
+          style={{
+            padding: "12px",
+            backgroundColor: "#f9f9f9",
+            borderBottom: "1px solid #ddd",
+            fontSize: "12px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <div style={{ display: "flex", gap: "20px" }}>
             <span style={{ color: "#4caf50" }}>
               📋 Всего отчетов: {stats.totalReports}
@@ -129,10 +138,12 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
             </span>
           </div>
           <div style={{ display: "flex", gap: "15px" }}>
-            <span style={{ 
-              color: stats.isValid ? "#4caf50" : "#f44336",
-              fontWeight: "bold"
-            }}>
+            <span
+              style={{
+                color: stats.isValid ? "#4caf50" : "#f44336",
+                fontWeight: "bold",
+              }}
+            >
               {stats.isValid ? "✓ Дерево валидное" : "✗ Дерево невалидное"}
             </span>
             <span style={{ color: "#666" }}>
@@ -143,44 +154,52 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
       )}
 
       {/* Легенда */}
-      <div style={{
-        padding: "8px 12px",
-        backgroundColor: "#fafafa",
-        borderBottom: "1px solid #eee",
-        fontSize: "11px",
-        display: "flex",
-        gap: "20px",
-        alignItems: "center"
-      }}>
+      <div
+        style={{
+          padding: "8px 12px",
+          backgroundColor: "#fafafa",
+          borderBottom: "1px solid #eee",
+          fontSize: "11px",
+          display: "flex",
+          gap: "20px",
+          alignItems: "center",
+        }}
+      >
         <span style={{ color: "#333", fontWeight: "bold" }}>Легенда:</span>
         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <div style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            backgroundColor: "#ff4444",
-            border: "1px solid #222"
-          }}></div>
+          <div
+            style={{
+              width: "16px",
+              height: "16px",
+              borderRadius: "50%",
+              backgroundColor: "#ff4444",
+              border: "1px solid #222",
+            }}
+          ></div>
           <span>Красный узел</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <div style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            backgroundColor: "#333333",
-            border: "1px solid #222"
-          }}></div>
+          <div
+            style={{
+              width: "16px",
+              height: "16px",
+              borderRadius: "50%",
+              backgroundColor: "#333333",
+              border: "1px solid #222",
+            }}
+          ></div>
           <span>Черный узел</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <div style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            backgroundColor: "#2196f3",
-            border: "1px solid #1976d2"
-          }}></div>
+          <div
+            style={{
+              width: "16px",
+              height: "16px",
+              borderRadius: "50%",
+              backgroundColor: "#2196f3",
+              border: "1px solid #1976d2",
+            }}
+          ></div>
           <span>Выбранная дата</span>
         </div>
         <span style={{ marginLeft: "20px", color: "#666" }}>
@@ -188,113 +207,145 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
         </span>
       </div>
 
-      <div style={{
-        flex: 1,
-        overflow: "auto",
-        minHeight: 0,
-        backgroundColor: "#fafafa"
-      }}>
+      <div
+        style={{
+          flex: 1,
+          overflow: "auto",
+          minHeight: 0,
+          backgroundColor: "#fafafa",
+        }}
+      >
         {!treeData ? (
-          <div style={{
-            padding: "40px 20px",
-            textAlign: "center",
-            color: "#666",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center"
-          }}>
-            <div style={{ 
-              fontSize: "48px", 
-              marginBottom: "24px",
-              opacity: 0.3
-            }}>
+          <div
+            style={{
+              padding: "40px 20px",
+              textAlign: "center",
+              color: "#666",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "48px",
+                marginBottom: "24px",
+                opacity: 0.3,
+              }}
+            >
               🌳
             </div>
-            
-            <div style={{ 
-              fontSize: "24px", 
-              marginBottom: "16px",
-              fontWeight: "bold"
-            }}>
+
+            <div
+              style={{
+                fontSize: "24px",
+                marginBottom: "16px",
+                fontWeight: "bold",
+              }}
+            >
               Нет данных для построения дерева
             </div>
-            
-            <div style={{ 
-              fontSize: "16px", 
-              marginBottom: "24px",
-              maxWidth: "600px",
-              lineHeight: "1.5"
-            }}>
-              Загрузите пользователей и посылки для создания интерактивной 
+
+            <div
+              style={{
+                fontSize: "16px",
+                marginBottom: "24px",
+                maxWidth: "600px",
+                lineHeight: "1.5",
+              }}
+            >
+              Загрузите пользователей и посылки для создания интерактивной
               визуализации красно-черного дерева отчетов по датам.
             </div>
 
             {uniqueDates.length > 0 && (
-              <div style={{
-                backgroundColor: "white",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                padding: "20px",
-                maxWidth: "500px",
-                width: "100%"
-              }}>
-                <div style={{ 
-                  fontSize: "14px", 
-                  fontWeight: "bold",
-                  marginBottom: "12px",
-                  color: "#333"
-                }}>
+              <div
+                style={{
+                  backgroundColor: "white",
+                  border: "1px solid #ddd",
+                  borderRadius: "8px",
+                  padding: "20px",
+                  maxWidth: "500px",
+                  width: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    marginBottom: "12px",
+                    color: "#333",
+                  }}
+                >
                   Доступные данные:
                 </div>
-                
-                <div style={{ 
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "12px",
-                  fontSize: "14px"
-                }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "12px",
+                    fontSize: "14px",
+                  }}
+                >
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
                     <span>📅 Дат в данных:</span>
                     <strong>{uniqueDates.length}</strong>
                   </div>
-                  
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
                     <span>📦 Всего посылок:</span>
                     <strong>{packages.length}</strong>
                   </div>
-                  
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
                     <span>👥 Пользователей:</span>
                     <strong>{users.length}</strong>
                   </div>
-                  
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
                     <span>📊 Среднее на дату:</span>
-                    <strong>{uniqueDates.length > 0 ? (packages.length / uniqueDates.length).toFixed(1) : 0}</strong>
+                    <strong>
+                      {uniqueDates.length > 0
+                        ? (packages.length / uniqueDates.length).toFixed(1)
+                        : 0}
+                    </strong>
                   </div>
                 </div>
 
-                <div style={{ 
-                  marginTop: "16px",
-                  fontSize: "12px",
-                  color: "#f44336",
-                  textAlign: "center"
-                }}>
+                <div
+                  style={{
+                    marginTop: "16px",
+                    fontSize: "12px",
+                    color: "#f44336",
+                    textAlign: "center",
+                  }}
+                >
                   ⚠️ Для создания отчетов нужны данные о пользователях
                 </div>
               </div>
             )}
           </div>
         ) : (
-          <div style={{
-            padding: "20px",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "flex-start",
-            minHeight: "100%"
-          }}>
+          <div
+            style={{
+              padding: "20px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "flex-start",
+              minHeight: "100%",
+            }}
+          >
             <RBTreeCanvas
               treeData={treeData}
               selectedKey={selectedKey}
@@ -308,15 +359,24 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
 
       {/* Информация о выбранной дате */}
       {selectedKey && (
-        <div style={{
-          padding: "12px",
-          backgroundColor: "#e3f2fd",
-          borderTop: "1px solid #bbdefb",
-          fontSize: "12px",
-          color: "#1565c0"
-        }}>
-          <strong>Детализация по дате: {selectedKey.split('\n')[0]}</strong>
-          <table style={{ width: "100%", marginTop: 8, background: "white", borderCollapse: "collapse" }}>
+        <div
+          style={{
+            padding: "12px",
+            backgroundColor: "#e3f2fd",
+            borderTop: "1px solid #bbdefb",
+            fontSize: "12px",
+            color: "#1565c0",
+          }}
+        >
+          <strong>Детализация по дате: {selectedKey.split("\n")[0]}</strong>
+          <table
+            style={{
+              width: "100%",
+              marginTop: 8,
+              background: "white",
+              borderCollapse: "collapse",
+            }}
+          >
             <thead>
               <tr>
                 <th>Дата</th>
@@ -329,7 +389,14 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
             </thead>
             <tbody>
               {selectedReports.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', color: '#888' }}>Нет отчетов по выбранной дате</td></tr>
+                <tr>
+                  <td
+                    colSpan={6}
+                    style={{ textAlign: "center", color: "#888" }}
+                  >
+                    Нет отчетов по выбранной дате
+                  </td>
+                </tr>
               ) : (
                 selectedReports.map((report: any, idx: number) => (
                   <tr key={idx}>
@@ -348,19 +415,23 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
       )}
 
       {/* Подсказки */}
-      <div style={{
-        padding: "8px 12px",
-        backgroundColor: "#f0f0f0",
-        borderTop: "1px solid #ddd",
-        fontSize: "11px",
-        color: "#666"
-      }}>
+      <div
+        style={{
+          padding: "8px 12px",
+          backgroundColor: "#f0f0f0",
+          borderTop: "1px solid #ddd",
+          fontSize: "11px",
+          color: "#666",
+        }}
+      >
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>
-            <strong>Структура:</strong> Ключ = дата отправки, Значение = список индексов отчетов
+            <strong>Структура:</strong> Ключ = дата отправки, Значение = список
+            индексов отчетов
           </span>
           <span>
-            <strong>Использование:</strong> Кликните на узел для выделения конкретной даты
+            <strong>Использование:</strong> Кликните на узел для выделения
+            конкретной даты
           </span>
         </div>
       </div>

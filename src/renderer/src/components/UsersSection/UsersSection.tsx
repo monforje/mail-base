@@ -113,10 +113,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     const info = getHashTableInfo();
 
     if (!info.isInitialized) {
-      if (
-        viewMode === "structure" ||
-        viewMode === "datastructure"
-      ) {
+      if (viewMode === "structure" || viewMode === "datastructure") {
         return 'Справочник "Пользователи" (Хеш-таблица: не инициализирована)';
       } else {
         return 'Справочник "Пользователи"';
@@ -124,7 +121,9 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     }
 
     if (viewMode === "structure") {
-      return `Справочник "Пользователи" (Хеш-таблица: размер ${info.capacity}, загрузка ${(info.loadFactor * 100).toFixed(1)}%)`;
+      return `Справочник "Пользователи" (Хеш-таблица: размер ${
+        info.capacity
+      }, загрузка ${(info.loadFactor * 100).toFixed(1)}%)`;
     } else if (viewMode === "datastructure") {
       return 'Справочник "Пользователи" (Детальная структура хеш-таблицы)';
     } else {
@@ -151,9 +150,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
 
   return (
     <>
-      <div
-        className={`table-section ${isFullscreen ? 'fullscreen' : ''}`}
-      >
+      <div className={`table-section ${isFullscreen ? "fullscreen" : ""}`}>
         <div className="section-header">
           <div className="section-title">{getSectionTitle()}</div>
           <div className="section-actions">
@@ -179,17 +176,21 @@ const UsersSection: React.FC<UsersSectionProps> = ({
               🗑️
             </button>
             <button
-              className={`action-icon ${isFullscreen ? 'fullscreen-active' : ''}`}
+              className={`action-icon ${
+                isFullscreen ? "fullscreen-active" : ""
+              }`}
               onClick={toggleFullscreen}
-              title={isFullscreen ? "Выйти из полноэкранного режима (Esc)" : "Полноэкранный режим"}
+              title={
+                isFullscreen
+                  ? "Выйти из полноэкранного режима (Esc)"
+                  : "Полноэкранный режим"
+              }
             >
               {isFullscreen ? "🗗" : "⛶"}
             </button>
           </div>
         </div>
-        <div className="table-container">
-          {renderContent()}
-        </div>
+        <div className="table-container">{renderContent()}</div>
       </div>
 
       <UserModal

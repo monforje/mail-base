@@ -75,7 +75,8 @@ const LoggerWindow: React.FC = () => {
 
   const getLogClass = (log: string): string => {
     if (log.includes("ОШИБКА") || log.includes("ошибка")) return "error";
-    if (log.includes("ПРЕДУПРЕЖДЕНИЕ") || log.includes("очищен")) return "warning";
+    if (log.includes("ПРЕДУПРЕЖДЕНИЕ") || log.includes("очищен"))
+      return "warning";
     if (log.includes("ОТЛАДКА") || log.includes("статистика")) return "debug";
     if (log.includes("добавлен") || log.includes("завершено")) return "success";
     return "info";

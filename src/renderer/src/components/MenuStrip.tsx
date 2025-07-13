@@ -131,10 +131,7 @@ const MenuStrip: React.FC<MenuStripProps & { onMainView?: () => void }> = ({
             <button className="menu-button" onClick={onReportsOpen}>
               Отчет по посылкам
             </button>
-            <button 
-              className="menu-button" 
-              onClick={onReportsTreeOpen}
-            >
+            <button className="menu-button" onClick={onReportsTreeOpen}>
               Отчет-Дерево
             </button>
           </div>

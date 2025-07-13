@@ -22,7 +22,8 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ reports }) => {
         {reports.length === 0 ? (
           <tr>
             <td colSpan={6} className="empty-message">
-              Нет данных для отображения. Сформируйте отчет для просмотра результатов.
+              Нет данных для отображения. Сформируйте отчет для просмотра
+              результатов.
             </td>
           </tr>
         ) : (

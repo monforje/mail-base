@@ -80,8 +80,7 @@ const HashTableView: React.FC<HashTableViewProps> = ({}) => {
           justifyContent: "space-between",
           alignItems: "center",
         }}
-      >
-      </div>
+      ></div>
 
       <table className="data-table">
         <thead>

@@ -2,7 +2,11 @@ import { HashTable } from "../data-structures/HashTable";
 import { UsersArray, UserData } from "../data-structures/UsersArray";
 import { User } from "../types";
 import { logger } from "./Logger";
-import { validateFullName, validateAddress, validateUniqueFullName } from "../utils";
+import {
+  validateFullName,
+  validateAddress,
+  validateUniqueFullName,
+} from "../utils";
 
 export class UsersService {
   private hashTable: HashTable<number>;
@@ -59,13 +63,17 @@ export class UsersService {
       throw new Error(`User with phone ${user.phone} already exists`);
     }
     if (!validateFullName(user.fullName)) {
-      throw new Error("ФИО должно состоять из трёх слов, каждое с заглавной буквы (например: Иванов Иван Иванович)");
+      throw new Error(
+        "ФИО должно состоять из трёх слов, каждое с заглавной буквы (например: Иванов Иван Иванович)"
+      );
     }
     if (!validateUniqueFullName(user.fullName, this.getAllUsers())) {
       throw new Error("Пользователь с таким ФИО уже существует");
     }
     if (!validateAddress(user.address)) {
-      throw new Error("Адрес должен быть в формате: г. <город>, ул. <улица>, д. <номер>, кв. <номер>");
+      throw new Error(
+        "Адрес должен быть в формате: г. <город>, ул. <улица>, д. <номер>, кв. <номер>"
+      );
     }
 
     const userData: UserData = {
@@ -224,7 +232,9 @@ export class UsersService {
   }
 
   public loadUsers(users: User[], customHashTableSize?: number): void {
-    logger.info(`Загрузка пользователей: начало загрузки ${users.length} пользователей`);
+    logger.info(
+      `Загрузка пользователей: начало загрузки ${users.length} пользователей`
+    );
 
     if (customHashTableSize && customHashTableSize > 0) {
       logger.info(
@@ -250,9 +260,7 @@ export class UsersService {
       if (this.hashTable.containsKey(phoneKey)) {
         duplicates.push(user.phone);
         logger.warning(
-          `Дубликат телефона ${user.phone} пропущен (строка ${
-            index + 1
-          })`
+          `Дубликат телефона ${user.phone} пропущен (строка ${index + 1})`
         );
       } else {
         try {
@@ -264,18 +272,16 @@ export class UsersService {
             );
           }
         } catch (error) {
-          logger.error(
-            `Ошибка загрузки пользователя ${user.phone}: ${error}`
-          );
+          logger.error(`Ошибка загрузки пользователя ${user.phone}: ${error}`);
         }
       }
     });
 
     if (duplicates.length > 0) {
       logger.warning(
-        `Найдено ${
-          duplicates.length
-        } дубликатов номеров: ${duplicates.join(", ")}`
+        `Найдено ${duplicates.length} дубликатов номеров: ${duplicates.join(
+          ", "
+        )}`
       );
     }
 

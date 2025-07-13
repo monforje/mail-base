@@ -127,17 +127,25 @@ export class PackagesService {
         `Package from ${pkg.senderPhone} to ${pkg.receiverPhone} (${pkg.weight}kg, ${pkg.date}) already exists`
       );
     }
-    if (!validateUserExists(String(pkg.senderPhone), usersService.getAllUsers())) {
+    if (
+      !validateUserExists(String(pkg.senderPhone), usersService.getAllUsers())
+    ) {
       throw new Error("Отправитель должен существовать среди пользователей");
     }
-    if (!validateUserExists(String(pkg.receiverPhone), usersService.getAllUsers())) {
+    if (
+      !validateUserExists(String(pkg.receiverPhone), usersService.getAllUsers())
+    ) {
       throw new Error("Получатель должен существовать среди пользователей");
     }
     if (!validateWeight(String(pkg.weight))) {
-      throw new Error("Вес должен быть положительным числом с точкой (например, 3.5)");
+      throw new Error(
+        "Вес должен быть положительным числом с точкой (например, 3.5)"
+      );
     }
     if (!validateDate(pkg.date)) {
-      throw new Error('Дата должна быть в формате "dd mon yyyy", например "15 jan 2025"');
+      throw new Error(
+        'Дата должна быть в формате "dd mon yyyy", например "15 jan 2025"'
+      );
     }
 
     const key = this.generateKey(pkg.senderPhone);
@@ -336,9 +344,7 @@ export class PackagesService {
   }
 
   public loadPackages(packages: Package[]): void {
-    logger.info(
-      `Загрузка посылок: начало загрузки ${packages.length} посылок`
-    );
+    logger.info(`Загрузка посылок: начало загрузки ${packages.length} посылок`);
     this.clear();
 
     const loaded: string[] = [];
@@ -369,7 +375,9 @@ export class PackagesService {
 
     if (duplicates.length > 0) {
       logger.warning(
-        `Найдено ${duplicates.length} дубликатов посылок: ${duplicates.slice(0, 5).join(", ")}${
+        `Найдено ${duplicates.length} дубликатов посылок: ${duplicates
+          .slice(0, 5)
+          .join(", ")}${
           duplicates.length > 5 ? ` и еще ${duplicates.length - 5}...` : ""
         }`
       );

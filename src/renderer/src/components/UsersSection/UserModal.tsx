@@ -6,7 +6,7 @@ import {
   validateFullName,
   validateAddress,
   validateUniqueFullName,
-  validateUniquePhone
+  validateUniquePhone,
 } from "../../utils";
 import React, { useState, useEffect } from "react";
 import { usersService } from "../../DataServices";
@@ -77,14 +77,20 @@ const UserModal: React.FC<UserModalProps> = ({
       if (!fullName.trim()) {
         newErrors.push("ФИО обязательно для заполнения");
       } else if (!validateFullName(fullName)) {
-        newErrors.push("ФИО должно состоять из трёх слов, каждое с заглавной буквы (например: Иванов Иван Иванович)");
-      } else if (!validateUniqueFullName(fullName, usersService.getAllUsers())) {
+        newErrors.push(
+          "ФИО должно состоять из трёх слов, каждое с заглавной буквы (например: Иванов Иван Иванович)"
+        );
+      } else if (
+        !validateUniqueFullName(fullName, usersService.getAllUsers())
+      ) {
         newErrors.push("Пользователь с таким ФИО уже существует");
       }
       if (!address.trim()) {
         newErrors.push("Адрес обязателен для заполнения");
       } else if (!validateAddress(address)) {
-        newErrors.push("Адрес должен быть в формате: г. <город>, ул. <улица>, д. <номер>, кв. <номер>");
+        newErrors.push(
+          "Адрес должен быть в формате: г. <город>, ул. <улица>, д. <номер>, кв. <номер>"
+        );
       }
     }
 

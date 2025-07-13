@@ -17,13 +17,14 @@ export class ReportsService {
   }
 
   public generateReport(users: User[], packages: Package[]): void {
-    logger.info(`Начало формирования отчёта: ${packages.length} посылок, ${users.length} пользователей`);
-    
+    logger.info(
+      `Начало формирования отчёта: ${packages.length} посылок, ${users.length} пользователей`
+    );
+
     this.clear();
 
-    // Создаем мапу пользователей для быстрого поиска
     const usersMap = new Map<number, User>();
-    users.forEach(user => {
+    users.forEach((user) => {
       usersMap.set(user.phone, user);
     });
 
@@ -32,10 +33,12 @@ export class ReportsService {
 
     packages.forEach((pkg, index) => {
       const sender = usersMap.get(pkg.senderPhone);
-      
+
       if (!sender) {
         skippedCount++;
-        logger.warning(`Отправитель ${pkg.senderPhone} не найден среди пользователей, посылка пропущена`);
+        logger.warning(
+          `Отправитель ${pkg.senderPhone} не найден среди пользователей, посылка пропущена`
+        );
         return;
       }
 
@@ -49,22 +52,26 @@ export class ReportsService {
       };
 
       const arrayIndex = this.reportsArray.add(reportData);
-      
+
       let indexList = this.dateTree.search(pkg.date);
       if (indexList === null) {
         indexList = new DoublyLinkedList<number>();
         this.dateTree.insert(pkg.date, indexList);
       }
-      
+
       indexList.append(arrayIndex);
       processedCount++;
 
       if (processedCount % 50 === 0 || index === packages.length - 1) {
-        logger.debug(`Обработано ${processedCount} из ${packages.length} посылок`);
+        logger.debug(
+          `Обработано ${processedCount} из ${packages.length} посылок`
+        );
       }
     });
 
-    logger.info(`Формирование отчёта завершено — создано записей: ${processedCount}, пропущено: ${skippedCount}`);
+    logger.info(
+      `Формирование отчёта завершено — создано записей: ${processedCount}, пропущено: ${skippedCount}`
+    );
   }
 
   public getReportsByDate(date: string): ReportData[] {
@@ -87,7 +94,10 @@ export class ReportsService {
     return reports;
   }
 
-  public getReportsByDateRange(startDate: string, endDate: string): ReportData[] {
+  public getReportsByDateRange(
+    startDate: string,
+    endDate: string
+  ): ReportData[] {
     const allReports: ReportData[] = [];
     const allDates = this.dateTree.keys();
 
@@ -98,10 +108,11 @@ export class ReportsService {
       }
     }
 
-    // Сортируем по дате
     allReports.sort((a, b) => a.date.localeCompare(b.date));
 
-    logger.info(`Найдено ${allReports.length} записей за период с ${startDate} по ${endDate}`);
+    logger.info(
+      `Найдено ${allReports.length} записей за период с ${startDate} по ${endDate}`
+    );
     return allReports;
   }
 
@@ -109,7 +120,7 @@ export class ReportsService {
     const allReports = this.reportsArray.getAll();
     // Сортируем по дате
     allReports.sort((a, b) => a.date.localeCompare(b.date));
-    
+
     logger.debug(`Получено всех записей: ${allReports.length}`);
     return allReports;
   }
@@ -128,7 +139,7 @@ export class ReportsService {
 
     return {
       startDate: dates[0],
-      endDate: dates[dates.length - 1]
+      endDate: dates[dates.length - 1],
     };
   }
 
@@ -137,9 +148,11 @@ export class ReportsService {
       return "Нет данных для экспорта";
     }
 
-    const header = "Дата\tТелефон отправителя\tИмя отправителя\tАдрес отправителя\tТелефон получателя\tВес (кг)";
-    const rows = reports.map(report => 
-      `${report.date}\t${report.senderPhone}\t${report.senderName}\t${report.senderAddress}\t${report.receiverPhone}\t${report.weight}`
+    const header =
+      "Дата\tТелефон отправителя\tИмя отправителя\tАдрес отправителя\tТелефон получателя\tВес (кг)";
+    const rows = reports.map(
+      (report) =>
+        `${report.date}\t${report.senderPhone}\t${report.senderName}\t${report.senderAddress}\t${report.receiverPhone}\t${report.weight}`
     );
 
     const content = [header, ...rows].join("\n");
@@ -157,18 +170,27 @@ export class ReportsService {
   } {
     const allReports = this.getAllReports();
     const uniqueDates = this.getAvailableDates().length;
-    const totalWeight = allReports.reduce((sum, report) => sum + report.weight, 0);
+    const totalWeight = allReports.reduce(
+      (sum, report) => sum + report.weight,
+      0
+    );
 
     const stats = {
       totalReports: allReports.length,
       uniqueDates,
       dateRange: this.getDateRange(),
-      averageReportsPerDate: uniqueDates > 0 ? allReports.length / uniqueDates : 0,
+      averageReportsPerDate:
+        uniqueDates > 0 ? allReports.length / uniqueDates : 0,
       totalWeight,
-      averageWeight: allReports.length > 0 ? totalWeight / allReports.length : 0,
+      averageWeight:
+        allReports.length > 0 ? totalWeight / allReports.length : 0,
     };
 
-    logger.debug(`Статистика: всего: ${stats.totalReports}, уникальных дат: ${stats.uniqueDates}, средний вес: ${stats.averageWeight.toFixed(2)}кг`);
+    logger.debug(
+      `Статистика: всего: ${stats.totalReports}, уникальных дат: ${
+        stats.uniqueDates
+      }, средний вес: ${stats.averageWeight.toFixed(2)}кг`
+    );
     return stats;
   }
 
@@ -196,7 +218,8 @@ export class ReportsService {
   } {
     const uniqueDates = this.dateTree.getSize();
     const height = this.getTreeHeight();
-    const theoreticalHeight = uniqueDates > 0 ? Math.ceil(Math.log2(uniqueDates + 1)) : 0;
+    const theoreticalHeight =
+      uniqueDates > 0 ? Math.ceil(Math.log2(uniqueDates + 1)) : 0;
 
     return {
       height,
