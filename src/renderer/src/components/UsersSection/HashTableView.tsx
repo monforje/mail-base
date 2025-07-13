@@ -81,10 +81,6 @@ const HashTableView: React.FC<HashTableViewProps> = ({}) => {
           alignItems: "center",
         }}
       >
-        <span>Структура хеш-таблицы ({hashTableEntries.length} ячеек)</span>
-        <span style={{ color: "#666" }}>
-          Метод серединного квадрата + линейный пробинг
-        </span>
       </div>
 
       <table className="data-table">

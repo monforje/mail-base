@@ -20,6 +20,35 @@ export class PackagesService {
     return senderPhone.toString();
   }
 
+  private generatePackageKey(pkg: Package): string {
+    return `${pkg.senderPhone}-${pkg.receiverPhone}-${pkg.weight}-${pkg.date}`;
+  }
+
+  private packageExists(pkg: Package): boolean {
+    const key = this.generateKey(pkg.senderPhone);
+    const indexList = this.redBlackTree.search(key);
+
+    if (indexList === null) {
+      return false;
+    }
+
+    for (const index of indexList) {
+      const packageData = this.packagesArray.get(index);
+      if (packageData) {
+        const receiverPhone = parseInt(packageData.receiverPhone, 10);
+        if (
+          receiverPhone === pkg.receiverPhone &&
+          packageData.weight === pkg.weight &&
+          packageData.date === pkg.date
+        ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   public removeAllPackagesBySender(senderPhone: number): number {
     const key = this.generateKey(senderPhone);
     const indexList = this.redBlackTree.search(key);
@@ -68,7 +97,6 @@ export class PackagesService {
   }
 
   public getArrayIndexForPackage(pkg: Package): number | null {
-    // 1. Берём список индексов для данного отправителя
     const key = this.generateKey(pkg.senderPhone);
     const list = this.redBlackTree.search(key);
     if (!list) return null;
@@ -88,6 +116,16 @@ export class PackagesService {
   }
 
   public addPackage(pkg: Package): void {
+    if (this.packageExists(pkg)) {
+      const packageKey = this.generatePackageKey(pkg);
+      logger.warning(
+        `PackagesService: Package ${packageKey} already exists, skipping add`
+      );
+      throw new Error(
+        `Package from ${pkg.senderPhone} to ${pkg.receiverPhone} (${pkg.weight}kg, ${pkg.date}) already exists`
+      );
+    }
+
     const key = this.generateKey(pkg.senderPhone);
 
     const packageData: PackageData = {
@@ -307,23 +345,41 @@ export class PackagesService {
     this.clear();
 
     const loaded: string[] = [];
+    const duplicates: string[] = [];
 
     packages.forEach((pkg, index) => {
       try {
-        this.addPackageInternal(pkg);
-        loaded.push(`${pkg.senderPhone}->${pkg.receiverPhone}(${pkg.date})`);
-        if (loaded.length % 10 === 0 || index === packages.length - 1) {
-          logger.debug(
-            `PackagesService: Loaded ${loaded.length}/${packages.length} packages`
+        if (this.packageExists(pkg)) {
+          const packageKey = this.generatePackageKey(pkg);
+          duplicates.push(packageKey);
+          logger.warning(
+            `PackagesService: Duplicate package ${packageKey} skipped (line ${index + 1})`
           );
+        } else {
+          this.addPackageInternal(pkg);
+          const packageKey = this.generatePackageKey(pkg);
+          loaded.push(packageKey);
+          if (loaded.length % 10 === 0 || index === packages.length - 1) {
+            logger.debug(
+              `PackagesService: Loaded ${loaded.length}/${packages.length} packages`
+            );
+          }
         }
       } catch (error) {
         logger.error(`PackagesService: Failed to load package: ${error}`);
       }
     });
 
+    if (duplicates.length > 0) {
+      logger.warning(
+        `PackagesService: Found ${duplicates.length} duplicate packages: ${duplicates.slice(0, 5).join(", ")}${
+          duplicates.length > 5 ? ` and ${duplicates.length - 5} more...` : ""
+        }`
+      );
+    }
+
     logger.info(
-      `PackagesService: Load complete - ${loaded.length} packages loaded`
+      `PackagesService: Load complete - ${loaded.length} packages loaded, ${duplicates.length} duplicates skipped`
     );
     this.logTreeStatistics();
   }
@@ -536,4 +592,5 @@ export class PackagesService {
     return structure;
   }
 }
+
 export const packagesService = new PackagesService();
