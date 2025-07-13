@@ -2,7 +2,7 @@ import { MenuStripProps } from "../types";
 import React from "react";
 import "../assets/MenuStrip.css";
 
-const MenuStrip: React.FC<MenuStripProps> = ({
+const MenuStrip: React.FC<MenuStripProps & { onMainView?: () => void }> = ({
   onUsersClear,
   onPackagesClear,
   onUsersSave,
@@ -14,6 +14,7 @@ const MenuStrip: React.FC<MenuStripProps> = ({
   currentViewMode,
   onReportsOpen,
   onReportsTreeOpen,
+  onMainView,
 }) => {
   const handleUsersFileLoad = (event: React.ChangeEvent<HTMLInputElement>) => {
     onFileLoad(event, "users");
@@ -35,7 +36,7 @@ const MenuStrip: React.FC<MenuStripProps> = ({
   };
 
   const handleViewModeChange = (
-    mode: "table" | "structure" | "datastructure" | "arrayview"
+    mode: "table" | "structure" | "datastructure"
   ) => {
     onViewModeChange(mode);
   };
@@ -93,7 +94,10 @@ const MenuStrip: React.FC<MenuStripProps> = ({
               className={`menu-button ${
                 currentViewMode === "table" ? "active" : ""
               }`}
-              onClick={() => handleViewModeChange("table")}
+              onClick={() => {
+                handleViewModeChange("table");
+                if (onMainView) onMainView();
+              }}
             >
               Таблица данных
             </button>
@@ -101,7 +105,10 @@ const MenuStrip: React.FC<MenuStripProps> = ({
               className={`menu-button ${
                 currentViewMode === "structure" ? "active" : ""
               }`}
-              onClick={() => handleViewModeChange("structure")}
+              onClick={() => {
+                handleViewModeChange("structure");
+                if (onMainView) onMainView();
+              }}
             >
               Структура данных (простая)
             </button>
@@ -109,17 +116,12 @@ const MenuStrip: React.FC<MenuStripProps> = ({
               className={`menu-button ${
                 currentViewMode === "datastructure" ? "active" : ""
               }`}
-              onClick={() => handleViewModeChange("datastructure")}
+              onClick={() => {
+                handleViewModeChange("datastructure");
+                if (onMainView) onMainView();
+              }}
             >
               Структура данных (детальная)
-            </button>
-            <button
-              className={`menu-button ${
-                currentViewMode === "arrayview" ? "active" : ""
-              }`}
-              onClick={() => handleViewModeChange("arrayview")}
-            >
-              Отобразить массив данных
             </button>
           </div>
         </div>

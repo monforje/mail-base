@@ -2,6 +2,7 @@ import { HashTable } from "../data-structures/HashTable";
 import { UsersArray, UserData } from "../data-structures/UsersArray";
 import { User } from "../types";
 import { logger } from "./Logger";
+import { validateFullName, validateAddress, validateUniqueFullName } from "../utils";
 
 export class UsersService {
   private hashTable: HashTable<number>;
@@ -56,6 +57,15 @@ export class UsersService {
         `UsersService: User with phone ${user.phone} already exists, skipping add`
       );
       throw new Error(`User with phone ${user.phone} already exists`);
+    }
+    if (!validateFullName(user.fullName)) {
+      throw new Error("ФИО должно состоять из трёх слов, каждое с заглавной буквы (например: Иванов Иван Иванович)");
+    }
+    if (!validateUniqueFullName(user.fullName, this.getAllUsers())) {
+      throw new Error("Пользователь с таким ФИО уже существует");
+    }
+    if (!validateAddress(user.address)) {
+      throw new Error("Адрес должен быть в формате: г. <город>, ул. <улица>, д. <номер>, кв. <номер>");
     }
 
     const userData: UserData = {
@@ -213,28 +223,18 @@ export class UsersService {
     return results;
   }
 
-  public searchByAddress(addressPart: string): User[] {
-    const results = this.getAllUsers().filter((user) =>
-      user.address.toLowerCase().includes(addressPart.toLowerCase())
-    );
-    logger.info(
-      `UsersService: Search by address "${addressPart}" - ${results.length} results`
-    );
-    return results;
-  }
-
   public loadUsers(users: User[], customHashTableSize?: number): void {
-    logger.info(`UsersService: Starting load of ${users.length} users`);
+    logger.info(`Загрузка пользователей: начало загрузки ${users.length} пользователей`);
 
     if (customHashTableSize && customHashTableSize > 0) {
       logger.info(
-        `UsersService: Creating hash table with custom size: ${customHashTableSize}`
+        `Создание хеш-таблицы с пользовательским размером: ${customHashTableSize}`
       );
       this.hashTable = new HashTable<number>(customHashTableSize);
     } else {
       const optimalSize = Math.max(11, Math.ceil(users.length / 0.75));
       logger.info(
-        `UsersService: Creating hash table with optimal size: ${optimalSize}`
+        `Создание хеш-таблицы с оптимальным размером: ${optimalSize}`
       );
       this.hashTable = new HashTable<number>(optimalSize);
     }
@@ -250,7 +250,7 @@ export class UsersService {
       if (this.hashTable.containsKey(phoneKey)) {
         duplicates.push(user.phone);
         logger.warning(
-          `UsersService: Duplicate phone ${user.phone} skipped (line ${
+          `Дубликат телефона ${user.phone} пропущен (строка ${
             index + 1
           })`
         );
@@ -260,12 +260,12 @@ export class UsersService {
           loaded.push(user.phone);
           if (loaded.length % 10 === 0 || index === users.length - 1) {
             logger.debug(
-              `UsersService: Loaded ${loaded.length}/${users.length} users`
+              `Загружено ${loaded.length} из ${users.length} пользователей`
             );
           }
         } catch (error) {
           logger.error(
-            `UsersService: Failed to load user ${user.phone}: ${error}`
+            `Ошибка загрузки пользователя ${user.phone}: ${error}`
           );
         }
       }
@@ -273,20 +273,20 @@ export class UsersService {
 
     if (duplicates.length > 0) {
       logger.warning(
-        `UsersService: Found ${
+        `Найдено ${
           duplicates.length
-        } duplicate phone numbers: ${duplicates.join(", ")}`
+        } дубликатов номеров: ${duplicates.join(", ")}`
       );
     }
 
     const finalStats = this.getStatistics();
     logger.info(
-      `UsersService: Load complete - ${loaded.length} users loaded, ${duplicates.length} duplicates skipped`
+      `Загрузка завершена — загружено ${loaded.length} пользователей, пропущено дубликатов: ${duplicates.length}`
     );
     logger.info(
-      `UsersService: Final hash table - Size: ${
+      `Итоговая хеш-таблица — размер: ${
         finalStats.capacity
-      }, Load Factor: ${finalStats.loadFactor.toFixed(3)}`
+      }, коэффициент загрузки: ${finalStats.loadFactor.toFixed(3)}`
     );
 
     this.logStatistics();
@@ -294,7 +294,7 @@ export class UsersService {
 
   public getArrayIndexByPhone(phone: string): number | null {
     const idx = this.hashTable.get(phone);
-    return typeof idx === "number" ? idx : null; // null, если ещё не найден
+    return typeof idx === "number" ? idx : null;
   }
 
   private addUserInternal(user: User): void {
@@ -315,14 +315,6 @@ export class UsersService {
     return this.usersArray.size();
   }
 
-  public getCapacity(): number {
-    return this.hashTable.getCapacity();
-  }
-
-  public getLoadFactor(): number {
-    return this.hashTable.getLoadFactor();
-  }
-
   public isInitialized(): boolean {
     return this.hashTable.getIsInitialized();
   }
@@ -335,15 +327,14 @@ export class UsersService {
   } {
     const stats = {
       size: this.getCount(),
-      capacity: this.getCapacity(),
-      loadFactor: this.getLoadFactor(),
+      capacity: this.hashTable.getCapacity(),
+      loadFactor: this.hashTable.getLoadFactor(),
       distribution: this.hashTable.getPerformanceStats(),
     };
 
     logger.debug(
-      `UsersService: Statistics - Size: ${stats.size}, Capacity: ${
-        stats.capacity
-      }, Load Factor: ${stats.loadFactor.toFixed(3)}`
+      `Хеш-таблица: коэффициент загрузки: ${stats.loadFactor.toFixed(3)}, ` +
+        `пустых: ${stats.distribution.emptySlots}, занятых: ${stats.distribution.occupiedSlots}, удалённых: ${stats.distribution.deletedSlots}`
     );
     return stats;
   }
@@ -351,61 +342,9 @@ export class UsersService {
   private logStatistics(): void {
     const stats = this.hashTable.getPerformanceStats();
     logger.debug(
-      `HashTable Performance: Load Factor: ${stats.loadFactor.toFixed(3)}, ` +
-        `Empty: ${stats.emptySlots}, Occupied: ${stats.occupiedSlots}, Deleted: ${stats.deletedSlots}`
+      `Хеш-таблица: коэффициент загрузки: ${stats.loadFactor.toFixed(3)}, ` +
+        `пустых: ${stats.emptySlots}, занятых: ${stats.occupiedSlots}, удалённых: ${stats.deletedSlots}`
     );
-  }
-
-  public demonstrateHashing(key: string): {
-    originalKey: string;
-    numericRepresentation: number;
-    squared: number;
-    middleDigits: string;
-    finalHash: number;
-    tableIndex: number;
-  } {
-    if (!this.hashTable.getIsInitialized()) {
-      return {
-        originalKey: key,
-        numericRepresentation: 0,
-        squared: 0,
-        middleDigits: "N/A",
-        finalHash: 0,
-        tableIndex: 0,
-      };
-    }
-
-    let numericKey = 0;
-    for (let i = 0; i < key.length; i++) {
-      numericKey += key.charCodeAt(i) * (i + 1);
-    }
-
-    const squared = numericKey * numericKey;
-    const squaredStr = squared.toString();
-    const len = squaredStr.length;
-
-    let middleDigits: string;
-    if (len >= 6) {
-      const start = Math.floor((len - 4) / 2);
-      middleDigits = squaredStr.substring(start, start + 4);
-    } else if (len >= 4) {
-      const start = Math.floor((len - 2) / 2);
-      middleDigits = squaredStr.substring(start, start + 2);
-    } else {
-      middleDigits = squaredStr;
-    }
-
-    const hashValue = parseInt(middleDigits, 10);
-    const tableIndex = Math.abs(hashValue) % this.getCapacity();
-
-    return {
-      originalKey: key,
-      numericRepresentation: numericKey,
-      squared,
-      middleDigits,
-      finalHash: hashValue,
-      tableIndex,
-    };
   }
 
   public getHashTableEntries(): Array<{

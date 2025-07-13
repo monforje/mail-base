@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ReportData } from "../../data-structures/ReportsArray";
 import { ReportsService } from "../../services/ReportsService";
 import { User, Package } from "../../types";
@@ -9,26 +9,27 @@ import "../../assets/Modal.css";
 interface ReportsSectionProps {
   users: User[];
   packages: Package[];
-}
-
-const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
-  const [reportsService] = useState(new ReportsService());
-  const [reports, setReports] = useState<ReportData[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [statistics, setStatistics] = useState<{
+  reportData: ReportData[];
+  setReportData: React.Dispatch<React.SetStateAction<ReportData[]>>;
+  reportStatistics: {
     totalReports: number;
     uniqueDates: number;
     totalWeight: number;
     averageWeight: number;
-  } | null>(null);
+  } | null;
+  setReportStatistics: React.Dispatch<React.SetStateAction<{
+    totalReports: number;
+    uniqueDates: number;
+    totalWeight: number;
+    averageWeight: number;
+  } | null>>;
+  reportIsLoading: boolean;
+  setReportIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-  useEffect(() => {
-    // Очищаем отчеты при изменении исходных данных
-    setReports([]);
-    setStatistics(null);
-    reportsService.clear();
-  }, [users, packages, reportsService]);
+const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages, reportData, setReportData, reportStatistics, setReportStatistics, reportIsLoading, setReportIsLoading }) => {
+  const [reportsService] = useState(new ReportsService());
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => {
     if (packages.length === 0) {
@@ -47,7 +48,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
   };
 
   const handleGenerateReport = async (startDate?: string, endDate?: string) => {
-    setIsLoading(true);
+    setReportIsLoading(true);
     
     try {
       // Генерируем полный отчет
@@ -62,13 +63,13 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
         filteredReports = reportsService.getAllReports();
       }
       
-      setReports(filteredReports);
+      setReportData(filteredReports);
       
       // Обновляем статистику для отфильтрованных данных
       const totalWeight = filteredReports.reduce((sum, report) => sum + report.weight, 0);
       const uniqueDates = new Set(filteredReports.map(report => report.date)).size;
       
-      setStatistics({
+      setReportStatistics({
         totalReports: filteredReports.length,
         uniqueDates,
         totalWeight,
@@ -86,18 +87,18 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
       console.error("Error generating report:", error);
       alert(`Ошибка при формировании отчета: ${error}`);
     } finally {
-      setIsLoading(false);
+      setReportIsLoading(false);
     }
   };
 
   const handleExportReport = () => {
-    if (reports.length === 0) {
+    if (reportData.length === 0) {
       alert("Нет данных для экспорта. Сначала сформируйте отчет.");
       return;
     }
 
     try {
-      const exportData = reportsService.exportToText(reports);
+      const exportData = reportsService.exportToText(reportData);
       const blob = new Blob([exportData], { type: "text/plain; charset=utf-8" });
       const url = URL.createObjectURL(blob);
       
@@ -122,24 +123,24 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
   };
 
   const handleClearReport = () => {
-    if (reports.length === 0) {
+    if (reportData.length === 0) {
       alert("Отчет уже пуст");
       return;
     }
     
     if (window.confirm("Вы уверены, что хотите очистить текущий отчет?")) {
-      setReports([]);
-      setStatistics(null);
+      setReportData([]);
+      setReportStatistics(null);
       reportsService.clear();
       console.log("Report cleared");
     }
   };
 
   const getSectionTitle = () => {
-    if (statistics) {
-      return `Отчет по посылкам (${statistics.totalReports} записей, ${statistics.uniqueDates} дат)`;
+    if (reportStatistics) {
+      return `Отчёт "Информация по посылкам" (${reportStatistics.totalReports} записей, ${reportStatistics.uniqueDates} дат)`;
     }
-    return "Отчет по посылкам";
+    return 'Отчёт "Информация по посылкам"';
   };
 
   const getAvailableDates = () => {
@@ -173,7 +174,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
               className="action-icon"
               onClick={handleOpenModal}
               title="Сформировать отчет"
-              disabled={isLoading}
+              disabled={reportIsLoading}
             >
               📊
             </button>
@@ -181,7 +182,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
               className="action-icon"
               onClick={handleExportReport}
               title="Экспортировать отчет"
-              disabled={isLoading || reports.length === 0}
+              disabled={reportIsLoading || reportData.length === 0}
             >
               💾
             </button>
@@ -189,7 +190,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
               className="action-icon"
               onClick={handleClearReport}
               title="Очистить отчет"
-              disabled={isLoading || reports.length === 0}
+              disabled={reportIsLoading || reportData.length === 0}
             >
               🗑️
             </button>
@@ -201,7 +202,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
           overflow: "auto",
           minHeight: 0
         }}>
-          {isLoading ? (
+          {reportIsLoading ? (
             <div style={{ 
               padding: "40px 20px", 
               textAlign: "center", 
@@ -215,7 +216,7 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
             </div>
           ) : (
             <>
-              {statistics && (
+              {reportStatistics && (
                 <div style={{
                   borderBottom: "1px solid #eee",
                   backgroundColor: "#fafafa",
@@ -226,20 +227,20 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({ users, packages }) => {
                   flexWrap: "wrap"
                 }}>
                   <span style={{ color: "#4caf50" }}>
-                    📋 Записей: {statistics.totalReports}
+                    📋 Записей: {reportStatistics.totalReports}
                   </span>
                   <span style={{ color: "#2196f3" }}>
-                    📅 Дат: {statistics.uniqueDates}
+                    📅 Дат: {reportStatistics.uniqueDates}
                   </span>
                   <span style={{ color: "#ff9800" }}>
-                    ⚖️ Общий вес: {statistics.totalWeight.toFixed(2)} кг
+                    ⚖️ Общий вес: {reportStatistics.totalWeight.toFixed(2)} кг
                   </span>
                   <span style={{ color: "#9c27b0" }}>
-                    📊 Средний вес: {statistics.averageWeight.toFixed(2)} кг
+                    📊 Средний вес: {reportStatistics.averageWeight.toFixed(2)} кг
                   </span>
                 </div>
               )}
-              <ReportsTable reports={reports} />
+              <ReportsTable reports={reportData} />
             </>
           )}
         </div>

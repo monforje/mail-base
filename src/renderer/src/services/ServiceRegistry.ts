@@ -8,14 +8,14 @@ export class ServiceRegistry {
   private packagesService: PackagesService;
 
   private constructor() {
-    logger.info("ServiceRegistry: Initializing application services");
+    logger.info("Инициализация сервисов приложения");
 
     this.usersService = new UsersService();
     this.packagesService = new PackagesService();
 
     this.setupCascadeDelete();
 
-    logger.info("ServiceRegistry: All services initialized successfully");
+    logger.info("Все сервисы успешно инициализированы");
   }
 
   private setupCascadeDelete(): void {
@@ -24,13 +24,13 @@ export class ServiceRegistry {
         this.packagesService.removeAllPackagesBySender(userPhone);
       if (removedCount > 0) {
         logger.info(
-          `ServiceRegistry: Cascade delete - removed ${removedCount} packages for user ${userPhone}`
+          `Каскадное удаление: удалено ${removedCount} посылок для пользователя ${userPhone}`
         );
       }
     });
 
     logger.info(
-      "ServiceRegistry: Cascade deletion configured - user deletion will remove related packages"
+      "Каскадное удаление настроено — удаление пользователя приведёт к удалению связанных посылок"
     );
   }
 
@@ -50,14 +50,14 @@ export class ServiceRegistry {
   }
 
   public resetServices(): void {
-    logger.warning("ServiceRegistry: Resetting all services");
+    logger.warning("Сброс всех сервисов");
 
     this.usersService.clear();
     this.packagesService.clear();
 
     this.setupCascadeDelete();
 
-    logger.info("ServiceRegistry: Services reset complete");
+    logger.info("Сервисы успешно сброшены");
   }
 
   public getApplicationStatistics(): {
@@ -80,7 +80,7 @@ export class ServiceRegistry {
     };
 
     logger.debug(
-      `Application Statistics: Users: ${stats.users.count}, Packages: ${stats.packages.count}`
+      `Статистика приложения: пользователей: ${stats.users.count}, посылок: ${stats.packages.count}`
     );
     return stats;
   }

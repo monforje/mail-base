@@ -407,21 +407,6 @@ export class RedBlackTree<T> {
     return blackHeight;
   }
 
-  public getMin(): T | null {
-    if (this.root === this.NIL) return null;
-    return this.minimum(this.root).value;
-  }
-
-  public getMax(): T | null {
-    if (this.root === this.NIL) return null;
-
-    let current = this.root;
-    while (current.right !== this.NIL) {
-      current = current.right;
-    }
-    return current.value;
-  }
-
   public isValid(): boolean {
     if (this.root === this.NIL) return true;
     if (this.root.color !== Color.BLACK) return false;
@@ -458,22 +443,6 @@ export class RedBlackTree<T> {
       isValid: true,
       blackHeight: leftResult.blackHeight + blackIncrement,
     };
-  }
-
-  public *entries(): IterableIterator<[string, T]> {
-    yield* this.inOrderEntries(this.root);
-  }
-
-  private *inOrderEntries(node: RBNode<T>): IterableIterator<[string, T]> {
-    if (node !== this.NIL) {
-      yield* this.inOrderEntries(node.left);
-      yield [node.key, node.value];
-      yield* this.inOrderEntries(node.right);
-    }
-  }
-
-  public has(key: string): boolean {
-    return this.contains(key);
   }
 
   public getAllKeys(): string[] {

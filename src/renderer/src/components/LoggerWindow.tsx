@@ -22,7 +22,7 @@ const LoggerWindow: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error("Failed to load existing logs:", error);
+        console.error("Не удалось загрузить существующие логи:", error);
       }
     };
 
@@ -74,10 +74,10 @@ const LoggerWindow: React.FC = () => {
   };
 
   const getLogClass = (log: string): string => {
-    if (log.includes("ERROR") || log.includes("failed")) return "error";
-    if (log.includes("WARNING") || log.includes("Cleared")) return "warning";
-    if (log.includes("DEBUG") || log.includes("Statistics")) return "debug";
-    if (log.includes("Added") || log.includes("complete")) return "success";
+    if (log.includes("ОШИБКА") || log.includes("ошибка")) return "error";
+    if (log.includes("ПРЕДУПРЕЖДЕНИЕ") || log.includes("очищен")) return "warning";
+    if (log.includes("ОТЛАДКА") || log.includes("статистика")) return "debug";
+    if (log.includes("добавлен") || log.includes("завершено")) return "success";
     return "info";
   };
 
@@ -85,17 +85,17 @@ const LoggerWindow: React.FC = () => {
     <div className="console-container">
       <div className="console-header">
         <div className="console-title">
-          Logger Console ({logs.length} entries)
+          Консоль логов ({logs.length} записей)
         </div>
         <button className="console-clear-btn" onClick={handleClear}>
-          Clear
+          Очистить
         </button>
       </div>
 
       <div className="console-content">
         <div className="console-logs">
           {logs.length === 0 ? (
-            <div className="console-empty-message">Waiting for logs...</div>
+            <div className="console-empty-message">Ожидание логов...</div>
           ) : (
             <>
               {logs.map((log, index) => (

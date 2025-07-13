@@ -5,7 +5,9 @@ import {
   validateWeight,
   validateDate,
   parsePhoneNumber,
+  validateUserExists
 } from "../../utils";
+import { usersService } from "../../DataServices";
 
 interface PackageModalProps {
   isOpen: boolean;
@@ -64,6 +66,8 @@ const PackageModal: React.FC<PackageModalProps> = ({
       newErrors.push(
         "Неверный формат телефона отправителя (ожидается 8XXXXXXXXXX)"
       );
+    } else if (!validateUserExists(senderPhoneStr, usersService.getAllUsers())) {
+      newErrors.push("Отправитель должен существовать среди пользователей");
     }
 
     if (mode === "add" || mode === "delete") {
@@ -73,19 +77,21 @@ const PackageModal: React.FC<PackageModalProps> = ({
         newErrors.push(
           "Неверный формат телефона получателя (ожидается 8XXXXXXXXXX)"
         );
+      } else if (!validateUserExists(receiverPhoneStr, usersService.getAllUsers())) {
+        newErrors.push("Получатель должен существовать среди пользователей");
       }
 
       if (!weight.trim()) {
         newErrors.push("Вес обязателен для заполнения");
       } else if (!validateWeight(weight)) {
-        newErrors.push("Неверный формат веса (ожидается положительное число)");
+        newErrors.push("Неверный формат веса (ожидается положительное число с точкой, например 3.5)");
       }
 
       if (!date.trim()) {
         newErrors.push("Дата обязательна для заполнения");
       } else if (!validateDate(date)) {
         newErrors.push(
-          'Неверный формат даты (ожидается "dd mmm yyyy", например "15 jan 2025")'
+          'Неверный формат даты (ожидается "dd mon yyyy", например "15 jan 2025")'
         );
       }
     }

@@ -27,14 +27,6 @@ export class ReportsArray {
     return null;
   }
 
-  public update(index: number, reportData: ReportData): boolean {
-    if (index >= 0 && index < this.data.length) {
-      this.data[index] = reportData;
-      return true;
-    }
-    return false;
-  }
-
   public remove(
     index: number
   ): { movedFromIndex: number; newIndex: number } | null {
@@ -68,19 +60,5 @@ export class ReportsArray {
 
   public size(): number {
     return this.data.length;
-  }
-
-  public isValidIndex(index: number): boolean {
-    return index >= 0 && index < this.data.length;
-  }
-
-  public getByDateRange(startDate: string, endDate: string): ReportData[] {
-    return this.data.filter(report => {
-      return report.date >= startDate && report.date <= endDate;
-    });
-  }
-
-  public getByDate(date: string): ReportData[] {
-    return this.data.filter(report => report.date === date);
   }
 }

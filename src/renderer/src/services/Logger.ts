@@ -23,19 +23,19 @@ export class Logger {
   }
 
   public info(message: string): void {
-    this.log(`INFO: ${message}`);
+    this.log(`ИНФО: ${message}`);
   }
 
   public warning(message: string): void {
-    this.log(`WARNING: ${message}`);
+    this.log(`ПРЕДУПРЕЖДЕНИЕ: ${message}`);
   }
 
   public error(message: string): void {
-    this.log(`ERROR: ${message}`);
+    this.log(`ОШИБКА: ${message}`);
   }
 
   public debug(message: string): void {
-    this.log(`DEBUG: ${message}`);
+    this.log(`ОТЛАДКА: ${message}`);
   }
 }
 

@@ -1,7 +1,15 @@
 import { packagesService } from "../../DataServices";
 import { User, Package } from "../../types";
-import { validatePhoneNumber, parsePhoneNumber } from "../../utils";
+import {
+  validatePhoneNumber,
+  parsePhoneNumber,
+  validateFullName,
+  validateAddress,
+  validateUniqueFullName,
+  validateUniquePhone
+} from "../../utils";
 import React, { useState, useEffect } from "react";
+import { usersService } from "../../DataServices";
 
 interface UserModalProps {
   isOpen: boolean;
@@ -28,6 +36,7 @@ const UserModal: React.FC<UserModalProps> = ({
   const [errors, setErrors] = useState<string[]>([]);
   const [relatedPackages, setRelatedPackages] = useState<Package[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -63,16 +72,32 @@ const UserModal: React.FC<UserModalProps> = ({
     }
 
     if (mode === "add") {
+      if (!validateUniquePhone(phoneStr, usersService.getAllUsers())) {
+        newErrors.push("Пользователь с таким телефоном уже существует");
+      }
       if (!fullName.trim()) {
         newErrors.push("ФИО обязательно для заполнения");
+      } else if (!validateFullName(fullName)) {
+        newErrors.push("ФИО должно состоять из трёх слов, каждое с заглавной буквы (например: Иванов Иван Иванович)");
+      } else if (!validateUniqueFullName(fullName, usersService.getAllUsers())) {
+        newErrors.push("Пользователь с таким ФИО уже существует");
       }
       if (!address.trim()) {
         newErrors.push("Адрес обязателен для заполнения");
+      } else if (!validateAddress(address)) {
+        newErrors.push("Адрес должен быть в формате: г. <город>, ул. <улица>, д. <номер>, кв. <номер>");
       }
     }
 
     setErrors(newErrors);
     return newErrors.length === 0;
+  };
+
+  const validateSearchPhone = (phoneStr: string): string | null => {
+    if (!validatePhoneNumber(phoneStr)) {
+      return "Некорректный номер телефона";
+    }
+    return null;
   };
 
   const checkRelatedPackages = (phone: number): Package[] => {
@@ -109,6 +134,13 @@ const UserModal: React.FC<UserModalProps> = ({
     setRelatedPackages([]);
   };
 
+  const handleSearch = () => {
+    const error = validateSearchPhone(phoneStr);
+    setPhoneError(error);
+    if (error) return;
+    onSearch(Number(phoneStr));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -122,7 +154,7 @@ const UserModal: React.FC<UserModalProps> = ({
 
     switch (mode) {
       case "search":
-        onSearch(phone);
+        handleSearch();
         break;
       case "add":
         onAdd({ phone, fullName, address });

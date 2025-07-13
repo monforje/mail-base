@@ -36,21 +36,6 @@ export class DoublyLinkedList<T> {
     this.size++;
   }
 
-  public prepend(data: T): void {
-    const newNode = new ListNode(data);
-
-    if (this.head === null) {
-      this.head = newNode;
-      this.tail = newNode;
-    } else {
-      newNode.next = this.head;
-      this.head.prev = newNode;
-      this.head = newNode;
-    }
-
-    this.size++;
-  }
-
   public remove(data: T): boolean {
     let current = this.head;
 
@@ -79,19 +64,6 @@ export class DoublyLinkedList<T> {
     }
 
     this.size--;
-  }
-
-  public find(data: T): ListNode<T> | null {
-    let current = this.head;
-
-    while (current !== null) {
-      if (current.data === data) {
-        return current;
-      }
-      current = current.next;
-    }
-
-    return null;
   }
 
   public get(index: number): T | null {
@@ -129,10 +101,6 @@ export class DoublyLinkedList<T> {
     return this.size === 0;
   }
 
-  public getSize(): number {
-    return this.size;
-  }
-
   public getFirst(): T | null {
     return this.head ? this.head.data : null;
   }
@@ -146,14 +114,6 @@ export class DoublyLinkedList<T> {
     while (current !== null) {
       yield current.data;
       current = current.next;
-    }
-  }
-
-  public *reverseIterator(): IterableIterator<T> {
-    let current = this.tail;
-    while (current !== null) {
-      yield current.data;
-      current = current.prev;
     }
   }
 }

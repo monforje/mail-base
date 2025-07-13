@@ -1,10 +1,11 @@
 .menu-strip {
-  background-color: #f0f0f0;
-  border-bottom: 1px solid #ccc;
+  background: linear-gradient(90deg, #f7f7f7 0%, #ededed 100%);
+  border-bottom: 1.5px solid #bdbdbd;
   padding: 0;
-  height: 40px;
+  height: 48px;
   flex-shrink: 0;
   overflow: visible;
+  box-shadow: 0 2px 8px rgba(60, 60, 90, 0.06);
 }
 
 .menu-bar {
@@ -18,18 +19,23 @@
 }
 
 .menu-title {
-  padding: 8px 16px;
+  padding: 10px 22px;
   cursor: pointer;
   background-color: transparent;
   border: none;
-  font-size: 14px;
-  height: 40px;
+  font-size: 16px;
+  height: 48px;
   display: flex;
   align-items: center;
+  font-weight: 500;
+  color: #2d2d2d;
+  border-radius: 8px 8px 0 0;
+  transition: background 0.18s, color 0.18s;
 }
 
 .menu-title:hover {
   background-color: #e0e0e0;
+  color: #222;
 }
 
 .dropdown-menu {
@@ -37,13 +43,20 @@
   position: absolute;
   top: 100%;
   left: 0;
-  background-color: white;
-  border: 1px solid #ccc;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(90deg, #fff 0%, #f5f5f5 100%);
+  border: 1.5px solid #bdbdbd;
+  box-shadow: 0 6px 24px rgba(60, 60, 90, 0.10);
   z-index: 1000;
-  min-width: 200px;
-  max-height: 400px;
+  min-width: 220px;
+  max-height: 420px;
   overflow-y: auto;
+  border-radius: 0 0 12px 12px;
+  animation: dropdownFadeIn 0.18s;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .menu-item:hover .dropdown-menu {
@@ -53,20 +66,25 @@
 .menu-button {
   display: block;
   width: 100%;
-  padding: 8px 16px;
+  padding: 12px 22px;
   background: none;
   border: none;
   text-align: left;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
+  color: #2d2d2d;
   white-space: nowrap;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
 }
 
 .menu-button:hover {
-  background-color: #f0f0f0;
+  background-color: #e0e0e0;
+  color: #111;
 }
 
 .menu-button.active {
-  background-color: #d0d0d0;
+  background-color: #d6d6d6;
+  color: #111;
   font-weight: bold;
 }

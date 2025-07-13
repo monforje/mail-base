@@ -1,4 +1,4 @@
-import icon from "../../resources/icon.png?asset";
+import icon from "../../build/icon.png?asset";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
@@ -14,7 +14,7 @@ function createWindow(): void {
     height: 670,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === "linux" ? { icon } : {}),
+    icon: icon,
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
@@ -56,7 +56,7 @@ function createLoggerWindow(): void {
     maximizable: true,
     minimizable: true,
     backgroundMaterial: "acrylic",
-    ...(process.platform === "linux" ? { icon } : {}),
+    icon: icon,
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,

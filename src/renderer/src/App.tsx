@@ -11,6 +11,7 @@ import { User, Package, ViewMode } from "./types";
 import React, { useState, useEffect } from "react";
 import "./assets/App.css";
 import "./assets/SectionHeader.css";
+import { ReportData } from "./data-structures/ReportsArray";
 
 const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -26,6 +27,15 @@ const App: React.FC = () => {
     resolve: (size: number) => void;
     reject: () => void;
   } | null>(null);
+
+  const [reportData, setReportData] = useState<ReportData[]>([]);
+  const [reportStatistics, setReportStatistics] = useState<{
+    totalReports: number;
+    uniqueDates: number;
+    totalWeight: number;
+    averageWeight: number;
+  } | null>(null);
+  const [reportIsLoading, setReportIsLoading] = useState(false);
 
   const handlers = new AppHandlers(
     setUsers,
@@ -63,15 +73,15 @@ const App: React.FC = () => {
 
   useEffect(() => {
     console.log(
-      "App state - Users:",
+      "Состояние приложения — Пользователей:",
       users.length,
-      "Packages:",
+      "Посылок:",
       packages.length
     );
     console.log(
-      "Service state - Users:",
+      "Состояние сервисов — Пользователей:",
       usersService.getCount(),
-      "Packages:",
+      "Посылок:",
       packagesService.getCount()
     );
   }, [users, packages]);
@@ -87,17 +97,17 @@ const App: React.FC = () => {
 
   const handleReportsOpen = () => {
     setCurrentView("reports");
-    console.log("Switched to reports view");
+    console.log("Переключено на просмотр отчетов");
   };
 
   const handleReportsTreeOpen = () => {
     setCurrentView("reportsTree");
-    console.log("Switched to reports tree view");
+    console.log("Переключено на просмотр дерева отчетов");
   };
 
   const handleBackToMain = () => {
     setCurrentView("main");
-    console.log("Switched to main view");
+    console.log("Переключено на основной вид");
   };
 
   useEffect(() => {
@@ -138,81 +148,22 @@ const App: React.FC = () => {
 
   const renderReportsView = () => (
     <div className="content-area">
-      <div style={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column"
-      }}>
-        <div style={{
-          padding: "8px 12px",
-          backgroundColor: "#f0f0f0",
-          borderBottom: "1px solid #ccc",
-          fontSize: "14px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
-        }}>
-          <span>
-            <strong>Отчеты</strong> - объединенные данные о посылках и пользователях
-          </span>
-          <button
-            onClick={handleBackToMain}
-            style={{
-              background: "none",
-              border: "1px solid #ccc",
-              padding: "4px 12px",
-              cursor: "pointer",
-              fontSize: "12px",
-              borderRadius: "3px"
-            }}
-          >
-            ← Назад к основному виду
-          </button>
-        </div>
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <ReportsSection users={users} packages={packages} />
-        </div>
-      </div>
+      <ReportsSection
+        users={users}
+        packages={packages}
+        reportData={reportData}
+        setReportData={setReportData}
+        reportStatistics={reportStatistics}
+        setReportStatistics={setReportStatistics}
+        reportIsLoading={reportIsLoading}
+        setReportIsLoading={setReportIsLoading}
+      />
     </div>
   );
 
   const renderReportsTreeView = () => (
     <div className="content-area">
-      <div style={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column"
-      }}>
-        <div style={{
-          padding: "8px 12px",
-          backgroundColor: "#f0f0f0",
-          borderBottom: "1px solid #ccc",
-          fontSize: "14px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
-        }}>
-          <span>
-            <strong>Визуализация дерева отчетов</strong> - красно-черное дерево с ключом по датам
-          </span>
-          <button
-            onClick={handleBackToMain}
-            style={{
-              background: "none",
-              border: "1px solid #ccc",
-              padding: "4px 12px",
-              cursor: "pointer",
-              fontSize: "12px",
-              borderRadius: "3px"
-            }}
-          >
-            ← Назад к основному виду
-          </button>
-        </div>
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <ReportsTreeView users={users} packages={packages} />
-        </div>
-      </div>
+      <ReportsTreeView users={users} packages={packages} />
     </div>
   );
 
@@ -241,6 +192,7 @@ const App: React.FC = () => {
         currentViewMode={viewMode}
         onReportsOpen={handleReportsOpen}
         onReportsTreeOpen={handleReportsTreeOpen}
+        onMainView={handleBackToMain}
       />
       
       {renderCurrentView()}

@@ -1,7 +1,6 @@
 import { packagesService } from "../../DataServices";
 import { Package, ViewMode } from "../../types";
 import PackageModal from "./PackageModal";
-import PackagesArrayView from "./PackagesArrayView";
 import PackagesTable from "./PackagesTable";
 import RBTreeStructureView from "./RBTreeStructureView";
 import RBTreeView from "./RBTreeView";
@@ -103,13 +102,11 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     const stats = getTreeStats();
 
     if (viewMode === "structure") {
-      return `Посылки (Красно-черное дерево: ${stats.uniqueSenders} отправителей)`;
+      return `Справочник "Посылки" (Красно-черное дерево: ${stats.uniqueSenders} отправителей)`;
     } else if (viewMode === "datastructure") {
-      return `Посылки (Детальная структура красно-черного дерева)`;
-    } else if (viewMode === "arrayview") {
-      return `Посылки (Массив данных: ${stats.size} элементов)`;
+      return 'Справочник "Посылки" (Детальная структура красно-черного дерева)';
     } else {
-      return `Посылки`;
+      return 'Справочник "Посылки"';
     }
   };
 
@@ -121,8 +118,6 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
         return <RBTreeView packages={packages} onDataChange={onDataChange} />;
       case "datastructure":
         return <RBTreeStructureView packages={packages} />;
-      case "arrayview":
-        return <PackagesArrayView packages={packages} />;
       default:
         return <PackagesTable packages={packages} />;
     }

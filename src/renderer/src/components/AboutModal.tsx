@@ -1,4 +1,3 @@
-import { usersService, packagesService } from "../DataServices";
 import React from "react";
 
 interface AboutModalProps {
@@ -9,86 +8,36 @@ interface AboutModalProps {
 const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
-  const userStats = usersService.getStatistics();
-  const packageStats = packagesService.getTreeStatistics();
-  const isHashTableInitialized = usersService.isInitialized();
-
-  const getHashTableInfo = () => {
-    if (!isHashTableInitialized) {
-      return `- Пользователи: Хеш-таблица (не инициализирована)
-  • Размер таблицы: 0 ячеек
-  • Статус: ожидает загрузки данных
-  • Примечание: выберите размер при загрузке файла`;
-    }
-
-    return `- Пользователи: Хеш-таблица (${userStats.size} записей)
-  • Размер таблицы: ${userStats.capacity} ячеек
-  • Коэффициент загрузки: ${(userStats.loadFactor * 100).toFixed(1)}%
-  • Занятых ячеек: ${userStats.distribution.occupiedSlots}
-  • Пустых ячеек: ${userStats.distribution.emptySlots}
-  • Удаленных ячеек: ${userStats.distribution.deletedSlots}`;
-  };
-
-  const getPackagesInfo = () => {
-    return `- Посылки: Красно-черное дерево + двойные двусвязные списки
-  • Всего посылок: ${packageStats.size}
-  • Уникальных отправителей: ${packageStats.uniqueSenders}
-  • Высота дерева: ${packageStats.height}
-  • Черная высота: ${packageStats.blackHeight}
-  • Эффективность: ${(packageStats.efficiency * 100).toFixed(1)}%
-  • Среднее посылок на отправителя: ${packageStats.averagePackagesPerSender.toFixed(
-    1
-  )}
-  • Валидность дерева: ${packageStats.isValid ? "корректное" : "некорректное"}`;
-  };
-
-  const aboutText = `Mail Base v1.0.0
-Программа для управления пользователями и посылками
-
-Поддерживаемые форматы:
-- Телефон: 8XXXXXXXXXX (например: 89001234567)
-- Дата: dd mmm yyyy (например: 15 jan 2025)
-
-Структуры данных:
-${getHashTableInfo()}
-
-${getPackagesInfo()}
-
-Архитектура системы:
-- Хеш-таблица: метод серединного квадрата + линейный пробинг
-- Красно-черное дерево: ключ = номер отправителя
-- Двойные двусвязные списки: для хранения коллизий (индексов)
-- Массивы данных: фактические данные без ключей
-
-Особенности реализации:
-- Размер хеш-таблицы выбирается пользователем при загрузке
-- Таблица сбрасывается к размеру 0 при очистке данных
-- В дереве ключ - номер телефона отправителя
-- Значение в дереве - список индексов массива с данными посылок
-- Коллизии (несколько посылок от одного отправителя) хранятся в списке
-- Двусвязный список обеспечивает O(1) добавление и удаление
-
-Алгоритмы поиска:
-- Поиск пользователя: O(1) среднее время
-- Поиск по отправителю: O(log n) + O(k), где k - количество посылок
-- Поиск по получателю: O(n) - полный перебор всех посылок
-
-Состояние приложения:
-- Хеш-таблица: ${
-    isHashTableInitialized ? "инициализирована" : "не инициализирована"
-  }
-- Всего пользователей: ${userStats.size}
-- Всего посылок: ${packageStats.size}
-- Уникальных отправителей: ${packageStats.uniqueSenders}`;
-
-  React.useEffect(() => {
-    if (isOpen) {
-      alert(aboutText);
-      onClose();
-    }
-  }, [isOpen, aboutText, onClose]);
-
-  return null;
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      background: 'rgba(0,0,0,0.4)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: '#fff',
+        borderRadius: 12,
+        padding: 32,
+        minWidth: 320,
+        boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+        textAlign: 'center',
+        fontFamily: 'inherit'
+      }}>
+        <h2 style={{marginBottom: 8}}>Почта</h2>
+        <div style={{marginBottom: 16, color: '#888'}}>версия 1.0.0</div>
+        <div style={{marginBottom: 16}}>Простое приложение для учёта пользователей и посылок.</div>
+        <div style={{marginBottom: 24, fontSize: 13, color: '#888'}}>Автор: Даниил Комаров</div>
+        <button onClick={onClose} style={{padding: '8px 24px', borderRadius: 6, border: 'none', background: '#1976d2', color: '#fff', fontWeight: 500, cursor: 'pointer'}}>Закрыть</button>
+      </div>
+    </div>
+  );
 };
 
 export default AboutModal;

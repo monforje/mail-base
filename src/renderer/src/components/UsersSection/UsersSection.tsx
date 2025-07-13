@@ -3,7 +3,6 @@ import { User, ViewMode } from "../../types";
 import HashTableStructureView from "./HashTableStructureView";
 import HashTableView from "./HashTableView";
 import UserModal from "./UserModal";
-import UsersArrayView from "./UsersArrayView";
 import UsersTable from "./UsersTable";
 import React, { useState, useEffect } from "react";
 import "../../assets/UsersSectionStyles/UsersSection.css";
@@ -116,25 +115,20 @@ const UsersSection: React.FC<UsersSectionProps> = ({
     if (!info.isInitialized) {
       if (
         viewMode === "structure" ||
-        viewMode === "datastructure" ||
-        viewMode === "arrayview"
+        viewMode === "datastructure"
       ) {
-        return "Пользователи (Хеш-таблица: не инициализирована)";
+        return 'Справочник "Пользователи" (Хеш-таблица: не инициализирована)';
       } else {
-        return `Пользователи`;
+        return 'Справочник "Пользователи"';
       }
     }
 
     if (viewMode === "structure") {
-      return `Пользователи (Хеш-таблица: размер ${info.capacity}, загрузка ${(
-        info.loadFactor * 100
-      ).toFixed(1)}%)`;
+      return `Справочник "Пользователи" (Хеш-таблица: размер ${info.capacity}, загрузка ${(info.loadFactor * 100).toFixed(1)}%)`;
     } else if (viewMode === "datastructure") {
-      return `Пользователи (Детальная структура хеш-таблицы)`;
-    } else if (viewMode === "arrayview") {
-      return `Пользователи (Массив данных: ${info.size} элементов)`;
+      return 'Справочник "Пользователи" (Детальная структура хеш-таблицы)';
     } else {
-      return `Пользователи`;
+      return 'Справочник "Пользователи"';
     }
   };
 
@@ -146,8 +140,6 @@ const UsersSection: React.FC<UsersSectionProps> = ({
         return <HashTableView users={users} />;
       case "datastructure":
         return <HashTableStructureView users={users} />;
-      case "arrayview":
-        return <UsersArrayView users={users} />;
       default:
         return <UsersTable users={users} />;
     }

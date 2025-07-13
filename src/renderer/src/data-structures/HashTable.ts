@@ -83,16 +83,7 @@ export class HashTable<T> {
 
   private probe(key: string, step: number): number {
     const baseHash = this.hash(key);
-    const numericKey = this.stringToNumber(key);
-    return (baseHash + step * numericKey) % this.capacity;
-  }
-
-  private stringToNumber(key: string): number {
-    let result = 0;
-    for (let i = 0; i < key.length; i++) {
-      result += key.charCodeAt(i);
-    }
-    return result;
+    return (baseHash + step) % this.capacity;
   }
 
   public put(key: string, value: T): void {
@@ -245,21 +236,6 @@ export class HashTable<T> {
     return keys;
   }
 
-  public values(): T[] {
-    if (!this.isInitialized) {
-      return [];
-    }
-
-    const values: T[] = [];
-    for (let i = 0; i < this.capacity; i++) {
-      const entry = this.table[i];
-      if (entry !== null && !entry.isDeleted) {
-        values.push(entry.value);
-      }
-    }
-    return values;
-  }
-
   public getPerformanceStats(): {
     size: number;
     capacity: number;
@@ -366,19 +342,6 @@ export class HashTable<T> {
     return true;
   }
 
-  public *entries(): IterableIterator<[string, T]> {
-    if (!this.isInitialized) {
-      return;
-    }
-
-    for (let i = 0; i < this.capacity; i++) {
-      const entry = this.table[i];
-      if (entry !== null && !entry.isDeleted) {
-        yield [entry.key, entry.value];
-      }
-    }
-  }
-
   public getSize(): number {
     return this.size;
   }
@@ -397,25 +360,5 @@ export class HashTable<T> {
 
   public getIsInitialized(): boolean {
     return this.isInitialized;
-  }
-
-  public set(key: string, value: T): void {
-    this.put(key, value);
-  }
-
-  public has(key: string): boolean {
-    return this.containsKey(key);
-  }
-
-  public getAllKeys(): string[] {
-    return this.keys();
-  }
-
-  public getAllValues(): T[] {
-    return this.values();
-  }
-
-  public getDistributionStats() {
-    return this.getPerformanceStats();
   }
 }

@@ -17,7 +17,7 @@ export class ReportsService {
   }
 
   public generateReport(users: User[], packages: Package[]): void {
-    logger.info(`ReportsService: Starting report generation with ${packages.length} packages and ${users.length} users`);
+    logger.info(`Начало формирования отчёта: ${packages.length} посылок, ${users.length} пользователей`);
     
     this.clear();
 
@@ -35,7 +35,7 @@ export class ReportsService {
       
       if (!sender) {
         skippedCount++;
-        logger.warning(`ReportsService: Sender ${pkg.senderPhone} not found in users, skipping package`);
+        logger.warning(`Отправитель ${pkg.senderPhone} не найден среди пользователей, посылка пропущена`);
         return;
       }
 
@@ -60,12 +60,11 @@ export class ReportsService {
       processedCount++;
 
       if (processedCount % 50 === 0 || index === packages.length - 1) {
-        logger.debug(`ReportsService: Processed ${processedCount}/${packages.length} packages`);
+        logger.debug(`Обработано ${processedCount} из ${packages.length} посылок`);
       }
     });
 
-    logger.info(`ReportsService: Report generation completed - ${processedCount} records created, ${skippedCount} skipped`);
-    this.logStatistics();
+    logger.info(`Формирование отчёта завершено — создано записей: ${processedCount}, пропущено: ${skippedCount}`);
   }
 
   public getReportsByDate(date: string): ReportData[] {
@@ -73,7 +72,7 @@ export class ReportsService {
     const reports: ReportData[] = [];
 
     if (indexList === null) {
-      logger.debug(`ReportsService: No reports found for date ${date}`);
+      logger.debug(`Отчёт: не найдено записей на дату ${date}`);
       return reports;
     }
 
@@ -84,7 +83,7 @@ export class ReportsService {
       }
     }
 
-    logger.debug(`ReportsService: Found ${reports.length} reports for date ${date}`);
+    logger.debug(`Найдено ${reports.length} записей на дату ${date}`);
     return reports;
   }
 
@@ -102,7 +101,7 @@ export class ReportsService {
     // Сортируем по дате
     allReports.sort((a, b) => a.date.localeCompare(b.date));
 
-    logger.info(`ReportsService: Found ${allReports.length} reports for date range ${startDate} to ${endDate}`);
+    logger.info(`Найдено ${allReports.length} записей за период с ${startDate} по ${endDate}`);
     return allReports;
   }
 
@@ -111,13 +110,13 @@ export class ReportsService {
     // Сортируем по дате
     allReports.sort((a, b) => a.date.localeCompare(b.date));
     
-    logger.debug(`ReportsService: Retrieved all reports (${allReports.length} total)`);
+    logger.debug(`Получено всех записей: ${allReports.length}`);
     return allReports;
   }
 
   public getAvailableDates(): string[] {
     const dates = this.dateTree.keys().sort();
-    logger.debug(`ReportsService: Available dates: ${dates.length} unique dates`);
+    logger.debug(`Доступные даты: ${dates.length} уникальных дат`);
     return dates;
   }
 
@@ -144,7 +143,7 @@ export class ReportsService {
     );
 
     const content = [header, ...rows].join("\n");
-    logger.info(`ReportsService: Exported ${reports.length} reports to text format`);
+    logger.info(`Экспортировано ${reports.length} записей в текстовый формат`);
     return content;
   }
 
@@ -169,7 +168,7 @@ export class ReportsService {
       averageWeight: allReports.length > 0 ? totalWeight / allReports.length : 0,
     };
 
-    logger.debug(`ReportsService: Statistics - Total: ${stats.totalReports}, Unique dates: ${stats.uniqueDates}, Avg weight: ${stats.averageWeight.toFixed(2)}kg`);
+    logger.debug(`Статистика: всего: ${stats.totalReports}, уникальных дат: ${stats.uniqueDates}, средний вес: ${stats.averageWeight.toFixed(2)}кг`);
     return stats;
   }
 
@@ -177,7 +176,7 @@ export class ReportsService {
     const countBefore = this.reportsArray.size();
     this.dateTree.clear();
     this.reportsArray.clear();
-    logger.warning(`ReportsService: Cleared all reports (${countBefore} removed)`);
+    logger.warning(`Все отчёты очищены (${countBefore} удалено)`);
   }
 
   public isEmpty(): boolean {
@@ -206,16 +205,5 @@ export class ReportsService {
       uniqueDates,
       efficiency: theoreticalHeight > 0 ? theoreticalHeight / height : 1,
     };
-  }
-
-  private logStatistics(): void {
-    const stats = this.getStatistics();
-    const treeStats = this.getTreeStatistics();
-    
-    logger.debug(
-      `ReportsService Statistics: Total reports: ${stats.totalReports}, ` +
-      `Unique dates: ${stats.uniqueDates}, Tree height: ${treeStats.height}, ` +
-      `Tree efficiency: ${treeStats.efficiency.toFixed(3)}, Valid: ${treeStats.isValid}`
-    );
   }
 }

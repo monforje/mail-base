@@ -7,9 +7,10 @@ import { DoublyLinkedList } from "../../data-structures/DoublyLinkedList";
 interface RBTreeViewProps {
   packages: Package[];
   onDataChange?: () => void;
+  setPackages?: (pkgs: Package[]) => void;
 }
 
-const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange }) => {
+const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange, setPackages }) => {
   // Состояние выбранной ноды
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   // Получаем данные дерева и конвертируем для визуализации
@@ -34,8 +35,6 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange }) => {
       return null;
     }
   }, [packages]);
-
-  const stats = packagesService.getTreeStatistics();
 
   // Получить подробные посылки по выбранному отправителю (selectedKey)
   const selectedPackages = useMemo(() => {
@@ -71,6 +70,7 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange }) => {
           if (window.confirm(`Удалить все посылки отправителя ${senderPhone}?`)) {
             (packagesService as any).removeAllPackagesBySender(senderPhone);
             setSelectedKey(null);
+            if (setPackages) setPackages(packagesService.getAllPackages());
             if (onDataChange) onDataChange();
           }
         }
@@ -78,7 +78,7 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange }) => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedKey, onDataChange]);
+  }, [selectedKey, onDataChange, setPackages]);
 
   return (
     <div style={{
@@ -87,91 +87,6 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange }) => {
       flexDirection: "column",
       overflow: "hidden"
     }}>
-      {/* Информационная панель */}
-      <div style={{
-        padding: "12px",
-        backgroundColor: "#f9f9f9",
-        borderBottom: "1px solid #ddd",
-        fontSize: "12px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        flexShrink: 0
-      }}>
-        <div style={{ display: "flex", gap: "20px" }}>
-          <span style={{ color: "#4caf50" }}>
-            📦 Всего посылок: {stats.size}
-          </span>
-          <span style={{ color: "#2196f3" }}>
-            👥 Уникальных отправителей: {stats.uniqueSenders}
-          </span>
-          <span style={{ color: "#ff9800" }}>
-            📏 Высота дерева: {stats.height}
-          </span>
-          <span style={{ color: "#9c27b0" }}>
-            ⚫ Черная высота: {stats.blackHeight}
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: "15px" }}>
-          <span style={{ 
-            color: stats.isValid ? "#4caf50" : "#f44336",
-            fontWeight: "bold"
-          }}>
-            {stats.isValid ? "✓ Дерево валидное" : "✗ Дерево невалидное"}
-          </span>
-          <span style={{ color: "#666" }}>
-            📊 Эффективность: {(stats.efficiency * 100).toFixed(1)}%
-          </span>
-        </div>
-      </div>
-
-      {/* Легенда */}
-      <div style={{
-        padding: "8px 12px",
-        backgroundColor: "#fafafa",
-        borderBottom: "1px solid #eee",
-        fontSize: "11px",
-        display: "flex",
-        gap: "20px",
-        alignItems: "center",
-        flexShrink: 0
-      }}>
-        <span style={{ color: "#333", fontWeight: "bold" }}>Легенда:</span>
-        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <div style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            backgroundColor: "#ff4444",
-            border: "1px solid #222"
-          }}></div>
-          <span>Красный узел</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <div style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            backgroundColor: "#333333",
-            border: "1px solid #222"
-          }}></div>
-          <span>Черный узел</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <div style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            backgroundColor: "#2196f3",
-            border: "1px solid #1976d2"
-          }}></div>
-          <span>Выбранный узел</span>
-        </div>
-        <span style={{ marginLeft: "20px", color: "#666" }}>
-          Наведите на узел для подсветки
-        </span>
-      </div>
-
       {/* Канвас с деревом */}
       <div style={{
         flex: 1,
@@ -217,7 +132,34 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange }) => {
           fontSize: "12px",
           color: "#1565c0"
         }}>
-          <strong>Детализация по отправителю: {selectedKey.split('\n')[0]}</strong>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <strong>Детализация по отправителю: {selectedKey.split('\n')[0]}</strong>
+            <button
+              style={{
+                background: '#f44336',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                padding: '6px 16px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                marginLeft: 16
+              }}
+              onClick={() => {
+                const senderPhone = parseInt(selectedKey.split('\n')[0], 10);
+                if (!isNaN(senderPhone)) {
+                  if (window.confirm(`Удалить все посылки отправителя ${senderPhone}?`)) {
+                    (packagesService as any).removeAllPackagesBySender(senderPhone);
+                    setSelectedKey(null);
+                    if (setPackages) setPackages(packagesService.getAllPackages());
+                    if (onDataChange) onDataChange();
+                  }
+                }
+              }}
+            >
+              Удалить все посылки отправителя
+            </button>
+          </div>
           <table style={{ width: "100%", marginTop: 8, background: "white", borderCollapse: "collapse" }}>
             <thead>
               <tr>

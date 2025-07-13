@@ -31,7 +31,7 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
   // Константы для отрисовки
   const NODE_RADIUS = 40;
   const LEVEL_HEIGHT = 80;
-  const MIN_HORIZONTAL_SPACING = 80; // Увеличил для лучшего разделения
+  const MIN_HORIZONTAL_SPACING = 80;
 
   // Вычисление позиций узлов с улучшенным алгоритмом
   const calculatePositions = useCallback((

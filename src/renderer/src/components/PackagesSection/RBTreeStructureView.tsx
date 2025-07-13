@@ -95,7 +95,7 @@ const RBTreeStructureView: React.FC<RBTreeStructureViewProps> = () => {
           </div>
         </div>
       ) : (
-        <table className="data-table" style={{ fontSize: "11px" }}>
+        <table className="data-table structure-table" style={{ fontSize: "11px" }}>
           <thead>
             <tr>
               <th style={{ width: "140px", textAlign: "center" }}>

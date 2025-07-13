@@ -3,6 +3,8 @@ import { PackagesArray, PackageData } from "../data-structures/PackagesArray";
 import { RedBlackTree } from "../data-structures/RedBlackTree";
 import { Package } from "../types";
 import { logger } from "./Logger";
+import { validatePhoneNumber, validateWeight, validateDate, validateUserExists } from "../utils";
+import { usersService } from "../DataServices";
 
 export class PackagesService {
   private redBlackTree: RedBlackTree<DoublyLinkedList<number>>;
@@ -125,6 +127,18 @@ export class PackagesService {
         `Package from ${pkg.senderPhone} to ${pkg.receiverPhone} (${pkg.weight}kg, ${pkg.date}) already exists`
       );
     }
+    if (!validateUserExists(String(pkg.senderPhone), usersService.getAllUsers())) {
+      throw new Error("Отправитель должен существовать среди пользователей");
+    }
+    if (!validateUserExists(String(pkg.receiverPhone), usersService.getAllUsers())) {
+      throw new Error("Получатель должен существовать среди пользователей");
+    }
+    if (!validateWeight(String(pkg.weight))) {
+      throw new Error("Вес должен быть положительным числом с точкой (например, 3.5)");
+    }
+    if (!validateDate(pkg.date)) {
+      throw new Error('Дата должна быть в формате "dd mon yyyy", например "15 jan 2025"');
+    }
 
     const key = this.generateKey(pkg.senderPhone);
 
@@ -179,6 +193,10 @@ export class PackagesService {
       `PackagesService: Retrieved all packages (${packages.length} total)`
     );
     return packages;
+  }
+
+  public getCount(): number {
+    return this.packagesArray.size();
   }
 
   public getPackagesBySender(senderPhone: number): Package[] {
@@ -286,14 +304,6 @@ export class PackagesService {
     );
   }
 
-  public findPackagesBySender(senderPhone: number): Package[] {
-    const results = this.getPackagesBySender(senderPhone);
-    logger.info(
-      `PackagesService: Search by sender ${senderPhone} - ${results.length} results`
-    );
-    return results;
-  }
-
   public findPackagesByReceiver(receiverPhone: number): Package[] {
     const results = this.getAllPackages().filter(
       (pkg) => pkg.receiverPhone === receiverPhone
@@ -325,22 +335,9 @@ export class PackagesService {
     return results;
   }
 
-  public findPackagesByDateRange(
-    startDate: string,
-    endDate: string
-  ): Package[] {
-    const results = this.getAllPackages().filter((pkg) => {
-      return pkg.date >= startDate && pkg.date <= endDate;
-    });
-    logger.info(
-      `PackagesService: Search by date range ${startDate} to ${endDate} - ${results.length} results`
-    );
-    return results;
-  }
-
   public loadPackages(packages: Package[]): void {
     logger.info(
-      `PackagesService: Starting load of ${packages.length} packages`
+      `Загрузка посылок: начало загрузки ${packages.length} посылок`
     );
     this.clear();
 
@@ -353,167 +350,35 @@ export class PackagesService {
           const packageKey = this.generatePackageKey(pkg);
           duplicates.push(packageKey);
           logger.warning(
-            `PackagesService: Duplicate package ${packageKey} skipped (line ${index + 1})`
+            `Дубликат посылки ${packageKey} пропущен (строка ${index + 1})`
           );
         } else {
-          this.addPackageInternal(pkg);
+          this.addPackage(pkg);
           const packageKey = this.generatePackageKey(pkg);
           loaded.push(packageKey);
           if (loaded.length % 10 === 0 || index === packages.length - 1) {
             logger.debug(
-              `PackagesService: Loaded ${loaded.length}/${packages.length} packages`
+              `Загружено ${loaded.length} из ${packages.length} посылок`
             );
           }
         }
       } catch (error) {
-        logger.error(`PackagesService: Failed to load package: ${error}`);
+        logger.error(`Ошибка загрузки посылки: ${error}`);
       }
     });
 
     if (duplicates.length > 0) {
       logger.warning(
-        `PackagesService: Found ${duplicates.length} duplicate packages: ${duplicates.slice(0, 5).join(", ")}${
-          duplicates.length > 5 ? ` and ${duplicates.length - 5} more...` : ""
+        `Найдено ${duplicates.length} дубликатов посылок: ${duplicates.slice(0, 5).join(", ")}${
+          duplicates.length > 5 ? ` и еще ${duplicates.length - 5}...` : ""
         }`
       );
     }
 
     logger.info(
-      `PackagesService: Load complete - ${loaded.length} packages loaded, ${duplicates.length} duplicates skipped`
+      `Загрузка завершена — загружено ${loaded.length} посылок, пропущено дубликатов: ${duplicates.length}`
     );
     this.logTreeStatistics();
-  }
-
-  private addPackageInternal(pkg: Package): void {
-    const packageData: PackageData = {
-      receiverPhone: pkg.receiverPhone.toString(),
-      weight: pkg.weight,
-      date: pkg.date,
-    };
-
-    const index = this.packagesArray.add(packageData);
-    const key = this.generateKey(pkg.senderPhone);
-
-    let indexList = this.redBlackTree.search(key);
-    if (indexList === null) {
-      indexList = new DoublyLinkedList<number>();
-      this.redBlackTree.insert(key, indexList);
-    }
-
-    indexList.append(index);
-    logger.debug(
-      `PackagesService: Internal add package ${key} at index ${index}`
-    );
-  }
-
-  public getWeightStatistics(): {
-    total: number;
-    average: number;
-    min: number;
-    max: number;
-    sum: number;
-  } {
-    const packages = this.getAllPackages();
-    if (packages.length === 0) {
-      return { total: 0, average: 0, min: 0, max: 0, sum: 0 };
-    }
-
-    const weights = packages.map((pkg) => pkg.weight);
-    const sum = weights.reduce((acc, weight) => acc + weight, 0);
-
-    const stats = {
-      total: packages.length,
-      average: sum / packages.length,
-      min: Math.min(...weights),
-      max: Math.max(...weights),
-      sum,
-    };
-
-    logger.debug(
-      `PackagesService: Weight statistics - Total: ${
-        stats.total
-      }, Avg: ${stats.average.toFixed(2)}kg, Min: ${stats.min}kg, Max: ${
-        stats.max
-      }kg`
-    );
-    return stats;
-  }
-
-  public getPackagesByDate(): Map<string, Package[]> {
-    const packages = this.getAllPackages();
-    const dateMap = new Map<string, Package[]>();
-
-    packages.forEach((pkg) => {
-      if (!dateMap.has(pkg.date)) {
-        dateMap.set(pkg.date, []);
-      }
-      dateMap.get(pkg.date)!.push(pkg);
-    });
-
-    logger.debug(
-      `PackagesService: Grouped by date - ${dateMap.size} unique dates`
-    );
-    return dateMap;
-  }
-
-  public getTopSenders(
-    limit: number = 10
-  ): Array<{ phone: number; count: number; totalWeight: number }> {
-    const senderStats = new Map<
-      number,
-      { count: number; totalWeight: number }
-    >();
-
-    const allKeys = this.redBlackTree.keys();
-    for (const key of allKeys) {
-      const senderPhone = parseInt(key, 10);
-      const indexList = this.redBlackTree.search(key);
-
-      if (indexList !== null) {
-        let count = 0;
-        let totalWeight = 0;
-
-        for (const index of indexList) {
-          const packageData = this.packagesArray.get(index);
-          if (packageData) {
-            count++;
-            totalWeight += packageData.weight;
-          }
-        }
-
-        senderStats.set(senderPhone, { count, totalWeight });
-      }
-    }
-
-    const results = Array.from(senderStats.entries())
-      .map(([phone, stats]) => ({ phone, ...stats }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit);
-
-    logger.info(
-      `PackagesService: Top ${limit} senders calculated - ${results.length} results`
-    );
-    return results;
-  }
-
-  public getCount(): number {
-    return this.packagesArray.size();
-  }
-
-  public getHeight(): number {
-    return this.redBlackTree.getHeight();
-  }
-
-  public getBlackHeight(): number {
-    return this.redBlackTree.getBlackHeight();
-  }
-
-  public isTreeValid(): boolean {
-    const isValid = this.redBlackTree.isValid();
-    logger.debug(
-      `PackagesService: Tree validation - ${isValid ? "valid" : "invalid"}`
-    );
-    return isValid;
   }
 
   public getTreeStatistics(): {
@@ -525,17 +390,17 @@ export class PackagesService {
     uniqueSenders: number;
     averagePackagesPerSender: number;
   } {
-    const totalPackages = this.getCount();
+    const totalPackages = this.getAllPackages().length;
     const uniqueSenders = this.redBlackTree.getSize();
-    const height = this.getHeight();
+    const height = this.redBlackTree.getHeight();
     const theoreticalHeight =
       uniqueSenders > 0 ? Math.ceil(Math.log2(uniqueSenders + 1)) : 0;
 
     const stats = {
       size: totalPackages,
       height,
-      blackHeight: this.getBlackHeight(),
-      isValid: this.isTreeValid(),
+      blackHeight: this.redBlackTree.getBlackHeight(),
+      isValid: this.redBlackTree.isValid(),
       efficiency: theoreticalHeight > 0 ? theoreticalHeight / height : 1,
       uniqueSenders,
       averagePackagesPerSender:
@@ -555,11 +420,11 @@ export class PackagesService {
   private logTreeStatistics(): void {
     const stats = this.getTreeStatistics();
     logger.debug(
-      `RedBlackTree Performance: Height: ${stats.height}, Black Height: ${
+      `Красно-черное дерево: высота: ${stats.height}, черная высота: ${
         stats.blackHeight
-      }, Efficiency: ${stats.efficiency.toFixed(3)}, Valid: ${
+      }, эффективность: ${stats.efficiency.toFixed(3)}, валидно: ${
         stats.isValid
-      }, Unique Senders: ${stats.uniqueSenders}`
+      }, уникальных отправителей: ${stats.uniqueSenders}`
     );
   }
 
@@ -590,6 +455,10 @@ export class PackagesService {
     }
 
     return structure;
+  }
+
+  public findPackagesBySender(senderPhone: number): Package[] {
+    return this.getPackagesBySender(senderPhone);
   }
 }
 

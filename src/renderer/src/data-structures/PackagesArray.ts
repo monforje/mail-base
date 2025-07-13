@@ -24,14 +24,6 @@ export class PackagesArray {
     return null;
   }
 
-  public update(index: number, packageData: PackageData): boolean {
-    if (index >= 0 && index < this.data.length) {
-      this.data[index] = packageData;
-      return true;
-    }
-    return false;
-  }
-
   public remove(
     index: number
   ): { movedFromIndex: number; newIndex: number } | null {
@@ -65,9 +57,5 @@ export class PackagesArray {
 
   public size(): number {
     return this.data.length;
-  }
-
-  public isValidIndex(index: number): boolean {
-    return index >= 0 && index < this.data.length;
   }
 }

@@ -152,3 +152,30 @@ export const validateFileContent = (
 
   return { isValid: errors.length === 0, errors };
 };
+
+export function validateFullName(fullName: string): boolean {
+  // Три слова, каждое с заглавной буквы, только буквы
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length !== 3) return false;
+  return parts.every(
+    (word) => /^[А-ЯЁ][а-яё]+$/.test(word)
+  );
+}
+
+export function validateAddress(address: string): boolean {
+  // г. <город>, ул. <улица>, д. <номер>, кв. <номер>
+  const regex = /^г\.\s?[А-ЯЁа-яё\- ]+,\s?ул\.\s?[А-ЯЁа-яё\- ]+,\s?д\.\s?\d+,\s?кв\.\s?\d+$/;
+  return regex.test(address.trim());
+}
+
+export function validateUniqueFullName(fullName: string, users: { fullName: string }[]): boolean {
+  return !users.some((u) => u.fullName.trim() === fullName.trim());
+}
+
+export function validateUniquePhone(phone: string | number, users: { phone: string | number }[]): boolean {
+  return !users.some((u) => String(u.phone) === String(phone));
+}
+
+export function validateUserExists(phone: string | number, users: { phone: string | number }[]): boolean {
+  return users.some((u) => String(u.phone) === String(phone));
+}

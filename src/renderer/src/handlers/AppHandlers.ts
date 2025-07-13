@@ -65,28 +65,28 @@ export class AppHandlers {
   }
 
   handleUsersLoad = (loadedUsers: User[], customHashTableSize?: number) => {
-    console.log("Loading users:", loadedUsers);
+    console.log("Загрузка пользователей:", loadedUsers);
     try {
       // ИЗМЕНЕНО: Передаем размер хеш-таблицы в сервис
       usersService.loadUsers(loadedUsers, customHashTableSize);
       const allUsers = usersService.getAllUsers();
-      console.log("Users in service after load:", allUsers);
+      console.log("Пользователи в сервисе после загрузки:", allUsers);
       this.setUsers(allUsers);
     } catch (error) {
-      console.error("Error loading users:", error);
+      console.error("Ошибка при загрузке пользователей:", error);
       alert(`Ошибка при загрузке пользователей: ${error}`);
     }
   };
 
   handlePackagesLoad = (loadedPackages: Package[]) => {
-    console.log("Loading packages:", loadedPackages);
+    console.log("Загрузка посылок:", loadedPackages);
     try {
       packagesService.loadPackages(loadedPackages);
       const allPackages = packagesService.getAllPackages();
-      console.log("Packages in service after load:", allPackages);
+      console.log("Посылки в сервисе после загрузки:", allPackages);
       this.setPackages(allPackages);
     } catch (error) {
-      console.error("Error loading packages:", error);
+      console.error("Ошибка при загрузке посылок:", error);
       alert(`Ошибка при загрузке посылок: ${error}`);
     }
   };
@@ -99,7 +99,7 @@ export class AppHandlers {
     if (window.confirm("Вы уверены, что хотите удалить всех пользователей?")) {
       usersService.clear();
       this.setUsers([]);
-      console.log("Users cleared");
+      console.log("Пользователи очищены");
     }
   };
 
@@ -111,7 +111,7 @@ export class AppHandlers {
     if (window.confirm("Вы уверены, что хотите удалить все посылки?")) {
       packagesService.clear();
       this.setPackages([]);
-      console.log("Packages cleared");
+      console.log("Посылки очищены");
     }
   };
 
@@ -134,7 +134,7 @@ export class AppHandlers {
     a.download = "users.txt";
     a.click();
     URL.revokeObjectURL(url);
-    console.log("Users saved to file");
+    console.log("Пользователи сохранены в файл");
   };
 
   handlePackagesSave = () => {
@@ -159,7 +159,7 @@ export class AppHandlers {
     a.download = "packages.txt";
     a.click();
     URL.revokeObjectURL(url);
-    console.log("Packages saved to file");
+    console.log("Посылки сохранены в файл");
   };
 
   handleFileLoad = (
@@ -226,17 +226,17 @@ export class AppHandlers {
         this.askForHashTableSize(users.length)
           .then((hashTableSize) => {
             if (hashTableSize === null) {
-              console.log("User cancelled hash table size selection");
+              console.log("Пользователь отменил выбор размера хеш-таблицы");
               return;
             }
 
             console.log(
-              `Selected hash table size: ${hashTableSize} for ${users.length} users`
+              `Выбран размер хеш-таблицы: ${hashTableSize} для ${users.length} пользователей`
             );
             this.handleUsersLoad(users, hashTableSize);
           })
           .catch((error) => {
-            console.error("Error in hash table size selection:", error);
+            console.error("Ошибка при выборе размера хеш-таблицы:", error);
             alert(
               "Ошибка при выборе размера хеш-таблицы. Используется размер по умолчанию."
             );

@@ -23,14 +23,6 @@ export class UsersArray {
     return null;
   }
 
-  public update(index: number, userData: UserData): boolean {
-    if (index >= 0 && index < this.data.length) {
-      this.data[index] = userData;
-      return true;
-    }
-    return false;
-  }
-
   public remove(
     index: number
   ): { movedFromIndex: number; newIndex: number } | null {
@@ -64,9 +56,5 @@ export class UsersArray {
 
   public size(): number {
     return this.data.length;
-  }
-
-  public isValidIndex(index: number): boolean {
-    return index >= 0 && index < this.data.length;
   }
 }

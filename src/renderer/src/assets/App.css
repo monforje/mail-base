@@ -131,3 +131,24 @@ body.fullscreen-mode {
   z-index: 9998;
   pointer-events: none;
 }
+
+/* Скругление иконок */
+.app-icon {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.app-icon-rounded {
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+/* Скругление кнопок и элементов */
+.rounded-button {
+  border-radius: 8px;
+}
+
+.rounded-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
