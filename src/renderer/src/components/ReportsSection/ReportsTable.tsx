@@ -10,18 +10,20 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ reports }) => {
     <table className="data-table">
       <thead>
         <tr>
-          <th style={{ width: "120px" }}>Дата</th>
-          <th style={{ width: "140px" }}>Тел. отправителя</th>
-          <th style={{ width: "200px" }}>ФИО отправителя</th>
-          <th style={{ width: "250px" }}>Адрес отправителя</th>
-          <th style={{ width: "140px" }}>Тел. получателя</th>
-          <th style={{ width: "100px" }}>Вес (кг)</th>
+          <th style={{ width: "100px" }}>Дата</th>
+          <th style={{ width: "120px" }}>Тел. отправителя</th>
+          <th style={{ width: "150px" }}>ФИО отправителя</th>
+          <th style={{ width: "200px" }}>Адрес отправителя</th>
+          <th style={{ width: "120px" }}>Тел. получателя</th>
+          <th style={{ width: "150px" }}>ФИО получателя</th>
+          <th style={{ width: "200px" }}>Адрес получателя</th>
+          <th style={{ width: "80px" }}>Вес (кг)</th>
         </tr>
       </thead>
       <tbody>
         {reports.length === 0 ? (
           <tr>
-            <td colSpan={6} className="empty-message">
+            <td colSpan={8} className="empty-message">
               Нет данных для отображения. Сформируйте отчет для просмотра
               результатов.
             </td>
@@ -34,6 +36,8 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ reports }) => {
               <td>{report.senderName}</td>
               <td>{report.senderAddress}</td>
               <td>{report.receiverPhone}</td>
+              <td>{report.receiverName}</td>
+              <td>{report.receiverAddress}</td>
               <td>{report.weight}</td>
             </tr>
           ))

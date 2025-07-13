@@ -33,11 +33,20 @@ export class ReportsService {
 
     packages.forEach((pkg, index) => {
       const sender = usersMap.get(pkg.senderPhone);
+      const receiver = usersMap.get(pkg.receiverPhone);
 
       if (!sender) {
         skippedCount++;
         logger.warning(
           `Отправитель ${pkg.senderPhone} не найден среди пользователей, посылка пропущена`
+        );
+        return;
+      }
+
+      if (!receiver) {
+        skippedCount++;
+        logger.warning(
+          `Получатель ${pkg.receiverPhone} не найден среди пользователей, посылка пропущена`
         );
         return;
       }
@@ -48,6 +57,8 @@ export class ReportsService {
         senderName: sender.fullName,
         senderAddress: sender.address,
         receiverPhone: pkg.receiverPhone.toString(),
+        receiverName: receiver.fullName,
+        receiverAddress: receiver.address,
         weight: pkg.weight,
       };
 
@@ -125,6 +136,65 @@ export class ReportsService {
     return allReports;
   }
 
+  public getReportsByReceiverPhone(phone: string): ReportData[] {
+    const allReports = this.getAllReports();
+    const filteredReports = allReports.filter(
+      (report) => report.receiverPhone === phone
+    );
+
+    logger.debug(`Найдено ${filteredReports.length} записей для получателя ${phone}`);
+    return filteredReports;
+  }
+
+  public getReportsByAddress(address: string): ReportData[] {
+    const allReports = this.getAllReports();
+    const filteredReports = allReports.filter(
+      (report) => 
+        report.senderAddress.toLowerCase().includes(address.toLowerCase()) ||
+        report.receiverAddress.toLowerCase().includes(address.toLowerCase())
+    );
+
+    logger.debug(`Найдено ${filteredReports.length} записей для адреса ${address}`);
+    return filteredReports;
+  }
+
+  public getReportsByFilters(
+    startDate?: string,
+    endDate?: string,
+    receiverPhone?: string,
+    address?: string
+  ): ReportData[] {
+    let filteredReports: ReportData[];
+
+    // Сначала применяем фильтр по датам
+    if (startDate && endDate) {
+      filteredReports = this.getReportsByDateRange(startDate, endDate);
+    } else {
+      filteredReports = this.getAllReports();
+    }
+
+    // Затем применяем фильтр по телефону получателя
+    if (receiverPhone && receiverPhone.trim()) {
+      filteredReports = filteredReports.filter(
+        (report) => report.receiverPhone === receiverPhone.trim()
+      );
+    }
+
+    // Затем применяем фильтр по адресу
+    if (address && address.trim()) {
+      filteredReports = filteredReports.filter(
+        (report) => 
+          report.senderAddress.toLowerCase().includes(address.toLowerCase().trim()) ||
+          report.receiverAddress.toLowerCase().includes(address.toLowerCase().trim())
+      );
+    }
+
+    logger.info(
+      `Применены фильтры: даты=${startDate}-${endDate}, телефон=${receiverPhone}, адрес=${address}. Результат: ${filteredReports.length} записей`
+    );
+    return filteredReports;
+  }
+
   public getAvailableDates(): string[] {
     const dates = this.dateTree.keys().sort();
     logger.debug(`Доступные даты: ${dates.length} уникальных дат`);
@@ -149,10 +219,10 @@ export class ReportsService {
     }
 
     const header =
-      "Дата\tТелефон отправителя\tИмя отправителя\tАдрес отправителя\tТелефон получателя\tВес (кг)";
+      "Дата\tТелефон отправителя\tИмя отправителя\tАдрес отправителя\tТелефон получателя\tИмя получателя\tАдрес получателя\tВес (кг)";
     const rows = reports.map(
       (report) =>
-        `${report.date}\t${report.senderPhone}\t${report.senderName}\t${report.senderAddress}\t${report.receiverPhone}\t${report.weight}`
+        `${report.date}\t${report.senderPhone}\t${report.senderName}\t${report.senderAddress}\t${report.receiverPhone}\t${report.receiverName}\t${report.receiverAddress}\t${report.weight}`
     );
 
     const content = [header, ...rows].join("\n");

@@ -4,9 +4,11 @@ import { validateDate } from "../../utils";
 interface ReportsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onGenerate: (startDate?: string, endDate?: string) => void;
+  onGenerate: (startDate?: string, endDate?: string, receiverPhone?: string, address?: string) => void;
   availableDates: string[];
   dateRange: { startDate: string; endDate: string } | null;
+  availablePhones: string[];
+  availableAddresses: string[];
 }
 
 const ReportsModal: React.FC<ReportsModalProps> = ({
@@ -15,11 +17,15 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
   onGenerate,
   availableDates,
   dateRange,
+  availablePhones,
+  availableAddresses,
 }) => {
   const [filterType, setFilterType] = useState<"all" | "date" | "range">("all");
   const [selectedDate, setSelectedDate] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [receiverPhone, setReceiverPhone] = useState("");
+  const [address, setAddress] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
@@ -28,6 +34,8 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
       setSelectedDate("");
       setStartDate("");
       setEndDate("");
+      setReceiverPhone("");
+      setAddress("");
       setErrors([]);
     }
   }, [isOpen]);
@@ -77,18 +85,25 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
 
     if (!validateForm()) return;
 
+    let startDateParam: string | undefined;
+    let endDateParam: string | undefined;
+
     switch (filterType) {
       case "all":
-        onGenerate();
+        startDateParam = undefined;
+        endDateParam = undefined;
         break;
       case "date":
-        onGenerate(selectedDate, selectedDate);
+        startDateParam = selectedDate;
+        endDateParam = selectedDate;
         break;
       case "range":
-        onGenerate(startDate, endDate);
+        startDateParam = startDate;
+        endDateParam = endDate;
         break;
     }
 
+    onGenerate(startDateParam, endDateParam, receiverPhone.trim() || undefined, address.trim() || undefined);
     onClose();
   };
 
@@ -302,6 +317,65 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
             )}
           </div>
 
+          <div style={{ marginBottom: "16px" }}>
+            <p style={{ margin: "0 0 12px 0", fontWeight: "bold" }}>
+              Фильтр по получателю:
+            </p>
+
+            <div style={{ marginBottom: "8px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "4px",
+                  fontSize: "12px",
+                }}
+              >
+                Телефон получателя:
+              </label>
+              <select
+                value={receiverPhone}
+                onChange={(e) => setReceiverPhone(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "6px 8px",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                }}
+              >
+                <option value="">Все получатели</option>
+                {availablePhones.map((phone) => (
+                  <option key={phone} value={phone}>
+                    {phone}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: "8px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "4px",
+                  fontSize: "12px",
+                }}
+              >
+                Адрес (поиск по отправителю и получателю):
+              </label>
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Введите часть адреса для поиска..."
+                style={{
+                  width: "100%",
+                  padding: "6px 8px",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                }}
+              />
+            </div>
+          </div>
+
           {errors.length > 0 && (
             <div className="error-list">
               {errors.map((error, index) => (
@@ -323,8 +397,9 @@ const ReportsModal: React.FC<ReportsModalProps> = ({
           >
             <p style={{ margin: "0", fontSize: "12px", color: "#1565c0" }}>
               <strong>Информация:</strong> Отчет будет содержать данные о
-              посылках с полной информацией об отправителях (ФИО и адрес).
-              Записи без информации об отправителе будут исключены из отчета.
+              посылках с полной информацией об отправителях и получателях (ФИО и адрес).
+              Записи без информации об отправителе или получателе будут исключены из отчета.
+              Фильтры можно комбинировать для получения точных результатов.
             </p>
           </div>
 

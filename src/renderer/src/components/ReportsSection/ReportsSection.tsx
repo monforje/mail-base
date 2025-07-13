@@ -58,24 +58,25 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
     setIsModalOpen(false);
   };
 
-  const handleGenerateReport = async (startDate?: string, endDate?: string) => {
+  const handleGenerateReport = async (
+    startDate?: string, 
+    endDate?: string, 
+    receiverPhone?: string, 
+    address?: string
+  ) => {
     setReportIsLoading(true);
 
     try {
       // Генерируем полный отчет
       reportsService.generateReport(users, packages);
 
-      // Применяем фильтрацию если указаны даты
-      let filteredReports: ReportData[];
-
-      if (startDate && endDate) {
-        filteredReports = reportsService.getReportsByDateRange(
-          startDate,
-          endDate
-        );
-      } else {
-        filteredReports = reportsService.getAllReports();
-      }
+      // Применяем фильтрацию с новыми параметрами
+      const filteredReports = reportsService.getReportsByFilters(
+        startDate,
+        endDate,
+        receiverPhone,
+        address
+      );
 
       setReportData(filteredReports);
 
@@ -96,13 +97,17 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
       });
 
       if (filteredReports.length === 0) {
+        let message = "Нет данных для отчета.";
         if (startDate && endDate) {
-          alert(`Нет данных для выбранного периода: ${startDate} - ${endDate}`);
-        } else {
-          alert(
-            "Нет данных для отчета. Возможно, отсутствуют пользователи для некоторых отправителей."
-          );
+          message += ` Период: ${startDate} - ${endDate}`;
         }
+        if (receiverPhone) {
+          message += ` Телефон получателя: ${receiverPhone}`;
+        }
+        if (address) {
+          message += ` Адрес: ${address}`;
+        }
+        alert(message);
       }
     } catch (error) {
       console.error("Error generating report:", error);
@@ -180,6 +185,18 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
       startDate: dates[0],
       endDate: dates[dates.length - 1],
     };
+  };
+
+  const getAvailablePhones = () => {
+    // Получаем уникальные телефоны получателей из посылок
+    const phones = Array.from(new Set(packages.map((pkg) => pkg.receiverPhone.toString()))).sort();
+    return phones;
+  };
+
+  const getAvailableAddresses = () => {
+    // Получаем уникальные адреса из пользователей
+    const addresses = Array.from(new Set(users.map((user) => user.address))).sort();
+    return addresses;
   };
 
   return (
@@ -287,6 +304,8 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
         onGenerate={handleGenerateReport}
         availableDates={getAvailableDates()}
         dateRange={getDateRange()}
+        availablePhones={getAvailablePhones()}
+        availableAddresses={getAvailableAddresses()}
       />
     </>
   );

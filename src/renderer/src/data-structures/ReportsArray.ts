@@ -4,6 +4,8 @@ export interface ReportData {
   senderName: string;
   senderAddress: string;
   receiverPhone: string;
+  receiverName: string;
+  receiverAddress: string;
   weight: number;
 }
 
