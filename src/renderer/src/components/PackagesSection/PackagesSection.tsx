@@ -27,6 +27,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
   const [searchResults, setSearchResults] = useState<Package[] | undefined>(
     undefined
   );
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleSearch = (senderPhone: number) => {
     const results = packagesService.findPackagesBySender(senderPhone);
@@ -95,7 +96,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
       case "table":
         return <PackagesTable packages={packages} />;
       case "structure":
-        return <RBTreeView packages={packages} />;
+        return <RBTreeView packages={packages} onDataChange={onDataChange} />;
       case "datastructure":
         return <RBTreeStructureView packages={packages} />;
       case "arrayview":
@@ -107,7 +108,21 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
 
   return (
     <>
-      <div className="table-section">
+      <div
+        className="table-section"
+        style={isFullscreen ? {
+          position: 'fixed',
+          inset: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 10000,
+          background: 'white',
+          padding: 0,
+          margin: 0,
+          boxShadow: '0 0 32px 0 rgba(0,0,0,0.25)',
+          overflow: 'auto',
+        } : {}}
+      >
         <div className="section-header">
           <div className="section-title">{getSectionTitle()}</div>
           <div className="section-actions">
@@ -131,6 +146,13 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
               title="Удалить посылку"
             >
               🗑️
+            </button>
+            <button
+              className="action-icon"
+              onClick={() => setIsFullscreen(f => !f)}
+              title={isFullscreen ? "Свернуть" : "На весь экран"}
+            >
+              {isFullscreen ? "🗗" : "⛶"}
             </button>
           </div>
         </div>

@@ -11,7 +11,7 @@ interface ReportsTreeViewProps {
 
 const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) => {
   const [reportsService] = useState(() => new ReportsService());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   // Генерируем отчет и получаем данные дерева
   const { treeData, stats } = useMemo(() => {
@@ -30,8 +30,8 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
       const visualTree = convertRBTreeToVisualTree(tree, (date, value) => {
         // date - это дата
         // value - это DoublyLinkedList с индексами отчетов
-        const reportCount = value ? (value as DoublyLinkedList<any>).getSize() : 0;
-        return `${date}\n(${reportCount} отчетов)`;
+        const indices = value ? (value as DoublyLinkedList<any>).toArray() : [];
+        return `${date}\n[${indices.join(", ")}]`;
       });
 
       // Получаем статистику
@@ -52,11 +52,24 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
     return Array.from(new Set(packages.map(pkg => pkg.date))).sort();
   }, [packages]);
 
+  // Получить подробные отчеты по выбранной дате (selectedKey)
+  const selectedReports = useMemo(() => {
+    if (!selectedKey) return [];
+    const date = selectedKey.split('\n')[0];
+    // Получаем индексы из value (DoublyLinkedList) напрямую из дерева
+    const tree = (reportsService as any).dateTree;
+    if (!tree) return [];
+    const node = tree.search(date);
+    if (!node) return [];
+    const indices = node.toArray();
+    // Получаем отчеты по индексам
+    const arr = (reportsService as any).reportsArray;
+    return indices.map((idx: number) => arr.get(idx)).filter(Boolean);
+  }, [selectedKey, reportsService]);
+
   // Обработчик клика по узлу дерева
   const handleNodeClick = (nodeKey: string) => {
-    // Извлекаем дату из ключа узла (до символа переноса строки)
-    const date = nodeKey.split('\n')[0];
-    setSelectedDate(date);
+    setSelectedKey(nodeKey);
   };
 
   return (
@@ -76,7 +89,7 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
             title="Обновить визуализацию"
             onClick={() => {
               // Принудительно перерендериваем компонент
-              setSelectedDate(null);
+              setSelectedKey(null);
             }}
           >
             🔄
@@ -84,7 +97,7 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
           <button
             className="action-icon"
             title="Сбросить выделение"
-            onClick={() => setSelectedDate(null)}
+            onClick={() => setSelectedKey(null)}
           >
             ⚙️
           </button>
@@ -284,7 +297,7 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
           }}>
             <RBTreeCanvas
               treeData={treeData}
-              selectedKey={selectedDate ? `${selectedDate}\n` : null}
+              selectedKey={selectedKey}
               width={Math.max(800, window.innerWidth - 100)}
               height={Math.max(600, window.innerHeight - 250)}
               onNodeClick={handleNodeClick}
@@ -294,7 +307,7 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
       </div>
 
       {/* Информация о выбранной дате */}
-      {selectedDate && (
+      {selectedKey && (
         <div style={{
           padding: "12px",
           backgroundColor: "#e3f2fd",
@@ -302,14 +315,35 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({ users, packages }) =>
           fontSize: "12px",
           color: "#1565c0"
         }}>
-          <strong>Выбранная дата: {selectedDate}</strong>
-          {stats && (
-            <span style={{ marginLeft: "20px" }}>
-              Отчетов за эту дату: {
-                reportsService.getReportsByDate(selectedDate).length
-              }
-            </span>
-          )}
+          <strong>Детализация по дате: {selectedKey.split('\n')[0]}</strong>
+          <table style={{ width: "100%", marginTop: 8, background: "white", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Тел. отправителя</th>
+                <th>ФИО отправителя</th>
+                <th>Адрес отправителя</th>
+                <th>Тел. получателя</th>
+                <th>Вес (кг)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedReports.length === 0 ? (
+                <tr><td colSpan={6} style={{ textAlign: 'center', color: '#888' }}>Нет отчетов по выбранной дате</td></tr>
+              ) : (
+                selectedReports.map((report: any, idx: number) => (
+                  <tr key={idx}>
+                    <td>{report.date}</td>
+                    <td>{report.senderPhone}</td>
+                    <td>{report.senderName}</td>
+                    <td>{report.senderAddress}</td>
+                    <td>{report.receiverPhone}</td>
+                    <td>{report.weight}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       )}
 

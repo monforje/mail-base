@@ -27,6 +27,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
   const [searchResult, setSearchResult] = useState<User | null | undefined>(
     undefined
   );
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const getHashTableInfo = () => {
     const stats = usersService.getStatistics();
@@ -132,7 +133,21 @@ const UsersSection: React.FC<UsersSectionProps> = ({
 
   return (
     <>
-      <div className="table-section">
+      <div
+        className="table-section"
+        style={isFullscreen ? {
+          position: 'fixed',
+          inset: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 10000,
+          background: 'white',
+          padding: 0,
+          margin: 0,
+          boxShadow: '0 0 32px 0 rgba(0,0,0,0.25)',
+          overflow: 'auto',
+        } : {}}
+      >
         <div className="section-header">
           <div className="section-title">{getSectionTitle()}</div>
           <div className="section-actions">
@@ -156,6 +171,13 @@ const UsersSection: React.FC<UsersSectionProps> = ({
               title="Удалить пользователя"
             >
               🗑️
+            </button>
+            <button
+              className="action-icon"
+              onClick={() => setIsFullscreen(f => !f)}
+              title={isFullscreen ? "Свернуть" : "На весь экран"}
+            >
+              {isFullscreen ? "🗗" : "⛶"}
             </button>
           </div>
         </div>

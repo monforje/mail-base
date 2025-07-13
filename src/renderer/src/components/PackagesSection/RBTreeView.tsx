@@ -1,14 +1,17 @@
 import { Package } from "../../types";
 import { packagesService } from "../../DataServices";
 import RBTreeCanvas, { convertRBTreeToVisualTree } from "./RBTreeCanvas";
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { DoublyLinkedList } from "../../data-structures/DoublyLinkedList";
 
 interface RBTreeViewProps {
   packages: Package[];
+  onDataChange?: () => void;
 }
 
-const RBTreeView: React.FC<RBTreeViewProps> = ({ packages }) => {
+const RBTreeView: React.FC<RBTreeViewProps> = ({ packages, onDataChange }) => {
+  // Состояние выбранной ноды
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   // Получаем данные дерева и конвертируем для визуализации
   const treeData = useMemo(() => {
     try {
@@ -23,8 +26,8 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages }) => {
       return convertRBTreeToVisualTree(tree, (key, value) => {
         // key - это номер телефона отправителя
         // value - это DoublyLinkedList с индексами посылок
-        const packageCount = value ? (value as DoublyLinkedList<any>).getSize() : 0;
-        return `${key}\n(${packageCount} посылок)`;
+        const indices = value ? (value as DoublyLinkedList<any>).toArray() : [];
+        return `${key}\n[${indices.join(", ")}]`;
       });
     } catch (error) {
       console.error('Error converting tree data:', error);
@@ -33,6 +36,49 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages }) => {
   }, [packages]);
 
   const stats = packagesService.getTreeStatistics();
+
+  // Получить подробные посылки по выбранному отправителю (selectedKey)
+  const selectedPackages = useMemo(() => {
+    if (!selectedKey) return [];
+    const senderPhone = parseInt(selectedKey.split('\n')[0], 10);
+    if (isNaN(senderPhone)) return [];
+    // Получаем индексы из value (DoublyLinkedList) напрямую из дерева
+    const tree = (packagesService as any).redBlackTree;
+    if (!tree) return [];
+    const node = tree.search(senderPhone.toString());
+    if (!node) return [];
+    const indices = node.toArray();
+    // Получаем посылки по индексам
+    const arr = (packagesService as any).packagesArray;
+    return indices.map((idx: number) => {
+      const data = arr.get(idx);
+      if (!data) return null;
+      return {
+        senderPhone,
+        receiverPhone: parseInt(data.receiverPhone, 10),
+        weight: data.weight,
+        date: data.date,
+      };
+    }).filter(Boolean);
+  }, [selectedKey, packages]);
+
+  // Удаление всех посылок выбранного отправителя по Delete
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' && selectedKey) {
+        const senderPhone = parseInt(selectedKey.split('\n')[0], 10);
+        if (!isNaN(senderPhone)) {
+          if (window.confirm(`Удалить все посылки отправителя ${senderPhone}?`)) {
+            (packagesService as any).removeAllPackagesBySender(senderPhone);
+            setSelectedKey(null);
+            if (onDataChange) onDataChange();
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedKey, onDataChange]);
 
   return (
     <div style={{
@@ -139,6 +185,8 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages }) => {
           treeData={treeData}
           width={Math.max(800, window.innerWidth - 100)}
           height={Math.max(600, window.innerHeight - 200)}
+          selectedKey={selectedKey}
+          onNodeClick={setSelectedKey}
         />
       </div>
 
@@ -160,6 +208,42 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({ packages }) => {
           </span>
         </div>
       </div>
+
+      {selectedKey && (
+        <div style={{
+          padding: "12px",
+          backgroundColor: "#e3f2fd",
+          borderTop: "1px solid #bbdefb",
+          fontSize: "12px",
+          color: "#1565c0"
+        }}>
+          <strong>Детализация по отправителю: {selectedKey.split('\n')[0]}</strong>
+          <table style={{ width: "100%", marginTop: 8, background: "white", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th>Тел. отправителя</th>
+                <th>Тел. получателя</th>
+                <th>Вес (кг)</th>
+                <th>Дата</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedPackages.length === 0 ? (
+                <tr><td colSpan={4} style={{ textAlign: 'center', color: '#888' }}>Нет посылок по выбранному отправителю</td></tr>
+              ) : (
+                selectedPackages.map((pkg: any, idx: number) => (
+                  <tr key={idx}>
+                    <td>{pkg.senderPhone}</td>
+                    <td>{pkg.receiverPhone}</td>
+                    <td>{pkg.weight}</td>
+                    <td>{pkg.date}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

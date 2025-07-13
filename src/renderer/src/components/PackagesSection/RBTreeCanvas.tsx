@@ -29,7 +29,7 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
   const mouseMoveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Константы для отрисовки
-  const NODE_RADIUS = 25;
+  const NODE_RADIUS = 40;
   const LEVEL_HEIGHT = 80;
   const MIN_HORIZONTAL_SPACING = 80; // Увеличил для лучшего разделения
 
@@ -196,13 +196,8 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
     const startY = (node.y ?? 0) - totalHeight / 2 + lineHeight / 2;
 
     lines.forEach((line, index) => {
-      let displayLine = line;
-      // Обрезаем длинные строки
-      if (displayLine.length > 10) {
-        displayLine = displayLine.substring(0, 8) + '...';
-      }
-      // node.x and startY are always set in drawNode, but for TS safety use !
-      ctx.fillText(displayLine, node.x!, startY + index * lineHeight);
+      // node.x and startY are always set in drawNode, но теперь не обрезаем строку
+      ctx.fillText(line, node.x!, startY + index * lineHeight);
     });
 
     // Рекурсивно рисуем дочерние узлы
@@ -290,6 +285,15 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Масштабируем canvas для высокой плотности пикселей
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // сброс
+    ctx.scale(dpr, dpr);
 
     // Очистка канваса
     ctx.clearRect(0, 0, width, height);
