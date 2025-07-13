@@ -36,7 +36,6 @@ const UserModal: React.FC<UserModalProps> = ({
   const [errors, setErrors] = useState<string[]>([]);
   const [relatedPackages, setRelatedPackages] = useState<Package[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -136,7 +135,6 @@ const UserModal: React.FC<UserModalProps> = ({
 
   const handleSearch = () => {
     const error = validateSearchPhone(phoneStr);
-    setPhoneError(error);
     if (error) return;
     onSearch(Number(phoneStr));
   };

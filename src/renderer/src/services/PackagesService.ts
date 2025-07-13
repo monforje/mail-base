@@ -3,7 +3,7 @@ import { PackagesArray, PackageData } from "../data-structures/PackagesArray";
 import { RedBlackTree } from "../data-structures/RedBlackTree";
 import { Package } from "../types";
 import { logger } from "./Logger";
-import { validatePhoneNumber, validateWeight, validateDate, validateUserExists } from "../utils";
+import { validateWeight, validateDate, validateUserExists } from "../utils";
 import { usersService } from "../DataServices";
 
 export class PackagesService {
