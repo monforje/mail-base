@@ -12,6 +12,8 @@ const MenuStrip: React.FC<MenuStripProps> = ({
   onRefreshData,
   onViewModeChange,
   currentViewMode,
+  onReportsOpen,
+  onReportsTreeOpen,
 }) => {
   const handleUsersFileLoad = (event: React.ChangeEvent<HTMLInputElement>) => {
     onFileLoad(event, "users");
@@ -118,6 +120,20 @@ const MenuStrip: React.FC<MenuStripProps> = ({
               onClick={() => handleViewModeChange("arrayview")}
             >
               Отобразить массив данных
+            </button>
+          </div>
+        </div>
+        <div className="menu-item">
+          <button className="menu-title">Отчеты</button>
+          <div className="dropdown-menu">
+            <button className="menu-button" onClick={onReportsOpen}>
+              Отчет по посылкам
+            </button>
+            <button 
+              className="menu-button" 
+              onClick={onReportsTreeOpen}
+            >
+              Отчет-Дерево
             </button>
           </div>
         </div>

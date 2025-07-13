@@ -26,6 +26,8 @@ export interface MenuStripProps {
   onRefreshData: () => void;
   onViewModeChange: (mode: ViewMode) => void;
   currentViewMode: ViewMode;
+  onReportsOpen: () => void;
+  onReportsTreeOpen: () => void;
 }
 
 export interface UsersTableProps {
