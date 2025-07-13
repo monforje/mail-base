@@ -12,13 +12,14 @@
 
 .hashtable-structure .data-table th {
     background-color: #e0e0e0;
-    padding: 8px;
+    padding: 6px 8px;
     text-align: left;
     border: 1px solid #ccc;
     font-weight: bold;
     position: sticky;
     top: 0;
     z-index: 10;
+    font-size: 14px;
 }
 
 .hashtable-structure .data-table th:nth-child(1),
@@ -56,7 +57,7 @@
 }
 
 .hashtable-structure .data-table td {
-    padding: 6px 8px;
+    padding: 4px 8px;
     border: 1px solid #ccc;
     overflow: hidden;
     text-overflow: ellipsis;

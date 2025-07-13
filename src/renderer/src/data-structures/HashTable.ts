@@ -2,6 +2,7 @@ export interface HashTableEntry<T> {
   key: string;
   value: T;
   isDeleted: boolean;
+  hashValue?: number; // Сохраняем вычисленный хеш
 }
 
 export class HashTable<T> {
@@ -107,7 +108,8 @@ export class HashTable<T> {
       if (entry === null) {
         const insertIndex =
           firstTombstoneIndex !== -1 ? firstTombstoneIndex : index;
-        this.table[insertIndex] = { key, value, isDeleted: false };
+        const hashValue = this.hash(key);
+        this.table[insertIndex] = { key, value, isDeleted: false, hashValue };
         this.size++;
         return;
       }
@@ -118,6 +120,7 @@ export class HashTable<T> {
         }
       } else if (entry.key === key) {
         entry.value = value;
+        entry.hashValue = this.hash(key); // Обновляем хеш при обновлении
         return;
       }
 
@@ -126,7 +129,8 @@ export class HashTable<T> {
     }
 
     if (firstTombstoneIndex !== -1) {
-      this.table[firstTombstoneIndex] = { key, value, isDeleted: false };
+      const hashValue = this.hash(key);
+      this.table[firstTombstoneIndex] = { key, value, isDeleted: false, hashValue };
       this.size++;
       return;
     }
@@ -212,6 +216,7 @@ export class HashTable<T> {
     for (let i = 0; i < oldCapacity; i++) {
       const entry = oldTable[i];
       if (entry !== null && !entry.isDeleted) {
+        // При resize хеш может измениться из-за изменения capacity
         this.put(entry.key, entry.value);
       }
     }
@@ -315,7 +320,7 @@ export class HashTable<T> {
           key: entry.key,
           hasValue: true,
           isDeleted: entry.isDeleted,
-          hashValue: this.hash(entry.key),
+          hashValue: entry.hashValue || this.hash(entry.key), // Используем сохраненный хеш или вычисляем заново
         });
       }
     }

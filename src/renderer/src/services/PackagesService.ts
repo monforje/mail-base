@@ -98,6 +98,73 @@ export class PackagesService {
     return removedCount;
   }
 
+  public removeAllPackagesByReceiver(receiverPhone: number): number {
+    const allKeys = this.redBlackTree.keys();
+    const indicesToRemove: number[] = [];
+
+    // Собираем все индексы посылок для данного получателя
+    for (const key of allKeys) {
+      const indexList = this.redBlackTree.search(key);
+      if (indexList !== null) {
+        for (const index of indexList) {
+          const packageData = this.packagesArray.get(index);
+          if (packageData && parseInt(packageData.receiverPhone, 10) === receiverPhone) {
+            indicesToRemove.push(index);
+          }
+        }
+      }
+    }
+
+    if (indicesToRemove.length === 0) {
+      logger.debug(
+        `PackagesService: Cascade delete - no packages found for receiver ${receiverPhone}`
+      );
+      return 0;
+    }
+
+    logger.info(
+      `PackagesService: Starting cascade deletion for receiver ${receiverPhone} - ${indicesToRemove.length} packages to remove`
+    );
+
+    // Удаляем посылки в обратном порядке индексов
+    indicesToRemove.sort((a, b) => b - a);
+
+    for (const targetIndex of indicesToRemove) {
+      const moveInfo = this.packagesArray.remove(targetIndex);
+
+      if (moveInfo) {
+        // Обновляем индексы в дереве
+        for (const searchKey of allKeys) {
+          const list = this.redBlackTree.search(searchKey);
+          if (list !== null) {
+            if (list.remove(moveInfo.movedFromIndex)) {
+              list.append(moveInfo.newIndex);
+              logger.debug(
+                `PackagesService: Cascade delete - updated index in list for key ${searchKey} from ${moveInfo.movedFromIndex} to ${moveInfo.newIndex}`
+              );
+            }
+          }
+        }
+      }
+    }
+
+    // Удаляем пустые списки из дерева
+    for (const key of allKeys) {
+      const list = this.redBlackTree.search(key);
+      if (list !== null && list.isEmpty()) {
+        this.redBlackTree.delete(key);
+        logger.debug(
+          `PackagesService: Cascade delete - removed empty list for key ${key}`
+        );
+      }
+    }
+
+    logger.info(
+      `PackagesService: Cascade deletion completed for receiver ${receiverPhone} - ${indicesToRemove.length} packages removed`
+    );
+    return indicesToRemove.length;
+  }
+
   public getArrayIndexForPackage(pkg: Package): number | null {
     const key = this.generateKey(pkg.senderPhone);
     const list = this.redBlackTree.search(key);

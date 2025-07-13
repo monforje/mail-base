@@ -20,17 +20,23 @@ export class ServiceRegistry {
 
   private setupCascadeDelete(): void {
     this.usersService.setUserDeleteCallback((userPhone: number) => {
-      const removedCount =
-        this.packagesService.removeAllPackagesBySender(userPhone);
-      if (removedCount > 0) {
+      // Удаляем посылки, где пользователь является отправителем
+      const removedBySender = this.packagesService.removeAllPackagesBySender(userPhone);
+      
+      // Удаляем посылки, где пользователь является получателем
+      const removedByReceiver = this.packagesService.removeAllPackagesByReceiver(userPhone);
+      
+      const totalRemoved = removedBySender + removedByReceiver;
+      
+      if (totalRemoved > 0) {
         logger.info(
-          `Каскадное удаление: удалено ${removedCount} посылок для пользователя ${userPhone}`
+          `Каскадное удаление: удалено ${totalRemoved} посылок для пользователя ${userPhone} (отправитель: ${removedBySender}, получатель: ${removedByReceiver})`
         );
       }
     });
 
     logger.info(
-      "Каскадное удаление настроено — удаление пользователя приведёт к удалению связанных посылок"
+      "Каскадное удаление настроено — удаление пользователя приведёт к удалению связанных посылок (как отправитель и получатель)"
     );
   }
 
@@ -58,6 +64,18 @@ export class ServiceRegistry {
     this.setupCascadeDelete();
 
     logger.info("Сервисы успешно сброшены");
+  }
+
+  public clearAllData(): void {
+    logger.warning("Полная очистка всех данных");
+
+    // Сначала очищаем посылки
+    this.packagesService.clear();
+    
+    // Затем очищаем пользователей
+    this.usersService.clear();
+
+    logger.info("Все данные успешно очищены");
   }
 
   public getApplicationStatistics(): {

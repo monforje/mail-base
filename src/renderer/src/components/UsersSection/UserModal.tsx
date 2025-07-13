@@ -106,7 +106,26 @@ const UserModal: React.FC<UserModalProps> = ({
   };
 
   const checkRelatedPackages = (phone: number): Package[] => {
-    return packagesService.findPackagesBySender(phone);
+    // Получаем посылки, где пользователь является отправителем
+    const packagesAsSender = packagesService.getPackagesBySender(phone);
+    
+    // Получаем посылки, где пользователь является получателем
+    const packagesAsReceiver = packagesService.findPackagesByReceiver(phone);
+    
+    // Объединяем и возвращаем уникальные посылки
+    const allPackages = [...packagesAsSender, ...packagesAsReceiver];
+    
+    // Удаляем дубликаты (если посылка и от и к одному пользователю)
+    const uniquePackages = allPackages.filter((pkg, index, self) => 
+      index === self.findIndex(p => 
+        p.senderPhone === pkg.senderPhone && 
+        p.receiverPhone === pkg.receiverPhone && 
+        p.date === pkg.date && 
+        p.weight === pkg.weight
+      )
+    );
+    
+    return uniquePackages;
   };
 
   const handleDeleteStep1 = () => {
@@ -243,9 +262,7 @@ const UserModal: React.FC<UserModalProps> = ({
                   <p
                     style={{ margin: "0", fontSize: "12px", color: "#856404" }}
                   >
-                    Найдено {relatedPackages.length} посылок от этого
-                    отправителя. При удалении пользователя все его посылки также
-                    будут удалены.
+                    Найдено {relatedPackages.length} посылок, где этот пользователь является отправителем или получателем. При удалении пользователя все связанные посылки также будут удалены.
                   </p>
                 </div>
 
@@ -266,6 +283,16 @@ const UserModal: React.FC<UserModalProps> = ({
                   >
                     <thead>
                       <tr style={{ backgroundColor: "#f8f9fa" }}>
+                        <th
+                          style={{
+                            padding: "6px 8px",
+                            textAlign: "left",
+                            borderBottom: "1px solid #ddd",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Отправитель
+                        </th>
                         <th
                           style={{
                             padding: "6px 8px",
@@ -307,6 +334,14 @@ const UserModal: React.FC<UserModalProps> = ({
                               index % 2 === 0 ? "#ffffff" : "#f8f9fa",
                           }}
                         >
+                          <td
+                            style={{
+                              padding: "4px 8px",
+                              borderBottom: "1px solid #eee",
+                            }}
+                          >
+                            {pkg.senderPhone.toString()}
+                          </td>
                           <td
                             style={{
                               padding: "4px 8px",

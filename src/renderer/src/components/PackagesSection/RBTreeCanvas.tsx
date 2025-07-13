@@ -23,6 +23,21 @@ interface RBTreeCanvasProps {
   onNodeClick?: (nodeKey: string) => void;
 }
 
+interface ViewportState {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+interface DragState {
+  isDragging: boolean;
+  startX: number;
+  startY: number;
+  lastX: number;
+  lastY: number;
+  draggedNode: string | null;
+}
+
 const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
   treeData,
   selectedKey = null,
@@ -33,11 +48,30 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const mouseMoveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Состояние viewport для масштабирования и панорамирования
+  const [viewport, setViewport] = useState<ViewportState>({
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+  });
+
+  // Состояние перетаскивания
+  const [dragState, setDragState] = useState<DragState>({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    lastX: 0,
+    lastY: 0,
+    draggedNode: null,
+  });
 
   // Константы для отрисовки
   const NODE_RADIUS = 40;
   const LEVEL_HEIGHT = 80;
   const MIN_HORIZONTAL_SPACING = 80;
+  const MIN_SCALE = 0.3;
+  const MAX_SCALE = 3.0;
 
   // Вычисление позиций узлов с улучшенным алгоритмом
   const calculatePositions = useCallback(
@@ -93,6 +127,7 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
               ) ?? undefined;
           }
         } else {
+          // Если места мало, масштабируем
           const scale = availableWidth / totalWidth;
           const scaledSpacing = MIN_HORIZONTAL_SPACING * scale;
 
@@ -138,30 +173,72 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
     return calculatePositions(treeData, 0, 0, width);
   }, [treeData, width, calculatePositions]);
 
+  // Преобразование координат мыши в координаты канваса с учетом viewport
+  const screenToCanvas = useCallback((screenX: number, screenY: number) => {
+    return {
+      x: (screenX - viewport.offsetX) / viewport.scale,
+      y: (screenY - viewport.offsetY) / viewport.scale,
+    };
+  }, [viewport]);
+
+  // Преобразование координат канваса в экранные координаты
+  const canvasToScreen = useCallback((canvasX: number, canvasY: number) => {
+    return {
+      x: canvasX * viewport.scale + viewport.offsetX,
+      y: canvasY * viewport.scale + viewport.offsetY,
+    };
+  }, [viewport]);
+
   const drawConnections = useCallback(
     (ctx: CanvasRenderingContext2D, node: TreeNode) => {
       if (!node.x || !node.y) return;
 
-      ctx.strokeStyle = "#666";
-      ctx.lineWidth = 2;
+      const drawCurvedLine = (fromX: number, fromY: number, toX: number, toY: number, isSelected: boolean) => {
+        // Преобразуем координаты в экранные
+        const fromScreen = canvasToScreen(fromX, fromY);
+        const toScreen = canvasToScreen(toX, toY);
+
+        ctx.beginPath();
+        ctx.moveTo(fromScreen.x, fromScreen.y);
+        
+        // Вычисляем контрольные точки для кривой Безье с более плавным изгибом
+        const dx = toScreen.x - fromScreen.x;
+        const dy = toScreen.y - fromScreen.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const curveFactor = Math.min(0.4, distance / 200); // Адаптивный изгиб
+        
+        const controlX1 = fromScreen.x + dx * curveFactor;
+        const controlY1 = fromScreen.y + dy * 0.1;
+        const controlX2 = toScreen.x - dx * curveFactor;
+        const controlY2 = toScreen.y - dy * 0.1;
+        
+        ctx.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, toScreen.x, toScreen.y);
+        
+        // Настройка стиля линии в зависимости от состояния
+        if (isSelected) {
+          ctx.strokeStyle = "#2196f3";
+          ctx.lineWidth = 3 * viewport.scale;
+        } else {
+          ctx.strokeStyle = "#666";
+          ctx.lineWidth = 2 * viewport.scale;
+        }
+        
+        ctx.stroke();
+      };
 
       if (node.left && node.left.x && node.left.y) {
-        ctx.beginPath();
-        ctx.moveTo(node.x, node.y);
-        ctx.lineTo(node.left.x, node.left.y);
-        ctx.stroke();
+        const isSelected = Boolean(selectedKey && (node.key === selectedKey || node.left.key === selectedKey));
+        drawCurvedLine(node.x, node.y, node.left.x, node.left.y, isSelected);
         drawConnections(ctx, node.left);
       }
 
       if (node.right && node.right.x && node.right.y) {
-        ctx.beginPath();
-        ctx.moveTo(node.x, node.y);
-        ctx.lineTo(node.right.x, node.right.y);
-        ctx.stroke();
+        const isSelected = Boolean(selectedKey && (node.key === selectedKey || node.right.key === selectedKey));
+        drawCurvedLine(node.x, node.y, node.right.x, node.right.y, isSelected);
         drawConnections(ctx, node.right);
       }
     },
-    []
+    [selectedKey, viewport, canvasToScreen]
   );
 
   const drawNode = useCallback(
@@ -170,50 +247,60 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
 
       const isSelected = selectedKey && node.key === selectedKey;
       const isHovered = hoveredNode === node.key;
+      const isDragging = dragState.draggedNode === node.key;
+
+      // Преобразуем координаты в экранные
+      const screenPos = canvasToScreen(node.x, node.y);
+      const scaledRadius = NODE_RADIUS * viewport.scale;
 
       let fillColor = node.color === "red" ? "#ff4444" : "#333333";
       if (isSelected) {
         fillColor = "#2196f3";
       } else if (isHovered) {
         fillColor = node.color === "red" ? "#ff6666" : "#555555";
+      } else if (isDragging) {
+        fillColor = "#ffaa00";
       }
 
       ctx.beginPath();
-      ctx.arc(node.x, node.y, NODE_RADIUS, 0, 2 * Math.PI);
+      ctx.arc(screenPos.x, screenPos.y, scaledRadius, 0, 2 * Math.PI);
       ctx.fillStyle = fillColor;
       ctx.fill();
 
       ctx.strokeStyle = isSelected ? "#1976d2" : isHovered ? "#888" : "#222";
-      ctx.lineWidth = isSelected ? 3 : 2;
+      ctx.lineWidth = (isSelected ? 3 : 2) * viewport.scale;
       ctx.stroke();
 
+      // Рисуем текст
       ctx.fillStyle = "white";
-      ctx.font = "bold 10px Arial";
+      ctx.font = `bold ${Math.max(8, 10 * viewport.scale)}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
       const lines = node.key.split("\n");
-      const lineHeight = 12;
+      const lineHeight = 12 * viewport.scale;
       const totalHeight = lines.length * lineHeight;
-      const startY = (node.y ?? 0) - totalHeight / 2 + lineHeight / 2;
+      const startY = screenPos.y - totalHeight / 2 + lineHeight / 2;
 
       lines.forEach((line, index) => {
-        // node.x and startY are always set in drawNode, но теперь не обрезаем строку
-        ctx.fillText(line, node.x!, startY + index * lineHeight);
+        ctx.fillText(line, screenPos.x, startY + index * lineHeight);
       });
 
       if (node.left) drawNode(ctx, node.left);
       if (node.right) drawNode(ctx, node.right);
     },
-    [selectedKey, hoveredNode]
+    [selectedKey, hoveredNode, dragState.draggedNode, viewport, canvasToScreen]
   );
 
   const findNodeAtPosition = useCallback(
     (node: TreeNode | null, x: number, y: number): string | null => {
       if (!node || !node.x || !node.y) return null;
 
-      const distance = Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2);
-      if (distance <= NODE_RADIUS) {
+      const screenPos = canvasToScreen(node.x, node.y);
+      const distance = Math.sqrt((x - screenPos.x) ** 2 + (y - screenPos.y) ** 2);
+      const scaledRadius = NODE_RADIUS * viewport.scale;
+      
+      if (distance <= scaledRadius) {
         return node.key;
       }
 
@@ -225,9 +312,10 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
 
       return null;
     },
-    []
+    [viewport, canvasToScreen]
   );
 
+  // Обработчики мыши
   const handleMouseMove = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>) => {
       if (mouseMoveTimeoutRef.current) {
@@ -242,24 +330,36 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
 
-        const nodeKey = findNodeAtPosition(positionedTree, x, y);
-        setHoveredNode(nodeKey);
+        if (dragState.isDragging) {
+          // Панорамирование
+          const deltaX = x - dragState.lastX;
+          const deltaY = y - dragState.lastY;
+          
+          setViewport(prev => ({
+            ...prev,
+            offsetX: prev.offsetX + deltaX,
+            offsetY: prev.offsetY + deltaY,
+          }));
+          
+          setDragState(prev => ({
+            ...prev,
+            lastX: x,
+            lastY: y,
+          }));
+        } else {
+          // Обновление hover состояния
+          const nodeKey = findNodeAtPosition(positionedTree, x, y);
+          setHoveredNode(nodeKey);
+        }
       }, 16); // ~60fps
     },
-    [positionedTree, findNodeAtPosition]
+    [positionedTree, findNodeAtPosition, dragState]
   );
 
-  const handleMouseLeave = useCallback(() => {
-    if (mouseMoveTimeoutRef.current) {
-      clearTimeout(mouseMoveTimeoutRef.current);
-    }
-    setHoveredNode(null);
-  }, []);
-
-  const handleClick = useCallback(
+  const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>) => {
       const canvas = canvasRef.current;
-      if (!canvas || !positionedTree || !onNodeClick) return;
+      if (!canvas || !positionedTree) return;
 
       const rect = canvas.getBoundingClientRect();
       const x = event.clientX - rect.left;
@@ -268,11 +368,142 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
       const nodeKey = findNodeAtPosition(positionedTree, x, y);
 
       if (nodeKey) {
-        onNodeClick(nodeKey);
+        // Начинаем перетаскивание узла
+        setDragState({
+          isDragging: true,
+          startX: x,
+          startY: y,
+          lastX: x,
+          lastY: y,
+          draggedNode: nodeKey,
+        });
+      } else {
+        // Начинаем панорамирование
+        setDragState({
+          isDragging: true,
+          startX: x,
+          startY: y,
+          lastX: x,
+          lastY: y,
+          draggedNode: null,
+        });
       }
     },
-    [positionedTree, findNodeAtPosition, onNodeClick]
+    [positionedTree, findNodeAtPosition]
   );
+
+  const handleMouseUp = useCallback(
+    (event: React.MouseEvent<HTMLCanvasElement>) => {
+      const canvas = canvasRef.current;
+      if (!canvas || !positionedTree || !onNodeClick) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      // Проверяем, был ли это клик (не перетаскивание)
+      const deltaX = Math.abs(x - dragState.startX);
+      const deltaY = Math.abs(y - dragState.startY);
+      const isClick = deltaX < 5 && deltaY < 5;
+
+      if (isClick && dragState.draggedNode) {
+        onNodeClick(dragState.draggedNode);
+      }
+
+      setDragState({
+        isDragging: false,
+        startX: 0,
+        startY: 0,
+        lastX: 0,
+        lastY: 0,
+        draggedNode: null,
+      });
+    },
+    [positionedTree, findNodeAtPosition, onNodeClick, dragState]
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    if (mouseMoveTimeoutRef.current) {
+      clearTimeout(mouseMoveTimeoutRef.current);
+    }
+    setHoveredNode(null);
+    setDragState({
+      isDragging: false,
+      startX: 0,
+      startY: 0,
+      lastX: 0,
+      lastY: 0,
+      draggedNode: null,
+    });
+  }, []);
+
+  // Обработчик колесика мыши для масштабирования
+  const handleWheel = useCallback(
+    (event: React.WheelEvent<HTMLCanvasElement>) => {
+      event.preventDefault();
+      
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      // Вычисляем новый масштаб
+      const scaleFactor = event.deltaY > 0 ? 0.9 : 1.1;
+      const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, viewport.scale * scaleFactor));
+
+      // Вычисляем новое смещение для зума к курсору
+      const scaleRatio = newScale / viewport.scale;
+      const newOffsetX = mouseX - (mouseX - viewport.offsetX) * scaleRatio;
+      const newOffsetY = mouseY - (mouseY - viewport.offsetY) * scaleRatio;
+
+      setViewport({
+        scale: newScale,
+        offsetX: newOffsetX,
+        offsetY: newOffsetY,
+      });
+    },
+    [viewport]
+  );
+
+  // Сброс viewport к центру дерева
+  const resetViewport = useCallback(() => {
+    setViewport({
+      scale: 1,
+      offsetX: width / 2,
+      offsetY: height / 2,
+    });
+  }, [width, height]);
+
+  // Обработчик клавиш
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case "0":
+          resetViewport();
+          break;
+        case "+":
+        case "=":
+          setViewport(prev => ({
+            ...prev,
+            scale: Math.min(MAX_SCALE, prev.scale * 1.2),
+          }));
+          break;
+        case "-":
+          setViewport(prev => ({
+            ...prev,
+            scale: Math.max(MIN_SCALE, prev.scale / 1.2),
+          }));
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [resetViewport]);
 
   useEffect(() => {
     return () => {
@@ -300,7 +531,6 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
     ctx.clearRect(0, 0, width, height);
 
     drawConnections(ctx, positionedTree);
-
     drawNode(ctx, positionedTree);
   }, [positionedTree, drawConnections, drawNode, width, height]);
 
@@ -338,20 +568,121 @@ const RBTreeCanvas: React.FC<RBTreeCanvasProps> = ({
   }
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={width}
-      height={height}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: "4px",
-        cursor: hoveredNode ? "pointer" : "default",
-        background: "#fafafa",
-      }}
-    />
+    <div style={{ position: "relative" }}>
+      <canvas
+        ref={canvasRef}
+        width={width}
+        height={height}
+        onMouseMove={handleMouseMove}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        onWheel={handleWheel}
+        style={{
+          border: "1px solid #ddd",
+          borderRadius: "4px",
+          cursor: dragState.isDragging 
+            ? (dragState.draggedNode ? "grabbing" : "move") 
+            : hoveredNode 
+            ? "pointer" 
+            : "default",
+          background: "#fafafa",
+        }}
+      />
+      
+      {/* Панель управления */}
+      <div
+        style={{
+          position: "absolute",
+          top: "10px",
+          right: "10px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "5px",
+        }}
+      >
+        <button
+          onClick={resetViewport}
+          style={{
+            width: "30px",
+            height: "30px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            background: "#fff",
+            cursor: "pointer",
+            fontSize: "12px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          title="Сбросить вид (0)"
+        >
+          🏠
+        </button>
+        <button
+          onClick={() => setViewport(prev => ({
+            ...prev,
+            scale: Math.min(MAX_SCALE, prev.scale * 1.2),
+          }))}
+          style={{
+            width: "30px",
+            height: "30px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            background: "#fff",
+            cursor: "pointer",
+            fontSize: "12px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          title="Увеличить (+)"
+        >
+          ➕
+        </button>
+        <button
+          onClick={() => setViewport(prev => ({
+            ...prev,
+            scale: Math.max(MIN_SCALE, prev.scale / 1.2),
+          }))}
+          style={{
+            width: "30px",
+            height: "30px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            background: "#fff",
+            cursor: "pointer",
+            fontSize: "12px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          title="Уменьшить (-)"
+        >
+          ➖
+        </button>
+      </div>
+
+      {/* Информационная панель */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "10px",
+          left: "10px",
+          background: "rgba(255, 255, 255, 0.9)",
+          padding: "8px 12px",
+          borderRadius: "4px",
+          fontSize: "11px",
+          color: "#666",
+          border: "1px solid #ddd",
+        }}
+      >
+        <div>Масштаб: {(viewport.scale * 100).toFixed(0)}%</div>
+        <div>Перетаскивание: {dragState.draggedNode ? "Узел" : "Панорама"}</div>
+        <div>Колесико мыши: Масштаб</div>
+        <div>Клавиши: 0=Сброс, +/- = Масштаб</div>
+      </div>
+    </div>
   );
 };
 

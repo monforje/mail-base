@@ -1,4 +1,5 @@
 import { usersService, packagesService } from "../DataServices";
+import { ServiceRegistry } from "../services/ServiceRegistry";
 import { User, Package, ViewMode } from "../types";
 import {
   detectFileType,
@@ -96,10 +97,25 @@ export class AppHandlers {
       alert("Список пользователей уже пуст");
       return;
     }
-    if (window.confirm("Вы уверены, что хотите удалить всех пользователей?")) {
-      usersService.clear();
+    
+    const userCount = usersService.getCount();
+    const packageCount = packagesService.getCount();
+    
+    let message = `Вы уверены, что хотите удалить всех пользователей (${userCount} пользователей)?`;
+    
+    if (packageCount > 0) {
+      message += `\n\nВнимание: В системе есть ${packageCount} посылок, связанных с пользователями. При удалении пользователей все посылки также будут удалены.`;
+    }
+    
+    if (window.confirm(message)) {
+      // Используем метод полной очистки из ServiceRegistry
+      const serviceRegistry = ServiceRegistry.getInstance();
+      serviceRegistry.clearAllData();
+      
+      // Обновляем состояние в UI
       this.setUsers([]);
-      console.log("Пользователи очищены");
+      this.setPackages([]);
+      console.log("Все данные очищены");
     }
   };
 
@@ -108,7 +124,17 @@ export class AppHandlers {
       alert("Список посылок уже пуст");
       return;
     }
-    if (window.confirm("Вы уверены, что хотите удалить все посылки?")) {
+    
+    const packageCount = packagesService.getCount();
+    const userCount = usersService.getCount();
+    
+    let message = `Вы уверены, что хотите удалить все посылки (${packageCount} посылок)?`;
+    
+    if (userCount > 0) {
+      message += `\n\nПримечание: В системе есть ${userCount} пользователей. Посылки будут удалены, но пользователи останутся.`;
+    }
+    
+    if (window.confirm(message)) {
       packagesService.clear();
       this.setPackages([]);
       console.log("Посылки очищены");
