@@ -4,7 +4,8 @@ import { User, Package, ViewMode } from "../types";
 import {
   detectFileType,
   validateFileContent,
-  parsePhoneNumber,
+  parseUserFromLine,
+  parsePackageFromLine,
 } from "../utils";
 
 export class AppHandlers {
@@ -68,11 +69,32 @@ export class AppHandlers {
   handleUsersLoad = (loadedUsers: User[], customHashTableSize?: number) => {
     console.log("Загрузка пользователей:", loadedUsers);
     try {
-      // ИЗМЕНЕНО: Передаем размер хеш-таблицы в сервис
+      const existingCount = usersService.getCount();
       usersService.loadUsers(loadedUsers, customHashTableSize);
       const allUsers = usersService.getAllUsers();
+      const newCount = usersService.getCount();
+      const addedCount = newCount - existingCount;
+
       console.log("Пользователи в сервисе после загрузки:", allUsers);
-      this.setUsers(allUsers);
+
+      if (loadedUsers.length >= 500) {
+        setTimeout(() => {
+          this.setUsers(allUsers);
+          console.log(
+            "UI обновлен после загрузки большого объема пользователей"
+          );
+        }, 100);
+      } else {
+        this.setUsers(allUsers);
+      }
+
+      if (existingCount > 0) {
+        alert(
+          `Добавлено ${addedCount} новых пользователей к существующим ${existingCount}. Всего: ${newCount} пользователей.`
+        );
+      } else {
+        alert(`Загружено ${newCount} пользователей.`);
+      }
     } catch (error) {
       console.error("Ошибка при загрузке пользователей:", error);
       alert(`Ошибка при загрузке пользователей: ${error}`);
@@ -82,10 +104,30 @@ export class AppHandlers {
   handlePackagesLoad = (loadedPackages: Package[]) => {
     console.log("Загрузка посылок:", loadedPackages);
     try {
+      const existingCount = packagesService.getCount();
       packagesService.loadPackages(loadedPackages);
       const allPackages = packagesService.getAllPackages();
+      const newCount = packagesService.getCount();
+      const addedCount = newCount - existingCount;
+
       console.log("Посылки в сервисе после загрузки:", allPackages);
-      this.setPackages(allPackages);
+
+      if (loadedPackages.length >= 500) {
+        setTimeout(() => {
+          this.setPackages(allPackages);
+          console.log("UI обновлен после загрузки большого объема данных");
+        }, 100);
+      } else {
+        this.setPackages(allPackages);
+      }
+
+      if (existingCount > 0) {
+        alert(
+          `Добавлено ${addedCount} новых посылок к существующим ${existingCount}. Всего: ${newCount} посылок.`
+        );
+      } else {
+        alert(`Загружено ${newCount} посылок.`);
+      }
     } catch (error) {
       console.error("Ошибка при загрузке посылок:", error);
       alert(`Ошибка при загрузке посылок: ${error}`);
@@ -97,21 +139,20 @@ export class AppHandlers {
       alert("Список пользователей уже пуст");
       return;
     }
-    
+
     const userCount = usersService.getCount();
     const packageCount = packagesService.getCount();
-    
+
     let message = `Вы уверены, что хотите удалить всех пользователей (${userCount} пользователей)?`;
-    
+
     if (packageCount > 0) {
       message += `\n\nВнимание: В системе есть ${packageCount} посылок, связанных с пользователями. При удалении пользователей все посылки также будут удалены.`;
     }
-    
+
     if (window.confirm(message)) {
-      // Используем метод полной очистки из ServiceRegistry
       const serviceRegistry = ServiceRegistry.getInstance();
       serviceRegistry.clearAllData();
-      
+
       // Обновляем состояние в UI
       this.setUsers([]);
       this.setPackages([]);
@@ -124,16 +165,16 @@ export class AppHandlers {
       alert("Список посылок уже пуст");
       return;
     }
-    
+
     const packageCount = packagesService.getCount();
     const userCount = usersService.getCount();
-    
+
     let message = `Вы уверены, что хотите удалить все посылки (${packageCount} посылок)?`;
-    
+
     if (userCount > 0) {
       message += `\n\nПримечание: В системе есть ${userCount} пользователей. Посылки будут удалены, но пользователи останутся.`;
     }
-    
+
     if (window.confirm(message)) {
       packagesService.clear();
       this.setPackages([]);
@@ -220,9 +261,24 @@ export class AppHandlers {
       const validation = validateFileContent(content, expectedType);
 
       if (!validation.isValid) {
-        const errorMessage = `Ошибки в файле:\n${validation.errors.join("\n")}`;
+        let errorMessage = `Ошибки в файле:\n${validation.errors.join("\n")}`;
+        if (validation.warnings.length > 0) {
+          errorMessage += `\n\nПредупреждения:\n${validation.warnings.join(
+            "\n"
+          )}`;
+        }
         alert(errorMessage);
         return;
+      }
+
+      // Показываем предупреждения, если есть
+      if (validation.warnings.length > 0) {
+        const warningMessage = `Предупреждения:\n${validation.warnings.join(
+          "\n"
+        )}`;
+        if (!confirm(`${warningMessage}\n\nПродолжить загрузку?`)) {
+          return;
+        }
       }
 
       const lines = content.split("\n").filter((line) => line.trim() !== "");
@@ -232,15 +288,11 @@ export class AppHandlers {
         const parseErrors: string[] = [];
 
         lines.forEach((line, index) => {
-          const [phoneStr, fullName, address] = line.split("\t");
-          const phone = parsePhoneNumber(phoneStr);
-
-          if (phone === null) {
-            parseErrors.push(
-              `Строка ${index + 1}: неверный формат телефона ${phoneStr}`
-            );
-          } else {
-            users.push({ phone, fullName, address });
+          const result = parseUserFromLine(line, index + 1);
+          if (result.error) {
+            parseErrors.push(result.error);
+          } else if (result.user) {
+            users.push(result.user);
           }
         });
 
@@ -273,43 +325,11 @@ export class AppHandlers {
         const parseErrors: string[] = [];
 
         lines.forEach((line, index) => {
-          const [senderPhoneStr, receiverPhoneStr, weightStr, date] =
-            line.split("\t");
-          const senderPhone = parsePhoneNumber(senderPhoneStr);
-          const receiverPhone = parsePhoneNumber(receiverPhoneStr);
-          const weight = parseFloat(weightStr);
-
-          if (senderPhone === null) {
-            parseErrors.push(
-              `Строка ${
-                index + 1
-              }: неверный формат телефона отправителя ${senderPhoneStr}`
-            );
-          }
-          if (receiverPhone === null) {
-            parseErrors.push(
-              `Строка ${
-                index + 1
-              }: неверный формат телефона получателя ${receiverPhoneStr}`
-            );
-          }
-          if (isNaN(weight)) {
-            parseErrors.push(
-              `Строка ${index + 1}: неверный формат веса ${weightStr}`
-            );
-          }
-
-          if (
-            senderPhone !== null &&
-            receiverPhone !== null &&
-            !isNaN(weight)
-          ) {
-            packages.push({
-              senderPhone,
-              receiverPhone,
-              weight,
-              date,
-            });
+          const result = parsePackageFromLine(line, index + 1);
+          if (result.error) {
+            parseErrors.push(result.error);
+          } else if (result.package) {
+            packages.push(result.package);
           }
         });
 

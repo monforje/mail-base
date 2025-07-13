@@ -2,7 +2,7 @@ export interface HashTableEntry<T> {
   key: string;
   value: T;
   isDeleted: boolean;
-  hashValue?: number; // Сохраняем вычисленный хеш
+  hashValue?: number;
 }
 
 export class HashTable<T> {
@@ -57,34 +57,38 @@ export class HashTable<T> {
   private hash(key: string): number {
     this.ensureInitialized();
 
-    let numericKey = 0;
-    for (let i = 0; i < key.length; i++) {
-      numericKey += key.charCodeAt(i) * (i + 1);
-    }
+    const k = parseInt(key, 10);
 
-    const squared = numericKey * numericKey;
+    // Вычисляем k^2
+    const kSquared = k * k;
 
-    const squaredStr = squared.toString();
-    const len = squaredStr.length;
+    const kSquaredStr = kSquared.toString();
+    const len = kSquaredStr.length;
 
-    let middleDigits: string;
+    let r, s;
+
     if (len >= 6) {
-      const start = Math.floor((len - 4) / 2);
-      middleDigits = squaredStr.substring(start, start + 4);
+      r = Math.floor(len / 2) - 2;
+      s = Math.floor(len / 2) - 2;
     } else if (len >= 4) {
-      const start = Math.floor((len - 2) / 2);
-      middleDigits = squaredStr.substring(start, start + 2);
+      r = Math.floor(len / 2) - 1;
+      s = Math.floor(len / 2) - 1;
     } else {
-      middleDigits = squaredStr;
+      r = 0;
+      s = 0;
     }
 
-    const hashValue = parseInt(middleDigits, 10);
+    const divisor1 = Math.pow(10, r);
+    const divisor2 = Math.pow(10, s);
+    const hashValue = Math.floor(kSquared / divisor1 / divisor2);
+
     return Math.abs(hashValue) % this.capacity;
   }
 
   private probe(key: string, step: number): number {
     const baseHash = this.hash(key);
-    return (baseHash + step) % this.capacity;
+    const numericKey = parseInt(key, 10);
+    return (baseHash + step * numericKey) % this.capacity;
   }
 
   public put(key: string, value: T): void {
@@ -120,7 +124,7 @@ export class HashTable<T> {
         }
       } else if (entry.key === key) {
         entry.value = value;
-        entry.hashValue = this.hash(key); // Обновляем хеш при обновлении
+        entry.hashValue = this.hash(key);
         return;
       }
 
@@ -130,7 +134,12 @@ export class HashTable<T> {
 
     if (firstTombstoneIndex !== -1) {
       const hashValue = this.hash(key);
-      this.table[firstTombstoneIndex] = { key, value, isDeleted: false, hashValue };
+      this.table[firstTombstoneIndex] = {
+        key,
+        value,
+        isDeleted: false,
+        hashValue,
+      };
       this.size++;
       return;
     }
@@ -216,7 +225,6 @@ export class HashTable<T> {
     for (let i = 0; i < oldCapacity; i++) {
       const entry = oldTable[i];
       if (entry !== null && !entry.isDeleted) {
-        // При resize хеш может измениться из-за изменения capacity
         this.put(entry.key, entry.value);
       }
     }
@@ -320,7 +328,7 @@ export class HashTable<T> {
           key: entry.key,
           hasValue: true,
           isDeleted: entry.isDeleted,
-          hashValue: entry.hashValue || this.hash(entry.key), // Используем сохраненный хеш или вычисляем заново
+          hashValue: entry.hashValue || this.hash(entry.key),
         });
       }
     }

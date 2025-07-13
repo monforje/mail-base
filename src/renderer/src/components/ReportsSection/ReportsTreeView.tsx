@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { User, Package } from "../../types";
 import { ReportsService } from "../../services/ReportsService";
+import { usersService, packagesService } from "../../DataServices";
 import RBTreeCanvas, {
   convertRBTreeToVisualTree,
 } from "../PackagesSection/RBTreeCanvas";
@@ -19,16 +20,20 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   // Генерируем отчет и получаем данные дерева
-  const { treeData, stats } = useMemo(() => {
+  const treeData = useMemo(() => {
     try {
+      // Получаем данные напрямую из сервисов
+      const allUsers = usersService.getAllUsers();
+      const allPackages = packagesService.getAllPackages();
+      
       // Генерируем отчет
-      reportsService.generateReport(users, packages);
+      reportsService.generateReport(allUsers, allPackages);
 
       // Получаем внутреннее дерево из сервиса
       const tree = (reportsService as any).dateTree;
 
-      if (!tree || packages.length === 0) {
-        return { treeData: null, stats: null };
+      if (!tree || allPackages.length === 0) {
+        return null;
       }
 
       // Конвертируем дерево для визуализации
@@ -39,23 +44,17 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({
         return `${date}\n[${indices.join(", ")}]`;
       });
 
-      // Получаем статистику
-      const treeStats = reportsService.getTreeStatistics();
-      const generalStats = reportsService.getStatistics();
-
-      return {
-        treeData: visualTree,
-        stats: { ...treeStats, ...generalStats },
-      };
+      return visualTree;
     } catch (error) {
       console.error("Error generating reports tree:", error);
-      return { treeData: null, stats: null };
+      return null;
     }
-  }, [users, packages, reportsService]);
+  }, [users, packages, reportsService, usersService.getCount(), packagesService.getCount()]);
 
   const uniqueDates = useMemo(() => {
-    return Array.from(new Set(packages.map((pkg) => pkg.date))).sort();
-  }, [packages]);
+    const allPackages = packagesService.getAllPackages();
+    return Array.from(new Set(allPackages.map((pkg) => pkg.date))).sort();
+  }, [packages, packagesService.getCount()]);
 
   // Получить подробные отчеты по выбранной дате (selectedKey)
   const selectedReports = useMemo(() => {
@@ -90,68 +89,10 @@ const ReportsTreeView: React.FC<ReportsTreeViewProps> = ({
         <div className="section-title">
           Визуализация дерева отчетов ({uniqueDates.length} уникальных дат)
         </div>
-        <div className="section-actions">
-          <button
-            className="action-icon"
-            title="Обновить визуализацию"
-            onClick={() => {
-              // Принудительно перерендериваем компонент
-              setSelectedKey(null);
-            }}
-          >
-            🔄
-          </button>
-          <button
-            className="action-icon"
-            title="Сбросить выделение"
-            onClick={() => setSelectedKey(null)}
-          >
-            ⚙️
-          </button>
-        </div>
+
       </div>
 
-      {stats && (
-        <div
-          style={{
-            padding: "12px",
-            backgroundColor: "#f9f9f9",
-            borderBottom: "1px solid #ddd",
-            fontSize: "12px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div style={{ display: "flex", gap: "20px" }}>
-            <span style={{ color: "#4caf50" }}>
-              📋 Всего отчетов: {stats.totalReports}
-            </span>
-            <span style={{ color: "#2196f3" }}>
-              📅 Уникальных дат: {stats.uniqueDates}
-            </span>
-            <span style={{ color: "#ff9800" }}>
-              📏 Высота дерева: {stats.height}
-            </span>
-            <span style={{ color: "#9c27b0" }}>
-              ⚫ Черная высота: {stats.blackHeight}
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: "15px" }}>
-            <span
-              style={{
-                color: stats.isValid ? "#4caf50" : "#f44336",
-                fontWeight: "bold",
-              }}
-            >
-              {stats.isValid ? "✓ Дерево валидное" : "✗ Дерево невалидное"}
-            </span>
-            <span style={{ color: "#666" }}>
-              📊 Эффективность: {(stats.efficiency * 100).toFixed(1)}%
-            </span>
-          </div>
-        </div>
-      )}
+
 
       {/* Легенда */}
       <div

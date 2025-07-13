@@ -236,7 +236,7 @@ const HashTableStructureView: React.FC<HashTableStructureViewProps> = () => {
         }}
       >
         <div style={{ marginBottom: "4px" }}>
-          <strong>Алгоритм хеширования:</strong> Метод серединного квадрата
+          <strong>Алгоритм хеширования:</strong> Метод серединного квадрата - h(k) = ⌊(k^2 ÷ 10^r) / 10^s⌋ mod m
         </div>
         <div style={{ marginBottom: "4px" }}>
           <strong>Разрешение коллизий:</strong> Линейный пробинг с шагом h_i(k)

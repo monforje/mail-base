@@ -102,13 +102,15 @@ export class PackagesService {
     const allKeys = this.redBlackTree.keys();
     const indicesToRemove: number[] = [];
 
-    // Собираем все индексы посылок для данного получателя
     for (const key of allKeys) {
       const indexList = this.redBlackTree.search(key);
       if (indexList !== null) {
         for (const index of indexList) {
           const packageData = this.packagesArray.get(index);
-          if (packageData && parseInt(packageData.receiverPhone, 10) === receiverPhone) {
+          if (
+            packageData &&
+            parseInt(packageData.receiverPhone, 10) === receiverPhone
+          ) {
             indicesToRemove.push(index);
           }
         }
@@ -126,7 +128,6 @@ export class PackagesService {
       `PackagesService: Starting cascade deletion for receiver ${receiverPhone} - ${indicesToRemove.length} packages to remove`
     );
 
-    // Удаляем посылки в обратном порядке индексов
     indicesToRemove.sort((a, b) => b - a);
 
     for (const targetIndex of indicesToRemove) {
@@ -148,7 +149,6 @@ export class PackagesService {
       }
     }
 
-    // Удаляем пустые списки из дерева
     for (const key of allKeys) {
       const list = this.redBlackTree.search(key);
       if (list !== null && list.isEmpty()) {
@@ -237,6 +237,27 @@ export class PackagesService {
     logger.info(
       `PackagesService: Added package ${pkg.senderPhone} -> ${pkg.receiverPhone} (${pkg.weight}kg, ${pkg.date}) at index ${index}`
     );
+  }
+
+  private addPackageOptimized(pkg: Package): void {
+    const key = this.generateKey(pkg.senderPhone);
+
+    const packageData: PackageData = {
+      receiverPhone: pkg.receiverPhone.toString(),
+      weight: pkg.weight,
+      date: pkg.date,
+    };
+
+    const index = this.packagesArray.add(packageData);
+
+    let indexList = this.redBlackTree.search(key);
+
+    if (indexList === null) {
+      indexList = new DoublyLinkedList<number>();
+      this.redBlackTree.insert(key, indexList);
+    }
+
+    indexList.append(index);
   }
 
   public getAllPackages(): Package[] {
@@ -412,33 +433,71 @@ export class PackagesService {
 
   public loadPackages(packages: Package[]): void {
     logger.info(`Загрузка посылок: начало загрузки ${packages.length} посылок`);
-    this.clear();
+
+    // Если дерево не инициализировано, создаем новое
+    if (this.redBlackTree.getSize() === 0) {
+      logger.info("Создание нового красно-черного дерева");
+      this.redBlackTree = new RedBlackTree<DoublyLinkedList<number>>();
+      this.packagesArray = new PackagesArray();
+    } else {
+      logger.info(
+        `Добавление к существующим данным (текущий размер: ${this.getCount()})`
+      );
+    }
 
     const loaded: string[] = [];
     const duplicates: string[] = [];
+    const existingCount = this.getCount();
+    const batchSize = 100; // Обрабатываем пакетами по 100
 
-    packages.forEach((pkg, index) => {
-      try {
-        if (this.packageExists(pkg)) {
-          const packageKey = this.generatePackageKey(pkg);
-          duplicates.push(packageKey);
-          logger.warning(
-            `Дубликат посылки ${packageKey} пропущен (строка ${index + 1})`
-          );
-        } else {
-          this.addPackage(pkg);
-          const packageKey = this.generatePackageKey(pkg);
-          loaded.push(packageKey);
-          if (loaded.length % 10 === 0 || index === packages.length - 1) {
-            logger.debug(
-              `Загружено ${loaded.length} из ${packages.length} посылок`
-            );
+    // Оптимизированная загрузка пакетами
+    for (let i = 0; i < packages.length; i += batchSize) {
+      const batch = packages.slice(i, Math.min(i + batchSize, packages.length));
+
+      let batchLoadedCount = 0;
+      batch.forEach((pkg, batchIndex) => {
+        const globalIndex = i + batchIndex;
+        try {
+          if (this.packageExists(pkg)) {
+            const packageKey = this.generatePackageKey(pkg);
+            duplicates.push(packageKey);
+            // Убираем логирование дубликатов для больших объемов
+            if (packages.length < 500) {
+              logger.warning(
+                `Дубликат посылки ${packageKey} пропущен (строка ${
+                  globalIndex + 1
+                })`
+              );
+            }
+          } else {
+            this.addPackageOptimized(pkg);
+            const packageKey = this.generatePackageKey(pkg);
+            loaded.push(packageKey);
+            batchLoadedCount++;
           }
+        } catch (error) {
+          logger.error(`Ошибка загрузки посылки: ${error}`);
         }
-      } catch (error) {
-        logger.error(`Ошибка загрузки посылки: ${error}`);
+      });
+
+      // Логируем прогресс реже для больших объемов
+      if (packages.length >= 500) {
+        if (i % 500 === 0 || i + batchSize >= packages.length) {
+          logger.info(
+            `Прогресс загрузки: ${Math.min(
+              i + batchSize,
+              packages.length
+            )} из ${packages.length} посылок`
+          );
+        }
+      } else {
+        if (loaded.length % 50 === 0 || i + batchSize >= packages.length) {
+          logger.debug(
+            `Загружено ${loaded.length} из ${packages.length} посылок`
+          );
+        }
       }
-    });
+    }
 
     if (duplicates.length > 0) {
       logger.warning(
@@ -450,8 +509,9 @@ export class PackagesService {
       );
     }
 
+    const totalLoaded = this.getCount() - existingCount;
     logger.info(
-      `Загрузка завершена — загружено ${loaded.length} посылок, пропущено дубликатов: ${duplicates.length}`
+      `Загрузка завершена — добавлено ${totalLoaded} новых посылок, пропущено дубликатов: ${duplicates.length}`
     );
     this.logTreeStatistics();
   }

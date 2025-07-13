@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ReportData } from "../../data-structures/ReportsArray";
 import { ReportsService } from "../../services/ReportsService";
 import { User, Package } from "../../types";
+import { usersService, packagesService } from "../../DataServices";
 import ReportsModal from "./ReportsModal";
 import ReportsTable from "./ReportsTable";
 import "../../assets/Modal.css";
@@ -43,11 +44,14 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => {
-    if (packages.length === 0) {
+    const allPackages = packagesService.getAllPackages();
+    const allUsers = usersService.getAllUsers();
+    
+    if (allPackages.length === 0) {
       alert("Нет данных о посылках для формирования отчета");
       return;
     }
-    if (users.length === 0) {
+    if (allUsers.length === 0) {
       alert("Нет данных о пользователях для формирования отчета");
       return;
     }
@@ -67,8 +71,12 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
     setReportIsLoading(true);
 
     try {
+      // Получаем данные напрямую из сервисов
+      const allUsers = usersService.getAllUsers();
+      const allPackages = packagesService.getAllPackages();
+      
       // Генерируем полный отчет
-      reportsService.generateReport(users, packages);
+      reportsService.generateReport(allUsers, allPackages);
 
       // Применяем фильтрацию с новыми параметрами
       const filteredReports = reportsService.getReportsByFilters(
@@ -172,8 +180,9 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
   };
 
   const getAvailableDates = () => {
-    // Получаем уникальные даты из текущих посылок
-    const dates = Array.from(new Set(packages.map((pkg) => pkg.date))).sort();
+    // Получаем уникальные даты из красно-черного дерева посылок
+    const allPackages = packagesService.getAllPackages();
+    const dates = Array.from(new Set(allPackages.map((pkg) => pkg.date))).sort();
     return dates;
   };
 
@@ -188,14 +197,16 @@ const ReportsSection: React.FC<ReportsSectionProps> = ({
   };
 
   const getAvailablePhones = () => {
-    // Получаем уникальные телефоны получателей из посылок
-    const phones = Array.from(new Set(packages.map((pkg) => pkg.receiverPhone.toString()))).sort();
+    // Получаем уникальные телефоны получателей из красно-черного дерева посылок
+    const allPackages = packagesService.getAllPackages();
+    const phones = Array.from(new Set(allPackages.map((pkg) => pkg.receiverPhone.toString()))).sort();
     return phones;
   };
 
   const getAvailableAddresses = () => {
-    // Получаем уникальные адреса из пользователей
-    const addresses = Array.from(new Set(users.map((user) => user.address))).sort();
+    // Получаем уникальные адреса из хеш-таблицы пользователей
+    const allUsers = usersService.getAllUsers();
+    const addresses = Array.from(new Set(allUsers.map((user) => user.address))).sort();
     return addresses;
   };
 

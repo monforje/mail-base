@@ -15,22 +15,17 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({
   onDataChange,
   setPackages,
 }) => {
-  // Состояние выбранной ноды
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  // Получаем данные дерева и конвертируем для визуализации
   const treeData = useMemo(() => {
     try {
-      // Получаем внутреннее дерево из сервиса через рефлексию
       const tree = (packagesService as any).redBlackTree;
+      const totalPackages = packagesService.getCount();
 
-      if (!tree || packages.length === 0) {
+      if (!tree || totalPackages === 0) {
         return null;
       }
 
-      // Конвертируем дерево для визуализации с форматированием узлов
       return convertRBTreeToVisualTree(tree, (key, value) => {
-        // key - это номер телефона отправителя
-        // value - это DoublyLinkedList с индексами посылок
         const indices = value ? (value as DoublyLinkedList<any>).toArray() : [];
         return `${key}\n[${indices.join(", ")}]`;
       });
@@ -38,14 +33,12 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({
       console.error("Error converting tree data:", error);
       return null;
     }
-  }, [packages]);
+  }, [packages, packagesService.getCount()]);
 
-  // Получить подробные посылки по выбранному отправителю (selectedKey)
   const selectedPackages = useMemo(() => {
     if (!selectedKey) return [];
     const senderPhone = parseInt(selectedKey.split("\n")[0], 10);
     if (isNaN(senderPhone)) return [];
-    // Получаем индексы из value (DoublyLinkedList) напрямую из дерева
     const tree = (packagesService as any).redBlackTree;
     if (!tree) return [];
     const node = tree.search(senderPhone.toString());
@@ -67,7 +60,6 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({
       .filter(Boolean);
   }, [selectedKey, packages]);
 
-  // Удаление всех посылок выбранного отправителя по Delete
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Delete" && selectedKey) {
@@ -97,7 +89,6 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({
         overflow: "hidden",
       }}
     >
-      {/* Канвас с деревом */}
       <div
         style={{
           flex: 1,
@@ -117,7 +108,6 @@ const RBTreeView: React.FC<RBTreeViewProps> = ({
         />
       </div>
 
-      {/* Подсказки внизу */}
       <div
         style={{
           padding: "8px 12px",

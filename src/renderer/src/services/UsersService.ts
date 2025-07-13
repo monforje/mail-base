@@ -236,46 +236,76 @@ export class UsersService {
       `Загрузка пользователей: начало загрузки ${users.length} пользователей`
     );
 
-    if (customHashTableSize && customHashTableSize > 0) {
-      logger.info(
-        `Создание хеш-таблицы с пользовательским размером: ${customHashTableSize}`
-      );
-      this.hashTable = new HashTable<number>(customHashTableSize);
+    if (!this.hashTable.getIsInitialized()) {
+      if (customHashTableSize && customHashTableSize > 0) {
+        logger.info(
+          `Создание хеш-таблицы с пользовательским размером: ${customHashTableSize}`
+        );
+        this.hashTable = new HashTable<number>(customHashTableSize);
+      } else {
+        const optimalSize = Math.max(11, Math.ceil(users.length / 0.75));
+        logger.info(
+          `Создание хеш-таблицы с оптимальным размером: ${optimalSize}`
+        );
+        this.hashTable = new HashTable<number>(optimalSize);
+      }
+      this.usersArray = new UsersArray();
     } else {
-      const optimalSize = Math.max(11, Math.ceil(users.length / 0.75));
       logger.info(
-        `Создание хеш-таблицы с оптимальным размером: ${optimalSize}`
+        `Добавление к существующим данным (текущий размер: ${this.getCount()})`
       );
-      this.hashTable = new HashTable<number>(optimalSize);
     }
-
-    this.usersArray = new UsersArray();
 
     const duplicates: number[] = [];
     const loaded: number[] = [];
+    const existingCount = this.getCount();
+    const batchSize = 100;
 
-    users.forEach((user, index) => {
-      const phoneKey = user.phone.toString();
+    for (let i = 0; i < users.length; i += batchSize) {
+      const batch = users.slice(i, Math.min(i + batchSize, users.length));
 
-      if (this.hashTable.containsKey(phoneKey)) {
-        duplicates.push(user.phone);
-        logger.warning(
-          `Дубликат телефона ${user.phone} пропущен (строка ${index + 1})`
-        );
-      } else {
-        try {
-          this.addUserInternal(user);
-          loaded.push(user.phone);
-          if (loaded.length % 10 === 0 || index === users.length - 1) {
-            logger.debug(
-              `Загружено ${loaded.length} из ${users.length} пользователей`
+      batch.forEach((user, batchIndex) => {
+        const globalIndex = i + batchIndex;
+        const phoneKey = user.phone.toString();
+
+        if (this.hashTable.containsKey(phoneKey)) {
+          duplicates.push(user.phone);
+          if (users.length < 500) {
+            logger.warning(
+              `Дубликат телефона ${user.phone} пропущен (строка ${
+                globalIndex + 1
+              })`
             );
           }
-        } catch (error) {
-          logger.error(`Ошибка загрузки пользователя ${user.phone}: ${error}`);
+        } else {
+          try {
+            this.addUserInternal(user);
+            loaded.push(user.phone);
+          } catch (error) {
+            logger.error(
+              `Ошибка загрузки пользователя ${user.phone}: ${error}`
+            );
+          }
+        }
+      });
+
+      // Логируем прогресс реже для больших объемов
+      if (users.length >= 500) {
+        if (i % 500 === 0 || i + batchSize >= users.length) {
+          logger.info(
+            `Прогресс загрузки: ${Math.min(i + batchSize, users.length)} из ${
+              users.length
+            } пользователей`
+          );
+        }
+      } else {
+        if (loaded.length % 50 === 0 || i + batchSize >= users.length) {
+          logger.debug(
+            `Загружено ${loaded.length} из ${users.length} пользователей`
+          );
         }
       }
-    });
+    }
 
     if (duplicates.length > 0) {
       logger.warning(
@@ -286,11 +316,12 @@ export class UsersService {
     }
 
     const finalStats = this.getStatistics();
+    const totalLoaded = this.getCount() - existingCount;
     logger.info(
-      `Загрузка завершена — загружено ${loaded.length} пользователей, пропущено дубликатов: ${duplicates.length}`
+      `Загрузка завершена — добавлено ${totalLoaded} новых пользователей, пропущено дубликатов: ${duplicates.length}`
     );
     logger.info(
-      `Итоговая хеш-таблица — размер: ${
+      `Итоговая хеш-таблица — общий размер: ${this.getCount()}, размер: ${
         finalStats.capacity
       }, коэффициент загрузки: ${finalStats.loadFactor.toFixed(3)}`
     );
