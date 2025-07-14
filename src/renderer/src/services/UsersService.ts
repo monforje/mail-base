@@ -412,7 +412,7 @@ export class UsersService {
           value: null,
           status: "empty",
         });
-      } else if (struct.isDeleted) {
+      } else if (struct.status === 0) {
         entries.push({
           index: struct.index,
           key: struct.key || "",

@@ -1,7 +1,7 @@
 export interface HashTableEntry<T> {
   key: string;
   value: T;
-  isDeleted: boolean;
+  status: number; // 1 = занято, 0 = свободно
   hashValue?: number;
 }
 
@@ -87,8 +87,7 @@ export class HashTable<T> {
 
   private probe(key: string, step: number): number {
     const baseHash = this.hash(key);
-    const numericKey = parseInt(key, 10);
-    return (baseHash + step * numericKey) % this.capacity;
+    return (baseHash + step) % this.capacity;
   }
 
   public put(key: string, value: T): void {
@@ -113,12 +112,12 @@ export class HashTable<T> {
         const insertIndex =
           firstTombstoneIndex !== -1 ? firstTombstoneIndex : index;
         const hashValue = this.hash(key);
-        this.table[insertIndex] = { key, value, isDeleted: false, hashValue };
+        this.table[insertIndex] = { key, value, status: 1, hashValue };
         this.size++;
         return;
       }
 
-      if (entry.isDeleted) {
+      if (entry.status === 0) { // Свободная ячейка (tombstone)
         if (firstTombstoneIndex === -1) {
           firstTombstoneIndex = index;
         }
@@ -137,7 +136,7 @@ export class HashTable<T> {
       this.table[firstTombstoneIndex] = {
         key,
         value,
-        isDeleted: false,
+        status: 1,
         hashValue,
       };
       this.size++;
@@ -166,7 +165,7 @@ export class HashTable<T> {
         return null;
       }
 
-      if (entry.key === key && !entry.isDeleted) {
+      if (entry.key === key && entry.status === 1) {
         return entry.value;
       }
 
@@ -196,8 +195,8 @@ export class HashTable<T> {
         return false;
       }
 
-      if (entry.key === key && !entry.isDeleted) {
-        entry.isDeleted = true;
+      if (entry.key === key && entry.status === 1) {
+        entry.status = 0; // Помечаем как свободную ячейку
         this.size--;
         return true;
       }
@@ -224,7 +223,7 @@ export class HashTable<T> {
 
     for (let i = 0; i < oldCapacity; i++) {
       const entry = oldTable[i];
-      if (entry !== null && !entry.isDeleted) {
+      if (entry !== null && entry.status === 1) {
         this.put(entry.key, entry.value);
       }
     }
@@ -242,7 +241,7 @@ export class HashTable<T> {
     const keys: string[] = [];
     for (let i = 0; i < this.capacity; i++) {
       const entry = this.table[i];
-      if (entry !== null && !entry.isDeleted) {
+      if (entry !== null && entry.status === 1) {
         keys.push(entry.key);
       }
     }
@@ -276,7 +275,7 @@ export class HashTable<T> {
       const entry = this.table[i];
       if (entry === null) {
         emptySlots++;
-      } else if (entry.isDeleted) {
+      } else if (entry.status === 0) {
         deletedSlots++;
       } else {
         occupiedSlots++;
@@ -297,7 +296,7 @@ export class HashTable<T> {
     index: number;
     key: string | null;
     hasValue: boolean;
-    isDeleted: boolean;
+    status: number;
     hashValue: number | null;
   }> {
     if (!this.isInitialized) {
@@ -308,7 +307,7 @@ export class HashTable<T> {
       index: number;
       key: string | null;
       hasValue: boolean;
-      isDeleted: boolean;
+      status: number;
       hashValue: number | null;
     }> = [];
 
@@ -319,7 +318,7 @@ export class HashTable<T> {
           index: i,
           key: null,
           hasValue: false,
-          isDeleted: false,
+          status: 0,
           hashValue: null,
         });
       } else {
@@ -327,7 +326,7 @@ export class HashTable<T> {
           index: i,
           key: entry.key,
           hasValue: true,
-          isDeleted: entry.isDeleted,
+          status: entry.status,
           hashValue: entry.hashValue || this.hash(entry.key),
         });
       }
